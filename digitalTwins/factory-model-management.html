@@ -3205,23 +3205,10 @@
                                              <el-tab-pane label="指标" name="metrics">
                                                 <div class="tab-content">
                                                     <div class="metrics-section">
-                                                        <!-- 指标管理头部 -->
-                                                        <div class="section-header">
-                                                            <h3 class="section-title">指标管理</h3>
-                                                            <div class="section-actions">
-                                                                <el-button size="small" @click="addIndicator" type="primary">
-                                                                    <i class="el-icon-plus"></i> 新增指标
-                                                                </el-button>
-                                                                <el-button size="small" @click="batchDeleteIndicators" :disabled="selectedIndicators.length === 0">
-                                                                    <i class="el-icon-delete"></i> 批量删除
-                                                                </el-button>
-                                                            </div>
-                                                        </div>
-                                                        
                                                         <!-- 指标筛选 -->
                                                         <div class="metrics-filter">
                                                             <el-row :gutter="16">
-                                                                <el-col :span="6">
+                                                                <el-col :span="4">
                                                                     <el-select v-model="indicatorFilter.category" placeholder="指标分类" clearable size="small" style="width: 100%">
                                                                         <el-option label="性能指标" value="性能指标"></el-option>
                                                                         <el-option label="经济指标" value="经济指标"></el-option>
@@ -3229,13 +3216,13 @@
                                                                         <el-option label="环保指标" value="环保指标"></el-option>
                                                                     </el-select>
                                                                 </el-col>
-                                                                <el-col :span="6">
+                                                                <el-col :span="4">
                                                                     <el-select v-model="indicatorFilter.direction" placeholder="指标方向" clearable size="small" style="width: 100%">
                                                                         <el-option label="正向" value="positive"></el-option>
                                                                         <el-option label="负向" value="negative"></el-option>
                                                                     </el-select>
                                                                 </el-col>
-                                                                <el-col :span="8">
+                                                                <el-col :span="4">
                                                                     <el-input 
                                                                         v-model="indicatorFilter.keyword" 
                                                                         placeholder="搜索指标名称或编码" 
@@ -3245,7 +3232,17 @@
                                                                     </el-input>
                                                                 </el-col>
                                                                 <el-col :span="4">
-                                                                    <el-button size="small" @click="clearIndicatorFilter">清空筛选</el-button>
+                                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                                        <el-button size="small" @click="clearIndicatorFilter">清空筛选</el-button>
+                                                                        <div style="display: flex; gap: 8px;">
+                                                                            <el-button size="small" @click="addIndicator" type="primary">
+                                                                                <i class="el-icon-plus"></i> 新增指标
+                                                                            </el-button>
+                                                                            <el-button size="small" @click="batchDeleteIndicators" :disabled="selectedIndicators.length === 0">
+                                                                                <i class="el-icon-delete"></i> 批量删除
+                                                                            </el-button>
+                                                                        </div>
+                                                                    </div>
                                                                 </el-col>
                                                             </el-row>
                                                         </div>

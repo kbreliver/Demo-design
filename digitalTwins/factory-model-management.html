@@ -197,6 +197,44 @@
             color: #0369a1;
         }
 
+        /* 告警徽标样式 */
+        .alarm-badge .el-badge__content {
+            background-color: #F56C6C;
+            color: white;
+            font-size: 10px;
+            height: 24px;
+            line-height: 16px;
+            padding: 0 4px;
+            border-radius: 8px;
+        }
+
+        /* 页签中的徽标样式 */
+        .el-tabs__item .el-badge {
+            margin-left: 4px;
+        }
+
+        .el-tabs__item .el-badge .el-badge__content {
+            transform: scale(0.8);
+            transform-origin: center;
+        }
+
+        /* 页签验证样式 */
+        .el-tabs__item {
+            transition: color 0.3s ease;
+        }
+
+        .el-tabs__item.has-warning {
+            color: #E6A23C !important;
+        }
+
+        .el-tabs__item.has-warning:hover {
+            color: #E6A23C !important;
+        }
+
+        .el-tabs__item.has-warning.is-active {
+            color: #E6A23C !important;
+        }
+
         .status-disabled {
             background-color: #fef2f2;
             color: #dc2626;
@@ -3153,7 +3191,7 @@
                                     <!-- 下方区域 - 页签 -->
                                     <div class="add-asset-bottom">
                                         <el-tabs v-model="activeTab" type="card">
-                                                                                         <el-tab-pane label="基础信息" name="basicInfo">
+                                                                                         <el-tab-pane :label="basicInfoTabLabel" name="basicInfo">
                                                  <div class="tab-content">
                                                      <div v-if="selectedAssetType">
                                                          <!-- <h4 style="margin-bottom: 16px; color: #303133;">静态属性配置</h4> -->
@@ -3174,7 +3212,7 @@
                                                      </div>
                                                  </div>
                                              </el-tab-pane>
-                                             <el-tab-pane label="采集参数" name="collectionParams">
+                                             <el-tab-pane :label="collectionParamsTabLabel" name="collectionParams">
                                                  <div class="tab-content">
                                                      <div v-if="selectedAssetType && selectedAssetType.dynamicVariables">
                                                          <!-- 新增参数按钮 -->
@@ -3381,7 +3419,7 @@
                                                      </div>
                                                  </div>
                                                                                           </el-tab-pane>
-                                             <el-tab-pane label="业务属性" name="businessProperties">
+                                             <el-tab-pane :label="businessPropertiesTabLabel" name="businessProperties">
                                                  <div class="tab-content">
                                                      <div v-if="selectedAssetType && selectedAssetType.businessProperties">
                                                          <div class="business-properties-table">
@@ -3541,7 +3579,7 @@
                                                      </div>
                                                  </div>
                                              </el-tab-pane>
-                                             <el-tab-pane label="指标" name="metrics">
+                                             <el-tab-pane :label="metricsTabLabel" name="metrics">
                                                 <div class="tab-content">
                                                     <div class="metrics-section">
                                                         <!-- 指标筛选 -->
@@ -3810,7 +3848,7 @@
                                                     </div>
                                                 </div>
                                             </el-tab-pane>
-                                            <el-tab-pane label="事件规则" name="eventRules">
+                                            <el-tab-pane :label="eventRulesTabLabel" name="eventRules">
                                                 <div class="tab-content">
                                                     <div v-if="selectedAssetType && selectedAssetType.eventRules">
                                                         <!-- 事件规则操作按钮 -->
@@ -4048,7 +4086,15 @@
                                                     </div>
                                                 </div>
                                             </el-tab-pane>
-                                            <el-tab-pane label="告警" name="alarms">
+                                            <el-tab-pane name="alarms">
+                                                <template slot="label">
+                                                    <span>告警</span>
+                                                    <el-badge 
+                                                        v-if="unhandledAlarmsCount > 0" 
+                                                        :value="unhandledAlarmsCount" 
+                                                        class="alarm-badge">
+                                                    </el-badge>
+                                                </template>
                                                 <div class="tab-content">
                                                     <div v-if="selectedAssetType && selectedAssetType.alarms">
                                                         <!-- 告警检索区域 -->
@@ -4094,7 +4140,7 @@
                                                         </div>
 
                                                         <!-- 告警操作按钮 -->
-                                                        <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
+                                                        <!-- <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
                                                             <el-button 
                                                                 size="small" 
                                                                 type="primary" 
@@ -4102,7 +4148,7 @@
                                                                 @click="refreshAlarms">
                                                                 刷新告警
                                                             </el-button>
-                                                        </div>
+                                                        </div> -->
 
                                                         <!-- 告警表格 -->
                                                         <div class="alarms-table">
@@ -4168,6 +4214,9 @@
                                                                             @click="markAsFalseAlarm(scope.row)"
                                                                             title="标记为误报">
                                                                         </el-button>
+                                                                        <span v-if="scope.row.isHandled" style="color: #909399; font-size: 12px;">
+                                                                            已处理
+                                                                        </span>
                                                                     </template>
                                                                 </el-table-column>
                                                             </el-table>
@@ -4487,9 +4536,36 @@
                         </el-table>
                     </el-card>
                     
-                    <div style="text-align: center;">
-                        <el-button @click="alarmDetailDrawerVisible = false">关闭</el-button>
-                    </div>
+                    <!-- 操作按钮 -->
+                    <el-card style="margin-bottom: 20px;">
+                        <div slot="header">
+                            <span>操作</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <el-button 
+                                v-if="!currentAlarm.isHandled"
+                                type="primary" 
+                                icon="el-icon-check"
+                                @click="handleAlarm(currentAlarm)">
+                                处理
+                            </el-button>
+                            <el-button 
+                                v-if="!currentAlarm.isHandled"
+                                type="warning" 
+                                icon="el-icon-close"
+                                @click="ignoreAlarm(currentAlarm)">
+                                忽略
+                            </el-button>
+                            <el-button 
+                                v-if="!currentAlarm.isHandled"
+                                type="danger" 
+                                icon="el-icon-warning"
+                                @click="markAsFalseAlarm(currentAlarm)">
+                                标记为误报
+                            </el-button>
+                            <el-button @click="alarmDetailDrawerVisible = false">关闭</el-button>
+                        </div>
+                    </el-card>
                 </div>
             </div>
         </el-drawer>
@@ -5978,9 +6054,11 @@
                         { id: 2, name: '压力异常检测', code: 'pressure_abnormal', category: '运行监控', description: '运行压力超出正常范围时触发事件', triggerCondition: '运行压力 < 0.5 OR 运行压力 > 2.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
                         { id: 3, name: '设备停机检测', code: 'device_shutdown', category: '状态监控', description: '检测设备停机状态并记录', triggerCondition: '设备状态 = 停机', severity: 'low', enabled: true, actions: ['记录日志', '更新状态'], isEditing: false }
                     ], alarms: [
-                        { id: 1, level: 'high', type: '温度超限', description: '水泥磨机温度达到85℃，超过安全阈值', alarmTime: '2024-01-15 14:30:25', triggerRule: '温度超限告警', triggerRuleName: '温度超限告警', triggerExpression: '设备温度 > 80', dataItems: [{ name: '设备温度', value: '85℃', dataSource: 'DCS.TEMP_001' }], isHandled: false, handler: '', status: 'active' },
-                        { id: 2, level: 'medium', type: '压力异常', description: '运行压力为2.5MPa，超出正常范围', alarmTime: '2024-01-15 13:45:12', triggerRule: '压力异常检测', triggerRuleName: '压力异常检测', triggerExpression: '运行压力 < 0.5 OR 运行压力 > 2.0', dataItems: [{ name: '运行压力', value: '2.5MPa', dataSource: 'DCS.PRESS_001' }], isHandled: true, handler: '张工程师', status: 'handled' },
-                        { id: 3, level: 'low', type: '设备停机', description: '设备运行状态异常，已停机', alarmTime: '2024-01-15 12:20:08', triggerRule: '设备停机检测', triggerRuleName: '设备停机检测', triggerExpression: '设备状态 = 停机', dataItems: [{ name: '设备状态', value: '停机', dataSource: 'DCS.STATUS_001' }], isHandled: false, handler: '', status: 'ignored' }
+                        { id: 1, level: 'high', type: '温度超限', description: '水泥磨机温度达到85℃，超过安全阈值', alarmTime: '2024-01-18 14:30:25', triggerRule: '温度超限告警', triggerRuleName: '温度超限告警', triggerExpression: '设备温度 > 80', dataItems: [{ name: '设备温度', value: '85℃', dataSource: 'DCS.TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '压力异常', description: '运行压力为2.5MPa，超出正常范围', alarmTime: '2024-01-17 13:45:12', triggerRule: '压力异常检测', triggerRuleName: '压力异常检测', triggerExpression: '运行压力 < 0.5 OR 运行压力 > 2.0', dataItems: [{ name: '运行压力', value: '2.5MPa', dataSource: 'DCS.PRESS_001' }], isHandled: true, handler: '张工程师', status: 'handled' },
+                        { id: 3, level: 'low', type: '设备停机', description: '设备运行状态异常，已停机', alarmTime: '2024-01-18 12:20:08', triggerRule: '设备停机检测', triggerRuleName: '设备停机检测', triggerExpression: '设备状态 = 停机', dataItems: [{ name: '设备状态', value: '停机', dataSource: 'DCS.STATUS_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 4, level: 'medium', type: '振动异常', description: '设备振动值达到12mm/s，超过正常范围', alarmTime: '2024-01-18 10:15:30', triggerRule: '振动异常检测', triggerRuleName: '振动异常检测', triggerExpression: '振动值 > 10', dataItems: [{ name: '振动值', value: '12mm/s', dataSource: 'DCS.VIB_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 5, level: 'high', type: '电流超限', description: '主电机电流达到120A，超过安全阈值', alarmTime: '2024-01-17 16:45:20', triggerRule: '电流超限告警', triggerRuleName: '电流超限告警', triggerExpression: '主电机电流 > 100', dataItems: [{ name: '主电机电流', value: '120A', dataSource: 'DCS.CURRENT_001' }], isHandled: false, handler: '', status: 'active' }
                     ]},
                     { value: 'rotary_kiln_001', label: '回转窑', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6012,9 +6090,11 @@
                         { id: 2, name: '转速异常检测', code: 'speed_abnormal', category: '运行监控', description: '窑体转速超出正常范围时触发事件', triggerCondition: '转速 < 0.5 OR 转速 > 3.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
                         { id: 3, name: '燃料消耗异常', code: 'fuel_consumption_abnormal', category: '能耗监控', description: '燃料消耗异常时触发事件', triggerCondition: '燃料消耗 > 1000', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false }
                     ], alarms: [
-                        { id: 1, level: 'high', type: '窑体温度超限', description: '回转窑温度达到1250℃，超过安全阈值', alarmTime: '2024-01-15 15:20:30', triggerRule: '窑体温度超限', triggerRuleName: '窑体温度超限', triggerExpression: '窑体温度 > 1200', dataItems: [{ name: '窑体温度', value: '1250℃', dataSource: 'DCS.KILN_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
-                        { id: 2, level: 'medium', type: '转速异常', description: '窑体转速为3.5rpm，超出正常范围', alarmTime: '2024-01-15 14:15:45', triggerRule: '转速异常检测', triggerRuleName: '转速异常检测', triggerExpression: '转速 < 0.5 OR 转速 > 3.0', dataItems: [{ name: '转速', value: '3.5rpm', dataSource: 'DCS.SPEED_001' }], isHandled: true, handler: '李工程师', status: 'handled' },
-                        { id: 3, level: 'medium', type: '燃料消耗异常', description: '燃料消耗达到1200kg/h，超出正常范围', alarmTime: '2024-01-15 13:30:20', triggerRule: '燃料消耗异常', triggerRuleName: '燃料消耗异常', triggerExpression: '燃料消耗 > 1000', dataItems: [{ name: '燃料消耗', value: '1200kg/h', dataSource: 'DCS.FUEL_001' }], isHandled: false, handler: '', status: 'active' }
+                        { id: 1, level: 'high', type: '窑体温度超限', description: '回转窑温度达到1250℃，超过安全阈值', alarmTime: '2024-01-18 15:20:30', triggerRule: '窑体温度超限', triggerRuleName: '窑体温度超限', triggerExpression: '窑体温度 > 1200', dataItems: [{ name: '窑体温度', value: '1250℃', dataSource: 'DCS.KILN_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '转速异常', description: '窑体转速为3.5rpm，超出正常范围', alarmTime: '2024-01-17 14:15:45', triggerRule: '转速异常检测', triggerRuleName: '转速异常检测', triggerExpression: '转速 < 0.5 OR 转速 > 3.0', dataItems: [{ name: '转速', value: '3.5rpm', dataSource: 'DCS.SPEED_001' }], isHandled: true, handler: '李工程师', status: 'handled' },
+                        { id: 3, level: 'medium', type: '燃料消耗异常', description: '燃料消耗达到1200kg/h，超出正常范围', alarmTime: '2024-01-18 13:30:20', triggerRule: '燃料消耗异常', triggerRuleName: '燃料消耗异常', triggerExpression: '燃料消耗 > 1000', dataItems: [{ name: '燃料消耗', value: '1200kg/h', dataSource: 'DCS.FUEL_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 4, level: 'low', type: '窑压异常', description: '窑内压力为-50Pa，低于正常范围', alarmTime: '2024-01-18 11:25:15', triggerRule: '窑压异常检测', triggerRuleName: '窑压异常检测', triggerExpression: '窑内压力 < -30', dataItems: [{ name: '窑内压力', value: '-50Pa', dataSource: 'DCS.KILN_PRESS_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 5, level: 'high', type: '氧气浓度异常', description: '窑尾氧气浓度达到8%，超过安全阈值', alarmTime: '2024-01-17 09:45:30', triggerRule: '氧气浓度告警', triggerRuleName: '氧气浓度告警', triggerExpression: '氧气浓度 > 5', dataItems: [{ name: '氧气浓度', value: '8%', dataSource: 'DCS.O2_001' }], isHandled: false, handler: '', status: 'active' }
                     ]},
                     { value: 'raw_material_bin_001', label: '原料仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6042,8 +6122,10 @@
                         { id: 2, name: '料位高告警', code: 'material_level_high', category: '库存告警', description: '料位接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 3, name: '温度异常检测', code: 'temperature_abnormal', category: '安全监控', description: '料仓温度异常时触发事件', triggerCondition: '料仓温度 > 60', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false }
                     ], alarms: [
-                        { id: 1, level: 'medium', type: '料位低告警', description: '原料仓料位高度为0.8m，低于安全库存', alarmTime: '2024-01-15 16:10:15', triggerRule: '料位低告警', triggerRuleName: '料位低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.8m', dataSource: 'SCADA.LEVEL_001' }], isHandled: false, handler: '', status: 'active' },
-                        { id: 2, level: 'high', type: '温度异常', description: '料仓温度达到65℃，超过安全阈值', alarmTime: '2024-01-15 15:45:30', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '料仓温度 > 60', dataItems: [{ name: '料仓温度', value: '65℃', dataSource: 'SCADA.TEMP_001' }], isHandled: true, handler: '王工程师', status: 'handled' }
+                        { id: 1, level: 'medium', type: '料位低告警', description: '原料仓料位高度为0.8m，低于安全库存', alarmTime: '2024-01-18 16:10:15', triggerRule: '料位低告警', triggerRuleName: '料位低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.8m', dataSource: 'SCADA.LEVEL_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'high', type: '温度异常', description: '料仓温度达到65℃，超过安全阈值', alarmTime: '2024-01-17 15:45:30', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '料仓温度 > 60', dataItems: [{ name: '料仓温度', value: '65℃', dataSource: 'SCADA.TEMP_001' }], isHandled: true, handler: '王工程师', status: 'handled' },
+                        { id: 3, level: 'low', type: '湿度异常', description: '料仓湿度达到85%，超过正常范围', alarmTime: '2024-01-18 14:20:45', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 4, level: 'medium', type: '料位高告警', description: '原料仓料位高度为9.2m，接近满仓', alarmTime: '2024-01-17 10:30:20', triggerRule: '料位高告警', triggerRuleName: '料位高告警', triggerExpression: '料位高度 > 9.0', dataItems: [{ name: '料位高度', value: '9.2m', dataSource: 'SCADA.LEVEL_001' }], isHandled: false, handler: '', status: 'active' }
                     ]},
                     { value: 'grate_cooler_001', label: '篦冷机', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6072,8 +6154,10 @@
                         { id: 2, name: '出料温度异常', code: 'discharge_temp_abnormal', category: '质量监控', description: '出料温度超出正常范围时触发事件', triggerCondition: '出料温度 > 100', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
                         { id: 3, name: '篦板速度异常', code: 'grate_speed_abnormal', category: '运行监控', description: '篦板速度异常时触发事件', triggerCondition: '篦板速度 < 0.5 OR 篦板速度 > 5.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false }
                     ], alarms: [
-                        { id: 1, level: 'high', type: '冷却水温度异常', description: '冷却水温度达到55℃，超过安全阈值', alarmTime: '2024-01-15 17:05:20', triggerRule: '冷却水温度异常', triggerRuleName: '冷却水温度异常', triggerExpression: '冷却水温度 > 50', dataItems: [{ name: '冷却水温度', value: '55℃', dataSource: 'PLC.WATER_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
-                        { id: 2, level: 'medium', type: '出料温度异常', description: '出料温度为110℃，超出正常范围', alarmTime: '2024-01-15 16:30:45', triggerRule: '出料温度异常', triggerRuleName: '出料温度异常', triggerExpression: '出料温度 > 100', dataItems: [{ name: '出料温度', value: '110℃', dataSource: 'PLC.DISCHARGE_TEMP_001' }], isHandled: true, handler: '赵工程师', status: 'handled' }
+                        { id: 1, level: 'high', type: '冷却水温度异常', description: '冷却水温度达到55℃，超过安全阈值', alarmTime: '2024-01-18 17:05:20', triggerRule: '冷却水温度异常', triggerRuleName: '冷却水温度异常', triggerExpression: '冷却水温度 > 50', dataItems: [{ name: '冷却水温度', value: '55℃', dataSource: 'PLC.WATER_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '出料温度异常', description: '出料温度为110℃，超出正常范围', alarmTime: '2024-01-17 16:30:45', triggerRule: '出料温度异常', triggerRuleName: '出料温度异常', triggerExpression: '出料温度 > 100', dataItems: [{ name: '出料温度', value: '110℃', dataSource: 'PLC.DISCHARGE_TEMP_001' }], isHandled: true, handler: '赵工程师', status: 'handled' },
+                        { id: 3, level: 'low', type: '篦板速度异常', description: '篦板速度为5.5m/min，超出正常范围', alarmTime: '2024-01-18 13:15:30', triggerRule: '篦板速度异常', triggerRuleName: '篦板速度异常', triggerExpression: '篦板速度 > 5.0', dataItems: [{ name: '篦板速度', value: '5.5m/min', dataSource: 'PLC.GRATE_SPEED_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 4, level: 'medium', type: '冷却效率异常', description: '冷却效率为65%，低于正常范围', alarmTime: '2024-01-17 12:45:15', triggerRule: '冷却效率异常', triggerRuleName: '冷却效率异常', triggerExpression: '冷却效率 < 70', dataItems: [{ name: '冷却效率', value: '65%', dataSource: 'PLC.COOLING_EFF_001' }], isHandled: false, handler: '', status: 'active' }
                     ]},
                     { value: 'cement_bin_001', label: '水泥仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6101,8 +6185,10 @@
                         { id: 2, name: '库存满告警', code: 'inventory_full', category: '库存告警', description: '水泥库存接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 3, name: '湿度异常检测', code: 'humidity_abnormal', category: '质量监控', description: '水泥仓湿度异常时触发事件', triggerCondition: '湿度 > 80', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false }
                     ], alarms: [
-                        { id: 1, level: 'medium', type: '库存低告警', description: '水泥仓料位高度为0.9m，低于安全库存', alarmTime: '2024-01-15 18:20:10', triggerRule: '库存低告警', triggerRuleName: '库存低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.9m', dataSource: 'SCADA.LEVEL_002' }], isHandled: false, handler: '', status: 'active' },
-                        { id: 2, level: 'high', type: '湿度异常', description: '水泥仓湿度达到85%，超过安全阈值', alarmTime: '2024-01-15 17:55:30', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: true, handler: '陈工程师', status: 'handled' }
+                        { id: 1, level: 'medium', type: '库存低告警', description: '水泥仓料位高度为0.9m，低于安全库存', alarmTime: '2024-01-18 18:20:10', triggerRule: '库存低告警', triggerRuleName: '库存低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.9m', dataSource: 'SCADA.LEVEL_002' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'high', type: '湿度异常', description: '水泥仓湿度达到85%，超过安全阈值', alarmTime: '2024-01-17 17:55:30', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: true, handler: '陈工程师', status: 'handled' },
+                        { id: 3, level: 'low', type: '温度异常', description: '水泥仓温度达到45℃，超过正常范围', alarmTime: '2024-01-18 15:30:25', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '温度 > 40', dataItems: [{ name: '温度', value: '45℃', dataSource: 'SCADA.TEMP_002' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 4, level: 'medium', type: '库存满告警', description: '水泥仓料位高度为9.1m，接近满仓', alarmTime: '2024-01-17 14:15:40', triggerRule: '库存满告警', triggerRuleName: '库存满告警', triggerExpression: '料位高度 > 9.0', dataItems: [{ name: '料位高度', value: '9.1m', dataSource: 'SCADA.LEVEL_002' }], isHandled: false, handler: '', status: 'active' }
                     ]}
                 ],
                 activeTab: 'basicInfo',
@@ -6243,7 +6329,7 @@
                 alarmSearchKeyword: '',
                 alarmSearchLevel: '',
                 alarmSearchStatus: 'unhandled',
-                alarmSearchTimeRange: '3days',
+                alarmSearchTimeRange: 'all',
                 
                 // 运算符列表
                 operators: [
@@ -6309,6 +6395,51 @@
                         return 0;
                     }
                     return this.selectedAssetType.alarms.filter(alarm => alarm.isHandled).length;
+                },
+
+                // 待处理告警数量
+                unhandledAlarmsCount() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.alarms) {
+                        return 0;
+                    }
+                    const count = this.selectedAssetType.alarms.filter(alarm => !alarm.isHandled).length;
+                    return count > 99 ? '99+' : count.toString();
+                },
+
+
+
+                // 基础信息页签标签
+                basicInfoTabLabel() {
+                    let label = '基础信息';
+                    if (!this.assetForm.assetType || !this.assetForm.deviceCode || !this.assetForm.deviceName) {
+                        label = `${label} ⚠️`;
+                    }
+                    return label;
+                },
+
+                // 采集参数页签标签
+                collectionParamsTabLabel() {
+                    return '采集参数';
+                },
+
+                // 业务属性页签标签
+                businessPropertiesTabLabel() {
+                    return '业务属性';
+                },
+
+                // 指标页签标签
+                metricsTabLabel() {
+                    return '指标';
+                },
+
+                // 事件规则页签标签
+                eventRulesTabLabel() {
+                    return '事件规则';
+                },
+
+                // 告警页签标签
+                alarmsTabLabel() {
+                    return '告警';
                 },
 
                 // 过滤后的告警列表
@@ -6558,7 +6689,14 @@
                 
                 // 初始化告警检索条件
                 this.alarmSearchStatus = 'unhandled';
-                this.alarmSearchTimeRange = '3days';
+                this.alarmSearchTimeRange = 'all';
+
+                // 初始化页签样式
+                this.$nextTick(() => {
+                    if (this.updateTabStyles) {
+                        this.updateTabStyles();
+                    }
+                });
             },
             watch: {
                 // 监听搜索关键词变化
@@ -6574,6 +6712,37 @@
                             property.defaultValue = '';
                         });
                     }
+                    this.$nextTick(() => {
+                        if (this.updateTabStyles) {
+                            this.updateTabStyles();
+                        }
+                    });
+                },
+
+                // 监听表单数据变化，更新页签样式
+                'assetForm.deviceCode'() {
+                    this.$nextTick(() => {
+                        if (this.updateTabStyles) {
+                            this.updateTabStyles();
+                        }
+                    });
+                },
+                'assetForm.deviceName'() {
+                    this.$nextTick(() => {
+                        if (this.updateTabStyles) {
+                            this.updateTabStyles();
+                        }
+                    });
+                },
+                'selectedAssetType.staticProperties': {
+                    handler() {
+                        this.$nextTick(() => {
+                            if (this.updateTabStyles) {
+                                this.updateTabStyles();
+                            }
+                        });
+                    },
+                    deep: true
                 },
                 
 
@@ -6607,6 +6776,22 @@
                 backToList() {
                     // 跳转到工厂模型列表页面
                     window.location.href = 'factory-model-list.html';
+                },
+
+                // 更新页签样式
+                updateTabStyles() {
+                    this.$nextTick(() => {
+                        const tabItems = document.querySelectorAll('.el-tabs__item');
+                        tabItems.forEach((item, index) => {
+                            // 移除之前的警告样式
+                            item.classList.remove('has-warning');
+                            
+                            // 检查是否是基础信息页签且有验证错误
+                            if (index === 0 && (!this.assetForm.assetType || !this.assetForm.deviceCode || !this.assetForm.deviceName)) {
+                                item.classList.add('has-warning');
+                            }
+                        });
+                    });
                 },
                 
 
@@ -8104,7 +8289,7 @@
                     this.alarmSearchKeyword = '';
                     this.alarmSearchLevel = '';
                     this.alarmSearchStatus = 'unhandled';
-                    this.alarmSearchTimeRange = '3days';
+                    this.alarmSearchTimeRange = 'all';
                 },
 
                 // 查看告警详情
@@ -8126,6 +8311,11 @@
                         alarm.handleTime = new Date().toLocaleString();
                         alarm.handleNote = value || '';
                         this.$message.success('告警已处理');
+                        
+                        // 如果在详情页面，关闭抽屉
+                        if (this.alarmDetailDrawerVisible) {
+                            this.alarmDetailDrawerVisible = false;
+                        }
                     }).catch(() => {
                         // 用户取消操作
                     });
@@ -8144,6 +8334,11 @@
                         alarm.handleTime = new Date().toLocaleString();
                         alarm.handleNote = '忽略，不做处理';
                         this.$message.success('告警已忽略');
+                        
+                        // 如果在详情页面，关闭抽屉
+                        if (this.alarmDetailDrawerVisible) {
+                            this.alarmDetailDrawerVisible = false;
+                        }
                     }).catch(() => {
                         // 用户取消操作
                     });
@@ -8162,6 +8357,11 @@
                         alarm.handleTime = new Date().toLocaleString();
                         alarm.handleNote = '误报';
                         this.$message.success('告警已标记为误报');
+                        
+                        // 如果在详情页面，关闭抽屉
+                        if (this.alarmDetailDrawerVisible) {
+                            this.alarmDetailDrawerVisible = false;
+                        }
                     }).catch(() => {
                         // 用户取消操作
                     });
@@ -8340,17 +8540,22 @@
                 
                 // 保存资产
                 saveAsset() {
-                    if (!this.assetForm.assetType) {
-                        this.$message.warning('请选择资产类型');
+                    // 检查基本信息必填字段
+                    if (!this.assetForm.assetType || !this.assetForm.deviceCode || !this.assetForm.deviceName) {
+                        this.$message.error('请完善基础信息中的必填字段');
+                        this.activeTab = 'basicInfo'; // 切换到基础信息页签
                         return;
                     }
-                    if (!this.assetForm.deviceCode) {
-                        this.$message.warning('请输入设备编码');
-                        return;
-                    }
-                    if (!this.assetForm.deviceName) {
-                        this.$message.warning('请输入设备名称');
-                        return;
+                    
+                    // 检查静态属性必填字段
+                    if (this.selectedAssetType && this.selectedAssetType.staticProperties) {
+                        for (let prop of this.selectedAssetType.staticProperties) {
+                            if (prop.required && !prop.defaultValue) {
+                                this.$message.error('请完善静态属性中的必填字段');
+                                this.activeTab = 'basicInfo'; // 切换到基础信息页签
+                                return;
+                            }
+                        }
                     }
                     
                     if (this.isAddingAsset) {

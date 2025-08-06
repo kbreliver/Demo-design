@@ -202,6 +202,109 @@
             color: #dc2626;
         }
 
+        /* 资产路径标题样式 */
+        .asset-path-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .asset-path {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .asset-path i {
+            color: #909399;
+            font-size: 16px;
+        }
+
+        .asset-operation-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: help;
+            transition: all 0.3s ease;
+        }
+
+        .asset-operation-status:hover {
+            transform: scale(1.1);
+        }
+
+        .asset-name {
+            color: #303133;
+            font-weight: 500;
+        }
+
+        /* 状态图标样式 */
+        .status-icon.status-connected {
+            color: #67c23a;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-icon.status-disconnected {
+            color: #f56c6c;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        /* 运行状态实心圆样式 */
+        .status-circle {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-circle.status-running {
+            background-color: #67c23a;
+        }
+
+        .status-circle.status-standby {
+            background-color: #e6a23c;
+        }
+
+        .status-circle.status-fault {
+            background-color: #f56c6c;
+        }
+
+        .status-circle.status-maintenance {
+            background-color: #409eff;
+        }
+
+        .status-circle.status-dash {
+            background-color: #909399;
+        }
+
+        .asset-operation-status.adding {
+            background-color: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .asset-operation-status.viewing {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+                .asset-operation-status.editing {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
         .status-draft {
             background-color: #fef3c7;
             color: #d97706;
@@ -603,7 +706,7 @@
             font-size: 14px;
             font-weight: 500;
             color: #303133;
-            margin-bottom: 4px;
+            /* margin-bottom: 4px; */
         }
 
         .asset-type {
@@ -1086,7 +1189,7 @@
         }
         
         .status-icon {
-            font-size: 16px;
+            font-size: 20px;
             flex-shrink: 0;
         }
         
@@ -1785,6 +1888,41 @@
             font-size: 11px;
             padding: 2px 6px;
             border-radius: 3px;
+        }
+
+        /* 指标行内编辑样式 */
+        .metrics-table-container .el-table .el-input--mini .el-input__inner {
+            height: 28px;
+            line-height: 28px;
+            font-size: 12px;
+        }
+
+        .metrics-table-container .el-table .el-select--mini .el-input__inner {
+            height: 28px;
+            line-height: 28px;
+            font-size: 12px;
+        }
+
+        .metrics-table-container .el-table .el-button--text {
+            padding: 0;
+            margin: 0 4px;
+        }
+
+        .metrics-table-container .el-table .el-button--text:hover {
+            background-color: transparent;
+        }
+
+        .metrics-table-container .el-table .el-button--text i {
+            font-size: 16px;
+        }
+
+        /* 编辑状态行样式 */
+        .metrics-table-container .el-table .el-table__row.is-editing {
+            background-color: #f0f9ff;
+        }
+
+        .metrics-table-container .el-table .el-table__row.is-editing:hover {
+            background-color: #e6f3ff;
         }
         
         .indicator-category-tag.performance {
@@ -2859,6 +2997,23 @@
                             <div class="detail-section">
                                 <div class="section-header">
                                     <h3 class="section-title">
+                                        <!-- 资产表单模式下的标题 -->
+                                        <template v-if="isAddingAsset || isViewingAsset || isEditingAsset">
+                                            <div class="asset-path-title">
+                                                <span class="asset-path">
+                                                    <i class="el-icon-folder"></i>
+                                                    {{ getAssetPath() }}
+                                                    <span v-if="getAssetName()" class="asset-name">
+                                                        / {{ getAssetName() }}
+                                                    </span>
+                                                </span>
+                                                <span class="asset-operation-status" :class="getAssetOperationStatusClass()" :title="getAssetOperationText()">
+                                                    <i :class="getAssetOperationIcon()"></i>
+                                                </span>
+                                            </div>
+                                        </template>
+                                        <!-- 正常模式下的标题 -->
+                                        <template v-else>
                                         {{ selectedNode.name }}
                                         <span class="node-type-tag" :class="getNodeTypeClass(selectedNode.type)">
                                             {{ selectedNode.type }}
@@ -2866,15 +3021,16 @@
                                         <span class="status-tag status-level">
                                             第{{ selectedNode.level }}级
                                         </span>
+                                        </template>
                                     </h3>
                                     <div class="section-actions">
-                                        <!-- 添加资产模式下的操作按钮 -->
-                                        <template v-if="isAddingAsset">
-                                            <el-button @click="cancelAddAsset" size="small">
+                                        <!-- 资产表单模式下的操作按钮 -->
+                                        <template v-if="isAddingAsset || isViewingAsset || isEditingAsset">
+                                            <el-button @click="cancelAssetForm" size="small">
                                                 返回列表
                                             </el-button>
-                                            <el-button type="primary" size="small" @click="saveAsset">
-                                                确认添加资产
+                                            <el-button v-if="!isViewingAsset" type="primary" size="small" @click="saveAsset">
+                                                {{ isAddingAsset ? '确认添加资产' : '确认修改资产' }}
                                             </el-button>
                                         </template>
                                         <!-- 正常模式下的按钮 -->
@@ -2883,12 +3039,14 @@
                                                 添加资产
                                             </el-button>
                                         </template>
-                                        <el-button type="text" @click="toggleNodeDetailsBasicInfo" :icon="nodeDetailsBasicInfoExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'">
+                                        <!-- 隐藏基本信息展开/收起按钮 -->
+                                        <!-- <el-button type="text" @click="toggleNodeDetailsBasicInfo" :icon="nodeDetailsBasicInfoExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'">
                                             {{ nodeDetailsBasicInfoExpanded ? '收起' : '展开' }}
-                                        </el-button>
+                                        </el-button> -->
                                     </div>
                                 </div>
-                                <div class="section-content" :class="{ 'collapsed': !nodeDetailsBasicInfoExpanded }">
+                                <!-- 隐藏基本信息区域 -->
+                                <!-- <div class="section-content" :class="{ 'collapsed': !nodeDetailsBasicInfoExpanded }">
                                     <div class="info-grid">
                                         <div class="info-item">
                                             <div class="info-label">节点编码</div>
@@ -2903,7 +3061,7 @@
                                         <div class="info-label">描述</div>
                                         <div class="info-value">{{ selectedNode.description || '暂无描述' }}</div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             
                             <!-- 子节点统计 -->
@@ -2929,14 +3087,14 @@
                             <div class="detail-section">
 
                                 
-                                <!-- 添加资产表单 -->
-                                <div v-if="isAddingAsset" class="add-asset-form">
+                                <!-- 资产表单 -->
+                                <div v-if="isAddingAsset || isViewingAsset || isEditingAsset" class="add-asset-form">
                                     <!-- 上方区域 -->
                                     <div class="add-asset-top">
                                         <div class="form-row">
                                             <div class="form-group">
                                                 <label>资产类型</label>
-                                                <el-select v-model="assetForm.assetType" placeholder="请选择资产类型" filterable style="width: 100%;">
+                                                <el-select v-model="assetForm.assetType" placeholder="请选择资产类型" filterable style="width: 100%;" :disabled="!isAddingAsset">
                                                     <el-option 
                                                         v-for="type in assetTypes" 
                                                         :key="type.value" 
@@ -2946,33 +3104,47 @@
                                                 </el-select>
                                             </div>
                                             <div class="form-group">
-                                                <label>设备编号</label>
-                                                <el-input v-model="assetForm.deviceCode" placeholder="请输入设备编号"></el-input>
+                                                <label>资产编号</label>
+                                                <el-input v-model="assetForm.deviceCode" placeholder="请输入资产编号" :disabled="isViewingAsset"></el-input>
                                             </div>
                                             <div class="form-group">
-                                                <label>设备名称</label>
-                                                <el-input v-model="assetForm.deviceName" placeholder="请输入设备名称"></el-input>
+                                                <label>资产名称</label>
+                                                <el-input v-model="assetForm.deviceName" placeholder="请输入资产名称" :disabled="isViewingAsset"></el-input>
                                             </div>
                                         </div>
                                         <div class="form-row">
                                             <div class="form-group">
                                                 <!-- <label>接入状态</label> -->
                                                 <div class="status-display">
-                                                    <span class="status-text">接入状态</span>
-                                                    <el-tooltip content="待接入" placement="top">
-                                                        <i class="el-icon-warning-outline status-icon status-pending"></i>
+                                                    <span class="status-text">接入状态：</span>
+                                                    <el-tooltip :content="assetForm.connectionStatus" placement="top">
+                                                        <i :class="assetForm.connectionStatus === '已接入' ? 'el-icon-link status-icon status-connected' : 'el-icon-scissors status-icon status-disconnected'"></i>
                                                     </el-tooltip>
-                                                    
+                                                    <el-button 
+                                                        v-if="!isViewingAsset"
+                                                        type="text" 
+                                                        size="mini" 
+                                                        :icon="assetForm.connectionStatus === '已接入' ? 'el-icon-close' : 'el-icon-link'"
+                                                        :title="assetForm.connectionStatus === '已接入' ? '断开连接' : '接入设备'"
+                                                        @click="toggleAssetFormConnection">
+                                                    </el-button>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <!-- <label>运行状态</label> -->
                                                 <div class="status-display">
                                                     <span class="status-text">运行状态：</span>
-                                                    <el-tooltip content="-" placement="top">
-                                                        <i class="el-icon-minus status-icon status-dash"></i>
+                                                    <el-tooltip :content="assetForm.runningStatus" placement="top">
+                                                        <span :class="getRunningStatusCircle()"></span>
                                                     </el-tooltip>
-                                                    <!-- <span class="status-text">-</span> -->
+                                                    <el-button 
+                                                        v-if="!isViewingAsset && assetForm.connectionStatus === '已接入'"
+                                                        type="text" 
+                                                        size="mini" 
+                                                        icon="el-icon-refresh"
+                                                        title="刷新状态"
+                                                        @click="refreshAssetFormStatus">
+                                                    </el-button>
                                                 </div>
                                             </div>
                                         </div>
@@ -2991,7 +3163,8 @@
                                                                  <el-input 
                                                                      v-model="property.defaultValue" 
                                                                      :placeholder="`请输入${property.name}`"
-                                                                     :type="property.type === '日期' ? 'date' : 'text'">
+                                                                     :type="property.type === '日期' ? 'date' : 'text'"
+                                                                     :disabled="isViewingAsset">
                                                                  </el-input>
                                                              </div>
                                                          </div>
@@ -3004,13 +3177,31 @@
                                              <el-tab-pane label="采集参数" name="collectionParams">
                                                  <div class="tab-content">
                                                      <div v-if="selectedAssetType && selectedAssetType.dynamicVariables">
-                                                         <!-- <h4 style="margin-bottom: 16px; color: #303133;">动态变量配置</h4> -->
+                                                         <!-- 新增参数按钮 -->
+                                                         <div style="margin-bottom: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+                                                             <el-button 
+                                                                 v-if="!isViewingAsset"
+                                                                 size="small" 
+                                                                 type="primary" 
+                                                                 icon="el-icon-plus"
+                                                                 @click="addDynamicVariable">
+                                                                 新增参数
+                                                             </el-button>
+                                                             <el-button 
+                                                                 v-if="!isViewingAsset"
+                                                                 size="small" 
+                                                                 type="success" 
+                                                                 icon="el-icon-document-copy"
+                                                                 @click="showDataPointBatchAdd">
+                                                                 用数据点位批量新增
+                                                             </el-button>
+                                                         </div>
                                                          <div class="dynamic-variables-table">
                                                              <el-table 
                                                                  :data="selectedAssetType.dynamicVariables" 
                                                                  size="small" 
                                                                  stripe 
-                                                                 @row-dblclick="handleRowDblClick">
+                                                                 :row-class-name="getDynamicVariableRowClassName">
                                                                  <el-table-column prop="name" label="变量名称" min-width="120">
                                                                      <template slot-scope="scope">
                                                                          <span v-if="!scope.row.isEditing">{{ scope.row.name }}</span>
@@ -3149,11 +3340,36 @@
                                                                  <el-table-column label="操作" min-width="120" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <div v-if="scope.row.isEditing">
-                                                                             <el-button type="text" size="small" @click="saveRowEdit(scope.row)">保存</el-button>
-                                                                             <el-button type="text" size="small" @click="cancelRowEdit(scope.row)">取消</el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="saveRowEdit(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-check" style="color: #67C23A; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="cancelRowEdit(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-close" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
                                                                          </div>
                                                                          <div v-else>
-                                                                             <el-button type="text" size="small" @click="deleteRow(scope.row)" style="color: #F56C6C;">删除</el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="enterDynamicVariableEditMode(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-edit" style="color: #409EFF; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="deleteRow(scope.row)"
+                                                                                 style="padding: 0;">
+                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
                                                                          </div>
                                                                      </template>
                                                                  </el-table-column>
@@ -3172,26 +3388,149 @@
                                                              <el-table 
                                                                  :data="selectedAssetType.businessProperties" 
                                                                  size="small" 
-                                                                 stripe>
-                                                                 <el-table-column prop="name" label="属性名称" min-width="120"></el-table-column>
-                                                                 <el-table-column prop="code" label="属性编码" min-width="120"></el-table-column>
-                                                                 <el-table-column prop="type" label="数据类型" min-width="80"></el-table-column>
+                                                                 stripe
+                                                                 :row-class-name="getBusinessPropertyRowClassName">
+                                                                 <el-table-column prop="name" label="属性名称" min-width="120">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-input 
+                                                                                 v-model="scope.row.name" 
+                                                                                 size="mini" 
+                                                                                 placeholder="请输入属性名称"
+                                                                                 @blur="saveBusinessPropertyRow(scope.row)">
+                                                                             </el-input>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             {{ scope.row.name }}
+                                                                         </div>
+                                                                     </template>
+                                                                 </el-table-column>
+                                                                 <el-table-column prop="code" label="属性编码" min-width="120">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-input 
+                                                                                 v-model="scope.row.code" 
+                                                                                 size="mini" 
+                                                                                 placeholder="请输入属性编码"
+                                                                                 @blur="saveBusinessPropertyRow(scope.row)">
+                                                                             </el-input>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             {{ scope.row.code }}
+                                                                         </div>
+                                                                     </template>
+                                                                 </el-table-column>
+                                                                 <el-table-column prop="type" label="数据类型" min-width="80">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-select 
+                                                                                 v-model="scope.row.type" 
+                                                                                 size="mini" 
+                                                                                 placeholder="请选择"
+                                                                                 @change="saveBusinessPropertyRow(scope.row)"
+                                                                                 style="width: 100%">
+                                                                                 <el-option label="字符串" value="字符串"></el-option>
+                                                                                 <el-option label="数值" value="数值"></el-option>
+                                                                                 <el-option label="布尔值" value="布尔值"></el-option>
+                                                                                 <el-option label="日期" value="日期"></el-option>
+                                                                                 <el-option label="日期时间" value="日期时间"></el-option>
+                                                                                 <el-option label="枚举" value="枚举"></el-option>
+                                                                             </el-select>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             {{ scope.row.type }}
+                                                                         </div>
+                                                                     </template>
+                                                                 </el-table-column>
                                                                  <el-table-column prop="required" label="是否必填" min-width="80">
                                                                      <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-select 
+                                                                                 v-model="scope.row.required" 
+                                                                                 size="mini" 
+                                                                                 placeholder="请选择"
+                                                                                 @change="saveBusinessPropertyRow(scope.row)"
+                                                                                 style="width: 100%">
+                                                                                 <el-option :label="true" :value="true">是</el-option>
+                                                                                 <el-option :label="false" :value="false">否</el-option>
+                                                                             </el-select>
+                                                                         </div>
+                                                                         <div v-else>
                                                                          <el-tag :type="scope.row.required ? 'danger' : 'info'" size="small">
                                                                              {{ scope.row.required ? '是' : '否' }}
                                                                          </el-tag>
+                                                                         </div>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column prop="defaultValue" label="默认值" min-width="100"></el-table-column>
+                                                                 <el-table-column prop="defaultValue" label="默认值" min-width="100">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-input 
+                                                                                 v-model="scope.row.defaultValue" 
+                                                                                 size="mini" 
+                                                                                 placeholder="请输入默认值"
+                                                                                 @blur="saveBusinessPropertyRow(scope.row)">
+                                                                             </el-input>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             {{ scope.row.defaultValue }}
+                                                                         </div>
+                                                                     </template>
+                                                                 </el-table-column>
                                                                  <el-table-column label="数据源配置" min-width="120">
                                                                      <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-select v-model="scope.row.dataSource" placeholder="选择数据源" size="mini" style="width: 100%">
+                                                                                 <el-option label="数据库表" value="database"></el-option>
+                                                                                 <el-option label="API接口" value="api"></el-option>
+                                                                                 <el-option label="文件系统" value="file"></el-option>
+                                                                                 <el-option label="消息队列" value="message_queue"></el-option>
+                                                                             </el-select>
+                                                                         </div>
+                                                                         <div v-else>
                                                                          <el-select v-model="scope.row.dataSource" placeholder="选择数据源" size="small" style="width: 100%">
                                                                              <el-option label="数据库表" value="database"></el-option>
                                                                              <el-option label="API接口" value="api"></el-option>
                                                                              <el-option label="文件系统" value="file"></el-option>
                                                                              <el-option label="消息队列" value="message_queue"></el-option>
                                                                          </el-select>
+                                                                         </div>
+                                                                     </template>
+                                                                 </el-table-column>
+                                                                 <el-table-column label="操作" min-width="120" fixed="right">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="saveBusinessPropertyRow(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-check" style="color: #67C23A; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="cancelBusinessPropertyEdit(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-close" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="enterBusinessPropertyEditMode(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-edit" style="color: #409EFF; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="deleteBusinessProperty(scope.row)"
+                                                                                 style="padding: 0;">
+                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                         </div>
                                                                      </template>
                                                                  </el-table-column>
                                                              </el-table>
@@ -3232,16 +3571,16 @@
                                                                     </el-input>
                                                                 </el-col>
                                                                 <el-col :span="4">
-                                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
                                                                         <el-button size="small" @click="clearIndicatorFilter">清空筛选</el-button>
-                                                                        <div style="display: flex; gap: 8px;">
+                                                                </el-col>
+                                                                <el-col :span="8">
+                                                                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
                                                                             <el-button size="small" @click="addIndicator" type="primary">
                                                                                 <i class="el-icon-plus"></i> 新增指标
                                                                             </el-button>
                                                                             <el-button size="small" @click="batchDeleteIndicators" :disabled="selectedIndicators.length === 0">
                                                                                 <i class="el-icon-delete"></i> 批量删除
                                                                             </el-button>
-                                                                        </div>
                                                                     </div>
                                                                 </el-col>
                                                             </el-row>
@@ -3253,41 +3592,195 @@
                                                                 :data="filteredIndicators" 
                                                                 size="small"
                                                                 stripe
+                                                                :row-class-name="getIndicatorRowClassName"
                                                                 @selection-change="handleIndicatorSelectionChange"
-                                                                @row-dblclick="configureIndicator"
                                                                 style="width: 100%">
                                                                 <el-table-column type="selection" width="55"></el-table-column>
                                                                 <el-table-column prop="name" label="指标名称" min-width="120">
                                                                     <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-input 
+                                                                                v-model="scope.row.name" 
+                                                                                size="mini" 
+                                                                                placeholder="请输入指标名称"
+                                                                                @blur="saveIndicatorRow(scope.row)">
+                                                                            </el-input>
+                                                                        </div>
+                                                                        <div v-else>
                                                                         <el-link type="primary" @click="viewIndicator(scope.row)">{{ scope.row.name }}</el-link>
+                                                                        </div>
                                                                     </template>
                                                                 </el-table-column>
-                                                                <el-table-column prop="code" label="指标编码" min-width="120"></el-table-column>
+                                                                <el-table-column prop="code" label="指标编码" min-width="120">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-input 
+                                                                                v-model="scope.row.code" 
+                                                                                size="mini" 
+                                                                                placeholder="请输入指标编码"
+                                                                                @blur="saveIndicatorRow(scope.row)">
+                                                                            </el-input>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            {{ scope.row.code }}
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
                                                                 <el-table-column prop="category" label="指标分类" width="100">
                                                                     <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-select 
+                                                                                v-model="scope.row.category" 
+                                                                                size="mini" 
+                                                                                placeholder="请选择"
+                                                                                @change="saveIndicatorRow(scope.row)"
+                                                                                style="width: 100%">
+                                                                                <el-option label="性能指标" value="性能指标"></el-option>
+                                                                                <el-option label="经济指标" value="经济指标"></el-option>
+                                                                                <el-option label="安全指标" value="安全指标"></el-option>
+                                                                                <el-option label="环保指标" value="环保指标"></el-option>
+                                                                            </el-select>
+                                                                        </div>
+                                                                        <div v-else>
                                                                         <el-tag size="mini" :type="getIndicatorCategoryType(scope.row.category)">{{ scope.row.category }}</el-tag>
+                                                                        </div>
                                                                     </template>
                                                                 </el-table-column>
                                                                 <el-table-column prop="direction" label="指标方向" width="80">
                                                                     <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-select 
+                                                                                v-model="scope.row.direction" 
+                                                                                size="mini" 
+                                                                                placeholder="请选择"
+                                                                                @change="saveIndicatorRow(scope.row)"
+                                                                                style="width: 100%">
+                                                                                <el-option label="正向" value="positive"></el-option>
+                                                                                <el-option label="负向" value="negative"></el-option>
+                                                                            </el-select>
+                                                                        </div>
+                                                                        <div v-else>
                                                                         <el-tag size="mini" :type="scope.row.direction === 'positive' ? 'success' : 'danger'">
                                                                             {{ scope.row.direction === 'positive' ? '正向' : '负向' }}
                                                                         </el-tag>
+                                                                        </div>
                                                                     </template>
                                                                 </el-table-column>
-                                                                <el-table-column prop="unit" label="单位" width="80"></el-table-column>
-                                                                <el-table-column prop="calculationCycle" label="计算周期" width="80"></el-table-column>
-                                                                <el-table-column prop="updateFrequency" label="更新频率" width="80"></el-table-column>
+                                                                <el-table-column prop="unit" label="单位" width="80">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-input 
+                                                                                v-model="scope.row.unit" 
+                                                                                size="mini" 
+                                                                                placeholder="请输入单位"
+                                                                                @blur="saveIndicatorRow(scope.row)">
+                                                                            </el-input>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            {{ scope.row.unit }}
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="calculationCycle" label="计算周期" width="80">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-select 
+                                                                                v-model="scope.row.calculationCycle" 
+                                                                                size="mini" 
+                                                                                placeholder="请选择"
+                                                                                @change="saveIndicatorRow(scope.row)"
+                                                                                style="width: 100%">
+                                                                                <el-option label="小时" value="hour"></el-option>
+                                                                                <el-option label="天" value="day"></el-option>
+                                                                                <el-option label="月" value="month"></el-option>
+                                                                                <el-option label="年" value="year"></el-option>
+                                                                            </el-select>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            {{ scope.row.calculationCycle }}
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="updateFrequency" label="更新频率" width="80">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-select 
+                                                                                v-model="scope.row.updateFrequency" 
+                                                                                size="mini" 
+                                                                                placeholder="请选择"
+                                                                                @change="saveIndicatorRow(scope.row)"
+                                                                                style="width: 100%">
+                                                                                <el-option label="1小时" value="1h"></el-option>
+                                                                                <el-option label="1天" value="1d"></el-option>
+                                                                                <el-option label="1月" value="1m"></el-option>
+                                                                            </el-select>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            {{ scope.row.updateFrequency }}
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
                                                                 <el-table-column prop="participatingVariables" label="参与变量数" width="100">
                                                                     <template slot-scope="scope">
                                                                         {{ scope.row.participatingVariables ? scope.row.participatingVariables.length : 0 }} 个
                                                                     </template>
                                                                 </el-table-column>
-                                                                <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip></el-table-column>
-                                                                <el-table-column label="操作" width="150" fixed="right">
+                                                                <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
                                                                     <template slot-scope="scope">
-                                                                        <el-button size="mini" @click="configureIndicator(scope.row)">配置</el-button>
-                                                                        <el-button size="mini" type="danger" @click="deleteIndicator(scope.row)">删除</el-button>
+                                                                        <div v-if="scope.row.isEditing">
+                                                                            <el-input 
+                                                                                v-model="scope.row.description" 
+                                                                                size="mini" 
+                                                                                placeholder="请输入描述"
+                                                                                @blur="saveIndicatorRow(scope.row)">
+                                                                            </el-input>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            {{ scope.row.description }}
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                                                                                 <el-table-column label="操作" width="120" fixed="right">
+                                                                     <template slot-scope="scope">
+                                                                         <div v-if="scope.row.isEditing">
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="saveIndicatorRow(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-check" style="color: #67C23A; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="cancelIndicatorEdit(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-close" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                         </div>
+                                                                         <div v-else>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="enterIndicatorEditMode(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-edit" style="color: #409EFF; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="configureIndicator(scope.row)"
+                                                                                 style="padding: 0; margin-right: 8px;">
+                                                                                 <i class="el-icon-setting" style="color: #409EFF; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                             <el-button 
+                                                                                 type="text" 
+                                                                                 size="mini" 
+                                                                                 @click="deleteIndicator(scope.row)"
+                                                                                 style="padding: 0;">
+                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
+                                                                             </el-button>
+                                                                         </div>
                                                                     </template>
                                                                 </el-table-column>
                                                             </el-table>
@@ -3319,12 +3812,370 @@
                                             </el-tab-pane>
                                             <el-tab-pane label="事件规则" name="eventRules">
                                                 <div class="tab-content">
-                                                    <p>事件规则内容（暂未实现）</p>
+                                                    <div v-if="selectedAssetType && selectedAssetType.eventRules">
+                                                        <!-- 事件规则操作按钮 -->
+                                                        <div style="margin-bottom: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+                                                            <el-button 
+                                                                v-if="!isViewingAsset"
+                                                                size="small" 
+                                                                type="primary" 
+                                                                icon="el-icon-plus"
+                                                                @click="addEventRule">
+                                                                新增事件规则
+                                                            </el-button>
+                                                            <el-button 
+                                                                v-if="!isViewingAsset"
+                                                                size="small" 
+                                                                type="danger" 
+                                                                icon="el-icon-delete"
+                                                                @click="batchDeleteEventRules"
+                                                                :disabled="selectedEventRules.length === 0">
+                                                                批量删除 ({{ selectedEventRules.length }})
+                                                            </el-button>
+                                                        </div>
+
+                                                        <!-- 事件规则表格 -->
+                                                        <div class="event-rules-table">
+                                                            <el-table 
+                                                                :data="selectedAssetType.eventRules" 
+                                                                size="small" 
+                                                                stripe
+                                                                @selection-change="handleEventRuleSelectionChange"
+                                                                :row-class-name="getEventRuleRowClassName"
+                                                                style="width: 100%;">
+                                                                <el-table-column type="selection" width="55"></el-table-column>
+                                                                <el-table-column prop="name" label="规则名称" min-width="150">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            {{ scope.row.name }}
+                                                                        </div>
+                                                                        <el-input 
+                                                                            v-else 
+                                                                            v-model="scope.row.name" 
+                                                                            size="small"
+                                                                            placeholder="请输入规则名称">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="code" label="规则编码" min-width="120">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            {{ scope.row.code }}
+                                                                        </div>
+                                                                        <el-input 
+                                                                            v-else 
+                                                                            v-model="scope.row.code" 
+                                                                            size="small"
+                                                                            placeholder="请输入规则编码">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="category" label="分类" min-width="100">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            <el-tag size="small" :type="getEventRuleCategoryTagType(scope.row.category)">
+                                                                                {{ scope.row.category }}
+                                                                            </el-tag>
+                                                                        </div>
+                                                                        <el-select 
+                                                                            v-else 
+                                                                            v-model="scope.row.category" 
+                                                                            size="small"
+                                                                            placeholder="请选择分类"
+                                                                            style="width: 100%;">
+                                                                            <el-option label="安全告警" value="安全告警"></el-option>
+                                                                            <el-option label="运行监控" value="运行监控"></el-option>
+                                                                            <el-option label="状态监控" value="状态监控"></el-option>
+                                                                            <el-option label="库存告警" value="库存告警"></el-option>
+                                                                            <el-option label="安全监控" value="安全监控"></el-option>
+                                                                            <el-option label="质量监控" value="质量监控"></el-option>
+                                                                            <el-option label="能耗监控" value="能耗监控"></el-option>
+                                                                        </el-select>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="severity" label="严重程度" min-width="100">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            <el-tag size="small" :type="getEventRuleSeverityTagType(scope.row.severity)">
+                                                                                {{ getEventRuleSeverityLabel(scope.row.severity) }}
+                                                                            </el-tag>
+                                                                        </div>
+                                                                        <el-select 
+                                                                            v-else 
+                                                                            v-model="scope.row.severity" 
+                                                                            size="small"
+                                                                            placeholder="请选择严重程度"
+                                                                            style="width: 100%;">
+                                                                            <el-option label="高" value="high"></el-option>
+                                                                            <el-option label="中" value="medium"></el-option>
+                                                                            <el-option label="低" value="low"></el-option>
+                                                                        </el-select>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="enabled" label="状态" min-width="80">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            <el-tag size="small" :type="scope.row.enabled ? 'success' : 'info'">
+                                                                                {{ scope.row.enabled ? '启用' : '禁用' }}
+                                                                            </el-tag>
+                                                                        </div>
+                                                                        <el-switch 
+                                                                            v-else 
+                                                                            v-model="scope.row.enabled"
+                                                                            active-text="启用"
+                                                                            inactive-text="禁用">
+                                                                        </el-switch>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            {{ scope.row.description }}
+                                                                        </div>
+                                                                        <el-input 
+                                                                            v-else 
+                                                                            v-model="scope.row.description" 
+                                                                            size="small"
+                                                                            type="textarea"
+                                                                            :rows="2"
+                                                                            placeholder="请输入规则描述">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="triggerCondition" label="触发条件" min-width="200" show-overflow-tooltip>
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            {{ scope.row.triggerCondition }}
+                                                                        </div>
+                                                                        <el-input 
+                                                                            v-else 
+                                                                            v-model="scope.row.triggerCondition" 
+                                                                            size="small"
+                                                                            type="textarea"
+                                                                            :rows="2"
+                                                                            placeholder="请输入触发条件">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="actions" label="执行动作" min-width="150" show-overflow-tooltip>
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            <el-tag 
+                                                                                v-for="action in scope.row.actions" 
+                                                                                :key="action"
+                                                                                size="small" 
+                                                                                style="margin-right: 4px; margin-bottom: 4px;">
+                                                                                {{ action }}
+                                                                            </el-tag>
+                                                                        </div>
+                                                                        <el-select 
+                                                                            v-else 
+                                                                            v-model="scope.row.actions" 
+                                                                            size="small"
+                                                                            multiple
+                                                                            placeholder="请选择执行动作"
+                                                                            style="width: 100%;">
+                                                                            <el-option label="发送告警" value="发送告警"></el-option>
+                                                                            <el-option label="发送通知" value="发送通知"></el-option>
+                                                                            <el-option label="记录日志" value="记录日志"></el-option>
+                                                                            <el-option label="更新状态" value="更新状态"></el-option>
+                                                                            <el-option label="自动降温" value="自动降温"></el-option>
+                                                                            <el-option label="停止设备" value="停止设备"></el-option>
+                                                                            <el-option label="启动备用设备" value="启动备用设备"></el-option>
+                                                                        </el-select>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column label="操作" width="240" fixed="right">
+                                                                    <template slot-scope="scope">
+                                                                        <div v-if="!scope.row.isEditing">
+                                                                            <el-button 
+                                                                                v-if="!isViewingAsset"
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                icon="el-icon-edit"
+                                                                                @click="enterEventRuleEditMode(scope.row)"
+                                                                                title="编辑">
+                                                                            </el-button>
+                                                                            <el-button 
+                                                                                v-if="!isViewingAsset"
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                icon="el-icon-setting"
+                                                                                @click="showEventRuleConfig(scope.row)"
+                                                                                title="配置">
+                                                                            </el-button>
+                                                                            <el-button 
+                                                                                v-if="!isViewingAsset"
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                :icon="scope.row.enabled ? 'el-icon-close' : 'el-icon-check'"
+                                                                                :style="{ color: scope.row.enabled ? '#F56C6C' : '#67C23A' }"
+                                                                                @click="toggleEventRuleStatus(scope.row)"
+                                                                                :title="scope.row.enabled ? '停用' : '启用'">
+                                                                            </el-button>
+                                                                            <el-button 
+                                                                                v-if="!isViewingAsset"
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                icon="el-icon-delete"
+                                                                                @click="deleteEventRule(scope.row)"
+                                                                                title="删除">
+                                                                            </el-button>
+                                                                        </div>
+                                                                        <div v-else>
+                                                                            <el-button 
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                icon="el-icon-check"
+                                                                                @click="saveEventRuleEdit(scope.row)"
+                                                                                title="保存">
+                                                                            </el-button>
+                                                                            <el-button 
+                                                                                type="text" 
+                                                                                size="small" 
+                                                                                icon="el-icon-close"
+                                                                                @click="cancelEventRuleEdit(scope.row)"
+                                                                                title="取消">
+                                                                            </el-button>
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column>
+                                                            </el-table>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <el-empty description="请先选择资产类型"></el-empty>
+                                                    </div>
                                                 </div>
                                             </el-tab-pane>
                                             <el-tab-pane label="告警" name="alarms">
                                                 <div class="tab-content">
-                                                    <p>告警内容（暂未实现）</p>
+                                                    <div v-if="selectedAssetType && selectedAssetType.alarms">
+                                                        <!-- 告警检索区域 -->
+                                                        <div style="margin-bottom: 16px;">
+                                                            <el-form :inline="true" size="small">
+                                                                <el-form-item label="关键词">
+                                                                    <el-input 
+                                                                        v-model="alarmSearchKeyword" 
+                                                                        placeholder="请输入告警类型或描述关键词"
+                                                                        style="width: 200px;">
+                                                                        <i slot="prefix" class="el-input__icon el-icon-search"></i>
+                                                                    </el-input>
+                                                                </el-form-item>
+                                                                <el-form-item label="告警级别">
+                                                                    <el-select v-model="alarmSearchLevel" placeholder="全部" style="width: 120px;">
+                                                                        <el-option label="全部" value=""></el-option>
+                                                                        <el-option label="高" value="high"></el-option>
+                                                                        <el-option label="中" value="medium"></el-option>
+                                                                        <el-option label="低" value="low"></el-option>
+                                                                    </el-select>
+                                                                </el-form-item>
+                                                                <el-form-item label="处理状态">
+                                                                    <el-select v-model="alarmSearchStatus" placeholder="请选择" style="width: 120px;">
+                                                                        <el-option label="未处理" value="unhandled"></el-option>
+                                                                        <el-option label="已处理" value="handled"></el-option>
+                                                                        <el-option label="全部" value="all"></el-option>
+                                                                    </el-select>
+                                                                </el-form-item>
+                                                                <el-form-item label="时间范围">
+                                                                    <el-select v-model="alarmSearchTimeRange" placeholder="请选择" style="width: 120px;">
+                                                                        <el-option label="近1天" value="1day"></el-option>
+                                                                        <el-option label="近3天" value="3days"></el-option>
+                                                                        <el-option label="近7天" value="7days"></el-option>
+                                                                        <el-option label="近30天" value="30days"></el-option>
+                                                                        <el-option label="全部" value="all"></el-option>
+                                                                    </el-select>
+                                                                </el-form-item>
+                                                                <el-form-item>
+                                                                    <el-button type="primary" @click="searchAlarms" icon="el-icon-search">检索</el-button>
+                                                                    <el-button @click="clearAlarmSearch" icon="el-icon-refresh">清空</el-button>
+                                                                </el-form-item>
+                                                            </el-form>
+                                                        </div>
+
+                                                        <!-- 告警操作按钮 -->
+                                                        <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
+                                                            <el-button 
+                                                                size="small" 
+                                                                type="primary" 
+                                                                icon="el-icon-refresh"
+                                                                @click="refreshAlarms">
+                                                                刷新告警
+                                                            </el-button>
+                                                        </div>
+
+                                                        <!-- 告警表格 -->
+                                                        <div class="alarms-table">
+                                                            <el-table 
+                                                                :data="filteredAlarms" 
+                                                                size="small" 
+                                                                stripe
+                                                                style="width: 100%;">
+                                                                <el-table-column prop="level" label="告警级别" width="100">
+                                                                    <template slot-scope="scope">
+                                                                        <el-tag size="small" :type="getAlarmLevelTagType(scope.row.level)">
+                                                                            {{ getAlarmLevelLabel(scope.row.level) }}
+                                                                        </el-tag>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="type" label="告警类型" min-width="120"></el-table-column>
+                                                                <el-table-column prop="description" label="告警描述" min-width="200" show-overflow-tooltip></el-table-column>
+                                                                <el-table-column prop="alarmTime" label="告警时间" width="160"></el-table-column>
+                                                                <el-table-column prop="triggerRule" label="触发规则" min-width="120"></el-table-column>
+                                                                <el-table-column prop="isHandled" label="处理状态" width="100">
+                                                                    <template slot-scope="scope">
+                                                                        <el-tag size="small" :type="scope.row.isHandled ? 'success' : 'danger'">
+                                                                            {{ scope.row.isHandled ? '已处理' : '未处理' }}
+                                                                        </el-tag>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="handler" label="处理人" width="100">
+                                                                    <template slot-scope="scope">
+                                                                        <span v-if="scope.row.handler">{{ scope.row.handler }}</span>
+                                                                        <span v-else style="color: #909399;">-</span>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column label="操作" width="280" fixed="right">
+                                                                    <template slot-scope="scope">
+                                                                        <el-button 
+                                                                            type="text" 
+                                                                            size="small" 
+                                                                            icon="el-icon-view"
+                                                                            @click="viewAlarmDetail(scope.row)"
+                                                                            title="查看详情">
+                                                                        </el-button>
+                                                                        <el-button 
+                                                                            v-if="!scope.row.isHandled"
+                                                                            type="text" 
+                                                                            size="small" 
+                                                                            icon="el-icon-check"
+                                                                            @click="handleAlarm(scope.row)"
+                                                                            title="处理">
+                                                                        </el-button>
+                                                                        <el-button 
+                                                                            v-if="!scope.row.isHandled"
+                                                                            type="text" 
+                                                                            size="small" 
+                                                                            icon="el-icon-close"
+                                                                            @click="ignoreAlarm(scope.row)"
+                                                                            title="忽略">
+                                                                        </el-button>
+                                                                        <el-button 
+                                                                            v-if="!scope.row.isHandled"
+                                                                            type="text" 
+                                                                            size="small" 
+                                                                            icon="el-icon-warning"
+                                                                            @click="markAsFalseAlarm(scope.row)"
+                                                                            title="标记为误报">
+                                                                        </el-button>
+                                                                    </template>
+                                                                </el-table-column>
+                                                            </el-table>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <el-empty description="请先选择资产类型"></el-empty>
+                                                    </div>
                                                 </div>
                                             </el-tab-pane>
                                             <el-tab-pane label="备件清单" name="spareParts">
@@ -3406,13 +4257,27 @@
                                                 </template>
                                             </el-table-column>
                                             <el-table-column prop="code" label="编码" min-width="80" max-width="100"></el-table-column>
-                                            <el-table-column prop="type" label="类型" min-width="60" max-width="80"></el-table-column>
+                                            <el-table-column prop="nodeLevel" label="层级" min-width="60" max-width="80">
+                                                <template slot-scope="scope">
+                                                    <el-tooltip :content="`点击定位到: ${scope.row.nodePath}`" placement="top">
+                                                        <div style="display: flex; align-items: center; gap: 4px; cursor: pointer;" @click="locateToAssetNode(scope.row)">
+                                                            <span>L{{ scope.row.nodeLevel }}</span>
+                                                            <i class="el-icon-location" style="font-size: 12px; color: #409EFF;"></i>
+                                                        </div>
+                                                    </el-tooltip>
+                                                </template>
+                                            </el-table-column>
+                                            <el-table-column prop="type" label="类型" min-width="60" max-width="80">
+                                                <template slot-scope="scope">
+                                                    {{ getAssetTypeName(scope.row.type) }}
+                                                </template>
+                                            </el-table-column>
                                             <el-table-column prop="model" label="型号" min-width="100" max-width="120"></el-table-column>
                                             <el-table-column prop="category" label="类别" min-width="80" max-width="100"></el-table-column>
                                             <el-table-column prop="supplier" label="供应商" min-width="120" max-width="180" show-overflow-tooltip></el-table-column>
                                             <el-table-column prop="manufacturer" label="制造商" min-width="120" max-width="180" show-overflow-tooltip></el-table-column>
                                             <el-table-column prop="installDate" label="安装日期" min-width="90" max-width="110"></el-table-column>
-                                            <el-table-column prop="status" label="状态" min-width="70" max-width="90">
+                                            <el-table-column prop="status" label="运行状态" min-width="70" max-width="90">
                                                 <template slot-scope="scope">
                                                     <span v-if="scope.row.isConnected">
                                                         <el-tag :type="scope.row.status === '运行中' ? 'success' : 'warning'" size="mini">
@@ -3422,7 +4287,7 @@
                                                     <span v-else>-</span>
                                                 </template>
                                             </el-table-column>
-                                            <el-table-column prop="isConnected" label="是否接入" min-width="80" max-width="100">
+                                            <el-table-column prop="isConnected" label="接入状态" min-width="80" max-width="100">
                                                 <template slot-scope="scope">
                                                     <el-tag :type="scope.row.isConnected ? 'success' : 'info'" size="mini">
                                                         {{ scope.row.isConnected ? '已接入' : '未接入' }}
@@ -3431,9 +4296,9 @@
                                             </el-table-column>
                                             <el-table-column label="操作" min-width="100" max-width="120">
                                                 <template slot-scope="scope">
-                                                    <el-button type="text" size="mini" icon="el-icon-view" title="查看详情"></el-button>
-                                                    <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-edit" title="编辑"></el-button>
-                                                    <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-delete" title="删除" style="color: #f56c6c;"></el-button>
+                                                    <el-button type="text" size="mini" icon="el-icon-view" title="查看详情" @click="viewAsset(scope.row)"></el-button>
+                                                    <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-edit" title="编辑" @click="editAsset(scope.row)"></el-button>
+                                                    <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-delete" title="删除" style="color: #f56c6c;" @click="deleteAsset(scope.row)"></el-button>
                                                 </template>
                                             </el-table-column>
                                         </el-table>
@@ -3535,6 +4400,235 @@
                 <el-button type="primary" @click="confirmExportAssets">确定导出</el-button>
             </div>
         </el-dialog>
+
+        <!-- 告警详情抽屉 -->
+        <el-drawer
+            title="告警详情"
+            :visible.sync="alarmDetailDrawerVisible"
+            direction="btt"
+            size="80%">
+            <div style="padding: 20px;">
+                <div class="alarm-detail" v-if="currentAlarm">
+                    <!-- 基本信息 -->
+                    <el-card style="margin-bottom: 20px;">
+                        <div slot="header">
+                            <span>基本信息</span>
+                        </div>
+                        <el-descriptions :column="2" border>
+                            <el-descriptions-item label="告警级别">
+                                <el-tag :type="getAlarmLevelTagType(currentAlarm.level)">
+                                    {{ getAlarmLevelLabel(currentAlarm.level) }}
+                                </el-tag>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="告警类型">
+                                {{ currentAlarm.type }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="告警时间">
+                                {{ currentAlarm.alarmTime }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="处理状态">
+                                <el-tag :type="currentAlarm.isHandled ? 'success' : 'danger'">
+                                    {{ currentAlarm.isHandled ? '已处理' : '未处理' }}
+                                </el-tag>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="处理人">
+                                {{ currentAlarm.handler || '-' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="处理时间">
+                                {{ currentAlarm.handleTime || '-' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="处理备注" :span="2">
+                                {{ currentAlarm.handleNote || '-' }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="告警描述" :span="2">
+                                {{ currentAlarm.description }}
+                            </el-descriptions-item>
+                        </el-descriptions>
+                    </el-card>
+
+                    <!-- 触发规则信息 -->
+                    <el-card style="margin-bottom: 20px;">
+                        <div slot="header">
+                            <span>触发规则信息</span>
+                        </div>
+                        <el-descriptions :column="1" border>
+                            <el-descriptions-item label="规则名称">
+                                {{ currentAlarm.triggerRuleName }}
+                            </el-descriptions-item>
+                            <el-descriptions-item label="触发表达式">
+                                <el-tag type="info" style="font-family: 'Courier New', monospace;">
+                                    {{ currentAlarm.triggerExpression }}
+                                </el-tag>
+                            </el-descriptions-item>
+                        </el-descriptions>
+                    </el-card>
+
+                    <!-- 涉及数据项 -->
+                    <el-card style="margin-bottom: 20px;">
+                        <div slot="header">
+                            <span>涉及数据项</span>
+                        </div>
+                        <el-table 
+                            :data="currentAlarm.dataItems" 
+                            size="small" 
+                            border
+                            style="width: 100%;">
+                            <el-table-column prop="name" label="数据项名称" min-width="150"></el-table-column>
+                            <el-table-column prop="value" label="当前值" min-width="120">
+                                <template slot-scope="scope">
+                                    <el-tag type="warning">{{ scope.row.value }}</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="dataSource" label="数据源" min-width="200">
+                                <template slot-scope="scope">
+                                    <el-tag type="info" size="small">{{ scope.row.dataSource }}</el-tag>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-card>
+                    
+                    <div style="text-align: center;">
+                        <el-button @click="alarmDetailDrawerVisible = false">关闭</el-button>
+                    </div>
+                </div>
+            </div>
+        </el-drawer>
+
+        <!-- 事件规则配置抽屉 -->
+        <el-drawer
+            title="事件规则配置"
+            :visible.sync="eventRuleConfigDrawerVisible"
+            direction="btt"
+            size="80%">
+            <div style="padding: 20px;">
+                <div class="event-rule-config">
+                    <div style="text-align: center; padding: 40px 0;">
+                        <h3 style="color: #606266; margin-bottom: 20px;">复用资产类型中的规则定义中的编辑配置页面，所能选数据是当前资产及子节点资产中的采集参数、业务属性、指标</h3>
+                        <!-- <p style="color: #909399; font-size: 14px;">这里将集成资产类型管理中的事件规则配置功能</p> -->
+                        <div v-if="currentConfigEventRule" style="margin-top: 20px; padding: 16px; background-color: #f5f7fa; border-radius: 4px;">
+                            <h4 style="color: #303133; margin-bottom: 10px;">当前配置规则：{{ currentConfigEventRule.name }}</h4>
+                            <p style="color: #606266; margin: 5px 0;">编码：{{ currentConfigEventRule.code }}</p>
+                            <p style="color: #606266; margin: 5px 0;">分类：{{ currentConfigEventRule.category }}</p>
+                            <p style="color: #606266; margin: 5px 0;">描述：{{ currentConfigEventRule.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </el-drawer>
+
+        <!-- 数据点位批量新增抽屉 -->
+        <el-drawer
+            title="数据点位批量新增"
+            :visible.sync="dataPointBatchAddDrawerVisible"
+            direction="btt"
+            size="80%">
+            <div style="padding: 20px;">
+                <div class="data-point-batch-add">
+                    <!-- 搜索区域 -->
+                    <div class="search-section">
+                        <!-- <h4>数据点位选择</h4> -->
+                        <div class="search-form">
+                            <el-form>
+                                <el-row :gutter="16" align="bottom">
+                                    <el-col :span="5">
+                                        <el-form-item label="搜索关键词">
+                                            <el-input 
+                                                v-model="dataPointSearchKeyword" 
+                                                placeholder="请输入数据点位名称或编码">
+                                                <i slot="prefix" class="el-input__icon el-icon-search"></i>
+                                            </el-input>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="4">
+                                        <el-form-item label="数据源">
+                                            <el-select v-model="dataPointSearchDataSource" placeholder="全部" style="width: 100%;">
+                                                <el-option label="全部" value=""></el-option>
+                                                <el-option label="DCS系统" value="DCS"></el-option>
+                                                <el-option label="SCADA系统" value="SCADA"></el-option>
+                                                <el-option label="PLC系统" value="PLC"></el-option>
+                                                <el-option label="RTU设备" value="RTU"></el-option>
+                                                <el-option label="OPC服务器" value="OPC"></el-option>
+                                                <el-option label="Modbus设备" value="MODBUS"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="4">
+                                        <el-form-item label="数据类型">
+                                            <el-select v-model="dataPointSearchType" placeholder="全部" style="width: 100%;">
+                                                <el-option label="全部" value=""></el-option>
+                                                <el-option label="数值" value="Float"></el-option>
+                                                <el-option label="整数" value="Int"></el-option>
+                                                <el-option label="字符串" value="String"></el-option>
+                                                <el-option label="布尔值" value="Boolean"></el-option>
+                                                <el-option label="枚举" value="Enum"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="4">
+                                        <el-form-item>
+                                            <el-button type="primary" @click="searchDataPoints" size="small" icon="el-icon-search">检索</el-button>
+                                            <el-button @click="clearDataPointSearch" size="small">清空</el-button>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                            </el-form>
+                        </div>
+                    </div>
+
+                    <!-- 数据点位列表 -->
+                    <div class="data-point-list">
+                        <div class="list-header">
+                            <span>已选择 {{ selectedDataPoints.length }} 个数据点位</span>
+                            <el-button 
+                                v-if="selectedDataPoints.length > 0"
+                                type="text" 
+                                size="small" 
+                                @click="clearSelectedDataPoints">
+                                清空选择
+                            </el-button>
+                        </div>
+                        <el-table 
+                            ref="dataPointTable"
+                            :data="filteredDataPoints" 
+                            size="small" 
+                            stripe
+                            @selection-change="handleDataPointSelectionChange"
+                            style="width: 100%;">
+                            <el-table-column type="selection" width="55"></el-table-column>
+                            <el-table-column prop="name" label="数据点位名称" min-width="150"></el-table-column>
+                            <el-table-column prop="code" label="数据点位编码" min-width="150"></el-table-column>
+                            <el-table-column prop="dataSource" label="数据源" min-width="120">
+                                <template slot-scope="scope">
+                                    <el-tag size="small" :type="getDataSourceTagType(scope.row.dataSource)">
+                                        {{ getDataSourceLabel(scope.row.dataSource) }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="dataType" label="数据类型" min-width="80">
+                                <template slot-scope="scope">
+                                    <el-tag size="small" :type="getDataTypeTagType(scope.row.dataType)">
+                                        {{ getDataTypeLabel(scope.row.dataType) }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="unit" label="单位" min-width="80"></el-table-column>
+                            <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip></el-table-column>
+                        </el-table>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="drawer-footer" style="margin-top: 20px; text-align: center;">
+                        <el-button @click="dataPointBatchAddDrawerVisible = false">取消</el-button>
+                        <el-button 
+                            type="primary" 
+                            @click="confirmBatchAddDataPoints"
+                            :disabled="selectedDataPoints.length === 0">
+                            确认批量新增 ({{ selectedDataPoints.length }})
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+        </el-drawer>
 
         <!-- 数据绑定配置抽屉 -->
     <el-drawer
@@ -4430,7 +5524,7 @@
             </div>
         </div>
     </div>
-    </div>
+    </div><!-- 结束 #app -->
 
     <!-- 引入Vue和Element UI -->
     <script src="assets/vue.js"></script>
@@ -4473,7 +5567,7 @@
                             { 
                                 id: 'asset-1', 
                                 name: '水泥厂DCS系统', 
-                                type: '系统',
+                                type: 'cement_mill_001',
                                 model: 'DCS-5000',
                                 category: '控制类',
                                 supplier: '霍尼韦尔国际公司',
@@ -4487,7 +5581,7 @@
                             { 
                                 id: 'asset-2', 
                                 name: '生产数据采集系统', 
-                                type: '系统',
+                                type: 'cement_mill_001',
                                 model: 'SCADA-3000',
                                 category: '采集类',
                                 supplier: '西门子股份公司',
@@ -4501,7 +5595,7 @@
                             { 
                                 id: 'asset-3', 
                                 name: '环境监测系统', 
-                                type: '系统',
+                                type: 'cement_mill_001',
                                 model: 'EMS-2000',
                                 category: '监控类',
                                 supplier: '艾默生电气公司',
@@ -4515,7 +5609,7 @@
                             { 
                                 id: 'asset-4', 
                                 name: '安全监控系统', 
-                                type: '系统',
+                                type: 'cement_mill_001',
                                 model: 'SEC-1000',
                                 category: '安全类',
                                 supplier: '海康威视数字技术股份有限公司',
@@ -4540,7 +5634,7 @@
                                     { 
                                         id: 'asset-5', 
                                         name: '石灰石破碎机', 
-                                        type: '设备',
+                                        type: 'cement_mill_001',
                                         model: 'CRUSHER-2000',
                                         category: '破碎类',
                                         supplier: '山特维克集团',
@@ -4554,7 +5648,7 @@
                                     { 
                                         id: 'asset-6', 
                                         name: '原料预均化堆场', 
-                                        type: '设备',
+                                        type: 'raw_material_bin_001',
                                         model: 'BLENDING-1500',
                                         category: '均化类',
                                         supplier: '伯利休斯公司',
@@ -4579,7 +5673,7 @@
                                             { 
                                                 id: 'asset-7', 
                                                 name: '颚式破碎机', 
-                                                type: '设备',
+                                                type: 'cement_mill_001',
                                                 model: 'JAW_CRUSHER-800',
                                                 category: '破碎类',
                                                 supplier: '美卓矿机公司',
@@ -4593,7 +5687,7 @@
                                             { 
                                                 id: 'asset-8', 
                                                 name: '圆锥破碎机', 
-                                                type: '设备',
+                                                type: 'cement_mill_001',
                                                 model: 'CONE_CRUSHER-600',
                                                 category: '破碎类',
                                                 supplier: '山特维克集团',
@@ -4618,7 +5712,7 @@
                                                     { 
                                                         id: 'asset-9', 
                                                         name: '振动筛分机', 
-                                                        type: '设备',
+                                                        type: 'cement_mill_001',
                                                         model: 'VIBRATING_SCREEN-400',
                                                         category: '筛分类',
                                                         supplier: '德瑞克公司',
@@ -4643,7 +5737,7 @@
                                                             { 
                                                                 id: 'asset-10', 
                                                                 name: 'PLC控制器', 
-                                                                type: '设备',
+                                                                type: 'cement_mill_001',
                                                                 model: 'PLC-300',
                                                                 category: '控制类',
                                                                 supplier: '罗克韦尔自动化公司',
@@ -4657,7 +5751,7 @@
                                                             { 
                                                                 id: 'asset-11', 
                                                                 name: '压力传感器', 
-                                                                type: '设备',
+                                                                type: 'cement_mill_001',
                                                                 model: 'PRESSURE_SENSOR-100',
                                                                 category: '传感器类',
                                                                 supplier: '施耐德电气公司',
@@ -4688,7 +5782,7 @@
                                     { 
                                         id: 'asset-12', 
                                         name: '回转窑', 
-                                        type: '设备',
+                                        type: 'rotary_kiln_001',
                                         model: 'ROTARY_KILN-5000',
                                         category: '烧成类',
                                         supplier: '伯利休斯公司',
@@ -4702,7 +5796,7 @@
                                     { 
                                         id: 'asset-13', 
                                         name: '预热器', 
-                                        type: '设备',
+                                        type: 'rotary_kiln_001',
                                         model: 'PREHEATER-5000',
                                         category: '预热类',
                                         supplier: '伯利休斯公司',
@@ -4727,7 +5821,7 @@
                                             { 
                                                 id: 'asset-14', 
                                                 name: '篦冷机', 
-                                                type: '设备',
+                                                type: 'grate_cooler_001',
                                                 model: 'COOLER-5000',
                                                 category: '冷却类',
                                                 supplier: '伯利休斯公司',
@@ -4754,7 +5848,7 @@
                                     { 
                                         id: 'asset-15', 
                                         name: '水泥磨', 
-                                        type: '设备',
+                                        type: 'cement_mill_001',
                                         model: 'CEMENT_MILL-4000',
                                         category: '粉磨类',
                                         supplier: '伯利休斯公司',
@@ -4768,7 +5862,7 @@
                                     { 
                                         id: 'asset-16', 
                                         name: '选粉机', 
-                                        type: '设备',
+                                        type: 'cement_mill_001',
                                         model: 'SEPARATOR-4000',
                                         category: '选粉类',
                                         supplier: '伯利休斯公司',
@@ -4829,7 +5923,7 @@
                 currentParentNode: null, // 用于保存当前正在添加子节点的父节点
                 
                 // 基本信息展开状态
-                basicInfoExpanded: true,
+                basicInfoExpanded: false,
                 
                 // 节点详情基本信息展开状态
                 nodeDetailsBasicInfoExpanded: false,
@@ -4845,6 +5939,9 @@
                 
                 // 添加资产相关
                 isAddingAsset: false,
+                isViewingAsset: false,
+                isEditingAsset: false,
+                currentEditingAsset: null,
                 assetForm: {
                     assetType: '',
                     deviceCode: '',
@@ -4876,6 +5973,14 @@
                         { id: 1, name: '设备效率', code: 'device_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '设备运行效率，基于实际产量与理论产量的比值', formula: '[实际产量] / [理论产量] * 100', participatingVariables: ['实际产量', '理论产量'] },
                         { id: 2, name: '单位能耗', code: 'unit_energy_consumption', category: '环保指标', direction: 'negative', unit: 'kWh/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的能源消耗量', formula: '[总能耗] / [总产量]', participatingVariables: ['总能耗', '总产量'] },
                         { id: 3, name: '故障率', code: 'failure_rate', category: '安全指标', direction: 'negative', unit: '次/月', calculationCycle: 'month', updateFrequency: '1d', description: '设备故障次数与运行时间的比值', formula: '[故障次数] / [运行时间] * 100', participatingVariables: ['故障次数'] }
+                    ], eventRules: [
+                        { id: 1, name: '温度超限告警', code: 'temp_over_limit', category: '安全告警', description: '设备温度超过设定阈值时触发告警', triggerCondition: '设备温度 > 80', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 2, name: '压力异常检测', code: 'pressure_abnormal', category: '运行监控', description: '运行压力超出正常范围时触发事件', triggerCondition: '运行压力 < 0.5 OR 运行压力 > 2.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
+                        { id: 3, name: '设备停机检测', code: 'device_shutdown', category: '状态监控', description: '检测设备停机状态并记录', triggerCondition: '设备状态 = 停机', severity: 'low', enabled: true, actions: ['记录日志', '更新状态'], isEditing: false }
+                    ], alarms: [
+                        { id: 1, level: 'high', type: '温度超限', description: '水泥磨机温度达到85℃，超过安全阈值', alarmTime: '2024-01-15 14:30:25', triggerRule: '温度超限告警', triggerRuleName: '温度超限告警', triggerExpression: '设备温度 > 80', dataItems: [{ name: '设备温度', value: '85℃', dataSource: 'DCS.TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '压力异常', description: '运行压力为2.5MPa，超出正常范围', alarmTime: '2024-01-15 13:45:12', triggerRule: '压力异常检测', triggerRuleName: '压力异常检测', triggerExpression: '运行压力 < 0.5 OR 运行压力 > 2.0', dataItems: [{ name: '运行压力', value: '2.5MPa', dataSource: 'DCS.PRESS_001' }], isHandled: true, handler: '张工程师', status: 'handled' },
+                        { id: 3, level: 'low', type: '设备停机', description: '设备运行状态异常，已停机', alarmTime: '2024-01-15 12:20:08', triggerRule: '设备停机检测', triggerRuleName: '设备停机检测', triggerExpression: '设备状态 = 停机', dataItems: [{ name: '设备状态', value: '停机', dataSource: 'DCS.STATUS_001' }], isHandled: false, handler: '', status: 'ignored' }
                     ]},
                     { value: 'rotary_kiln_001', label: '回转窑', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -4902,6 +6007,14 @@
                         { id: 1, name: '窑体效率', code: 'kiln_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑运行效率，基于实际产量与设计产能的比值', formula: '[实际产量] / [设计产能] * 100', participatingVariables: ['实际产量', '设计产能'] },
                         { id: 2, name: '热效率', code: 'thermal_efficiency', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑热效率，反映能源利用效率', formula: '[有效热量] / [总热量] * 100', participatingVariables: ['有效热量', '总热量'] },
                         { id: 3, name: '燃料消耗率', code: 'fuel_consumption_rate', category: '环保指标', direction: 'negative', unit: 'kg/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的燃料消耗量', formula: '[燃料消耗] / [产量]', participatingVariables: ['燃料消耗', '产量'] }
+                    ], eventRules: [
+                        { id: 1, name: '窑体温度超限', code: 'kiln_temp_over_limit', category: '安全告警', description: '窑体温度超过安全阈值时触发告警', triggerCondition: '窑体温度 > 1200', severity: 'high', enabled: true, actions: ['发送告警', '记录日志', '自动降温'], isEditing: false },
+                        { id: 2, name: '转速异常检测', code: 'speed_abnormal', category: '运行监控', description: '窑体转速超出正常范围时触发事件', triggerCondition: '转速 < 0.5 OR 转速 > 3.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
+                        { id: 3, name: '燃料消耗异常', code: 'fuel_consumption_abnormal', category: '能耗监控', description: '燃料消耗异常时触发事件', triggerCondition: '燃料消耗 > 1000', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false }
+                    ], alarms: [
+                        { id: 1, level: 'high', type: '窑体温度超限', description: '回转窑温度达到1250℃，超过安全阈值', alarmTime: '2024-01-15 15:20:30', triggerRule: '窑体温度超限', triggerRuleName: '窑体温度超限', triggerExpression: '窑体温度 > 1200', dataItems: [{ name: '窑体温度', value: '1250℃', dataSource: 'DCS.KILN_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '转速异常', description: '窑体转速为3.5rpm，超出正常范围', alarmTime: '2024-01-15 14:15:45', triggerRule: '转速异常检测', triggerRuleName: '转速异常检测', triggerExpression: '转速 < 0.5 OR 转速 > 3.0', dataItems: [{ name: '转速', value: '3.5rpm', dataSource: 'DCS.SPEED_001' }], isHandled: true, handler: '李工程师', status: 'handled' },
+                        { id: 3, level: 'medium', type: '燃料消耗异常', description: '燃料消耗达到1200kg/h，超出正常范围', alarmTime: '2024-01-15 13:30:20', triggerRule: '燃料消耗异常', triggerRuleName: '燃料消耗异常', triggerExpression: '燃料消耗 > 1000', dataItems: [{ name: '燃料消耗', value: '1200kg/h', dataSource: 'DCS.FUEL_001' }], isHandled: false, handler: '', status: 'active' }
                     ]},
                     { value: 'raw_material_bin_001', label: '原料仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -4924,6 +6037,13 @@
                     ], indicators: [
                         { id: 1, name: '料位利用率', code: 'material_level_utilization', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '料仓料位利用率，反映存储效率', formula: '[当前料位] / [最大料位] * 100', participatingVariables: ['当前料位', '最大料位'] },
                         { id: 2, name: '存储周转率', code: 'storage_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '原料存储周转率，反映库存管理效率', formula: '[出料量] / [平均库存]', participatingVariables: ['出料量', '平均库存'] }
+                    ], eventRules: [
+                        { id: 1, name: '料位低告警', code: 'material_level_low', category: '库存告警', description: '料位低于安全库存时触发告警', triggerCondition: '料位高度 < 1.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 2, name: '料位高告警', code: 'material_level_high', category: '库存告警', description: '料位接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 3, name: '温度异常检测', code: 'temperature_abnormal', category: '安全监控', description: '料仓温度异常时触发事件', triggerCondition: '料仓温度 > 60', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false }
+                    ], alarms: [
+                        { id: 1, level: 'medium', type: '料位低告警', description: '原料仓料位高度为0.8m，低于安全库存', alarmTime: '2024-01-15 16:10:15', triggerRule: '料位低告警', triggerRuleName: '料位低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.8m', dataSource: 'SCADA.LEVEL_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'high', type: '温度异常', description: '料仓温度达到65℃，超过安全阈值', alarmTime: '2024-01-15 15:45:30', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '料仓温度 > 60', dataItems: [{ name: '料仓温度', value: '65℃', dataSource: 'SCADA.TEMP_001' }], isHandled: true, handler: '王工程师', status: 'handled' }
                     ]},
                     { value: 'grate_cooler_001', label: '篦冷机', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -4947,6 +6067,13 @@
                     ], indicators: [
                         { id: 1, name: '冷却效率', code: 'cooling_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '篦冷机冷却效率，反映冷却效果', formula: '([进料温度] - [出料温度]) / [进料温度] * 100', participatingVariables: ['进料温度', '出料温度'] },
                         { id: 2, name: '冷却水利用率', code: 'cooling_water_utilization', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '冷却水利用效率', formula: '[有效冷却量] / [总冷却量] * 100', participatingVariables: ['有效冷却量', '总冷却量'] }
+                    ], eventRules: [
+                        { id: 1, name: '冷却水温度异常', code: 'cooling_water_temp_abnormal', category: '安全告警', description: '冷却水温度异常时触发告警', triggerCondition: '冷却水温度 > 50', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 2, name: '出料温度异常', code: 'discharge_temp_abnormal', category: '质量监控', description: '出料温度超出正常范围时触发事件', triggerCondition: '出料温度 > 100', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
+                        { id: 3, name: '篦板速度异常', code: 'grate_speed_abnormal', category: '运行监控', description: '篦板速度异常时触发事件', triggerCondition: '篦板速度 < 0.5 OR 篦板速度 > 5.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false }
+                    ], alarms: [
+                        { id: 1, level: 'high', type: '冷却水温度异常', description: '冷却水温度达到55℃，超过安全阈值', alarmTime: '2024-01-15 17:05:20', triggerRule: '冷却水温度异常', triggerRuleName: '冷却水温度异常', triggerExpression: '冷却水温度 > 50', dataItems: [{ name: '冷却水温度', value: '55℃', dataSource: 'PLC.WATER_TEMP_001' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'medium', type: '出料温度异常', description: '出料温度为110℃，超出正常范围', alarmTime: '2024-01-15 16:30:45', triggerRule: '出料温度异常', triggerRuleName: '出料温度异常', triggerExpression: '出料温度 > 100', dataItems: [{ name: '出料温度', value: '110℃', dataSource: 'PLC.DISCHARGE_TEMP_001' }], isHandled: true, handler: '赵工程师', status: 'handled' }
                     ]},
                     { value: 'cement_bin_001', label: '水泥仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -4969,6 +6096,13 @@
                     ], indicators: [
                         { id: 1, name: '库存周转率', code: 'inventory_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '水泥库存周转率，反映销售效率', formula: '[出库量] / [平均库存]', participatingVariables: ['出库量', '平均库存'] },
                         { id: 2, name: '存储效率', code: 'storage_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '水泥仓存储效率', formula: '[当前库存] / [最大容量] * 100', participatingVariables: ['当前库存', '最大容量'] }
+                    ], eventRules: [
+                        { id: 1, name: '库存低告警', code: 'inventory_low', category: '库存告警', description: '水泥库存低于安全库存时触发告警', triggerCondition: '料位高度 < 1.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 2, name: '库存满告警', code: 'inventory_full', category: '库存告警', description: '水泥库存接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
+                        { id: 3, name: '湿度异常检测', code: 'humidity_abnormal', category: '质量监控', description: '水泥仓湿度异常时触发事件', triggerCondition: '湿度 > 80', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false }
+                    ], alarms: [
+                        { id: 1, level: 'medium', type: '库存低告警', description: '水泥仓料位高度为0.9m，低于安全库存', alarmTime: '2024-01-15 18:20:10', triggerRule: '库存低告警', triggerRuleName: '库存低告警', triggerExpression: '料位高度 < 1.0', dataItems: [{ name: '料位高度', value: '0.9m', dataSource: 'SCADA.LEVEL_002' }], isHandled: false, handler: '', status: 'active' },
+                        { id: 2, level: 'high', type: '湿度异常', description: '水泥仓湿度达到85%，超过安全阈值', alarmTime: '2024-01-15 17:55:30', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: true, handler: '陈工程师', status: 'handled' }
                     ]}
                 ],
                 activeTab: 'basicInfo',
@@ -5090,6 +6224,26 @@
                 
                 // 过滤后的数据点位
                 filteredDataPoints: [],
+
+                // 数据点位批量新增相关
+                dataPointBatchAddDrawerVisible: false,
+                dataPointSearchKeyword: '',
+                dataPointSearchDataSource: '',
+                dataPointSearchType: '',
+                selectedDataPoints: [],
+                selectedEventRules: [],
+
+                // 事件规则配置相关
+                eventRuleConfigDrawerVisible: false,
+                currentConfigEventRule: null,
+
+                // 告警相关
+                alarmDetailDrawerVisible: false,
+                currentAlarm: null,
+                alarmSearchKeyword: '',
+                alarmSearchLevel: '',
+                alarmSearchStatus: 'unhandled',
+                alarmSearchTimeRange: '3days',
                 
                 // 运算符列表
                 operators: [
@@ -5147,6 +6301,59 @@
                         }
                         return part.value;
                     }).join(' ');
+                },
+
+                // 已处理告警数量
+                handledAlarmsCount() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.alarms) {
+                        return 0;
+                    }
+                    return this.selectedAssetType.alarms.filter(alarm => alarm.isHandled).length;
+                },
+
+                // 过滤后的告警列表
+                filteredAlarms() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.alarms) {
+                        return [];
+                    }
+
+                    let alarms = [...this.selectedAssetType.alarms];
+
+                    // 关键词过滤
+                    if (this.alarmSearchKeyword) {
+                        const keyword = this.alarmSearchKeyword.toLowerCase();
+                        alarms = alarms.filter(alarm => 
+                            alarm.type.toLowerCase().includes(keyword) ||
+                            alarm.description.toLowerCase().includes(keyword) ||
+                            alarm.triggerRule.toLowerCase().includes(keyword)
+                        );
+                    }
+
+                    // 告警级别过滤
+                    if (this.alarmSearchLevel) {
+                        alarms = alarms.filter(alarm => alarm.level === this.alarmSearchLevel);
+                    }
+
+                    // 处理状态过滤
+                    if (this.alarmSearchStatus === 'unhandled') {
+                        alarms = alarms.filter(alarm => !alarm.isHandled);
+                    } else if (this.alarmSearchStatus === 'handled') {
+                        alarms = alarms.filter(alarm => alarm.isHandled);
+                    }
+
+                    // 时间范围过滤
+                    if (this.alarmSearchTimeRange !== 'all') {
+                        const now = new Date();
+                        const days = parseInt(this.alarmSearchTimeRange.replace('days', '').replace('day', ''));
+                        const timeLimit = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+                        
+                        alarms = alarms.filter(alarm => {
+                            const alarmTime = new Date(alarm.alarmTime);
+                            return alarmTime >= timeLimit;
+                        });
+                    }
+
+                    return alarms;
                 },
                 
                 // 获取当前资产类型的指标列表
@@ -5343,6 +6550,15 @@
             mounted() {
                 // 初始化过滤后的数据点位列表
                 this.filteredDataPoints = [...this.dataPoints];
+                
+                // 设置默认资产类型（如果还没有选择的话）
+                if (!this.assetForm.assetType && this.assetTypes.length > 0) {
+                    this.assetForm.assetType = this.assetTypes[0].value;
+                }
+                
+                // 初始化告警检索条件
+                this.alarmSearchStatus = 'unhandled';
+                this.alarmSearchTimeRange = '3days';
             },
             watch: {
                 // 监听搜索关键词变化
@@ -5409,18 +6625,21 @@
     
     // 资产搜索和过滤相关方法
     searchAssets() {
-        if (!this.selectedNode || !this.selectedNode.assets) {
+        if (!this.selectedNode) {
             this.filteredAssets = [];
             return;
         }
         
+        // 获取当前节点及下级所有节点的资产
+        const allAssets = this.getAllAssetsFromNode(this.selectedNode);
+        
         const keyword = this.assetSearchKeyword.toLowerCase().trim();
         if (!keyword) {
-            this.filteredAssets = [...this.selectedNode.assets];
+            this.filteredAssets = allAssets;
             return;
         }
         
-        this.filteredAssets = this.selectedNode.assets.filter(asset => {
+        this.filteredAssets = allAssets.filter(asset => {
             if (this.assetSearchField === 'isConnected') {
                 // 处理是否接入字段的搜索
                 const isConnected = asset.isConnected;
@@ -5431,6 +6650,43 @@
                 return searchValue.toLowerCase().includes(keyword);
             }
         });
+    },
+
+    // 获取节点及下级所有节点的资产
+    getAllAssetsFromNode(node) {
+        let assets = [];
+        
+        // 添加当前节点的资产
+        if (node.assets && node.assets.length > 0) {
+            assets = assets.concat(node.assets.map(asset => ({
+                ...asset,
+                nodeLevel: node.level,
+                nodeName: node.name,
+                nodePath: this.getNodePath(node)
+            })));
+        }
+        
+        // 递归添加子节点的资产
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                assets = assets.concat(this.getAllAssetsFromNode(child));
+            });
+        }
+        
+        return assets;
+    },
+
+    // 获取节点路径
+    getNodePath(node) {
+        const path = [];
+        let currentNode = node;
+        
+        while (currentNode) {
+            path.unshift(currentNode.name);
+            currentNode = this.findParentNode(currentNode);
+        }
+        
+        return path.join(' / ');
     },
     
     // 切换搜索字段
@@ -5460,13 +6716,113 @@
                     this.$message.info('挂载资产功能开发中...');
                 },
 
+                // 检查是否有未保存的数据
+                hasUnsavedData() {
+                    // 检查是否在添加或编辑资产状态（查看模式不需要检查）
+                    if (this.isAddingAsset || this.isEditingAsset) {
+                        // 如果是添加模式，检查是否有填写的数据
+                        if (this.isAddingAsset) {
+                            return this.assetForm.assetType || 
+                                   this.assetForm.deviceCode || 
+                                   this.assetForm.deviceName ||
+                                   this.assetForm.connectionStatus !== '待接入' ||
+                                   this.assetForm.runningStatus !== '-';
+                        }
+                        // 如果是编辑模式，检查数据是否有变化
+                        if (this.isEditingAsset && this.currentEditingAsset) {
+                            return this.assetForm.assetType !== this.currentEditingAsset.type ||
+                                   this.assetForm.deviceCode !== this.currentEditingAsset.code ||
+                                   this.assetForm.deviceName !== this.currentEditingAsset.name ||
+                                   this.assetForm.connectionStatus !== (this.currentEditingAsset.isConnected ? '已接入' : '待接入') ||
+                                   this.assetForm.runningStatus !== this.currentEditingAsset.status;
+                        }
+                    }
+
+                    // 检查静态属性、动态变量、业务属性、指标是否有正在编辑的行
+                    if (this.selectedAssetType) {
+                        // 检查静态属性
+                        if (this.selectedAssetType.staticProperties) {
+                            for (let prop of this.selectedAssetType.staticProperties) {
+                                if (prop.isEditing) return true;
+                            }
+                        }
+                        
+                        // 检查动态变量
+                        if (this.selectedAssetType.dynamicVariables) {
+                            for (let variable of this.selectedAssetType.dynamicVariables) {
+                                if (variable.isEditing) return true;
+                            }
+                        }
+                        
+                        // 检查业务属性
+                        if (this.selectedAssetType.businessProperties) {
+                            for (let prop of this.selectedAssetType.businessProperties) {
+                                if (prop.isEditing) return true;
+                            }
+                        }
+                        
+                        // 检查指标
+                        if (this.selectedAssetType.indicators) {
+                            for (let indicator of this.selectedAssetType.indicators) {
+                                if (indicator.isEditing) return true;
+                            }
+                        }
+
+                        // 检查事件规则
+                        if (this.selectedAssetType.eventRules) {
+                            for (let rule of this.selectedAssetType.eventRules) {
+                                if (rule.isEditing) return true;
+                            }
+                        }
+                    }
+                    
+                    return false;
+                },
+
+                // 获取未保存数据的提示信息
+                getUnsavedDataMessage() {
+                    if (this.isAddingAsset) {
+                        return '当前正在添加资产，切换节点将丢失已填写的数据。确定要切换吗？';
+                    } else if (this.isEditingAsset) {
+                        return '当前正在编辑资产，切换节点将丢失未保存的修改。确定要切换吗？';
+                    } else {
+                        return '当前有未保存的数据，切换节点将丢失这些数据。确定要切换吗？';
+                    }
+                },
+
                 // 节点点击处理
                 selectNode(node) {
+                    // 直接执行节点选择（包含未保存数据检查）
+                    this.performNodeSelection(node);
+                },
+
+                // 执行节点选择
+                performNodeSelection(node) {
+                    // 在显示资产列表之前，再次检查是否有未保存的数据
+                    if (this.hasUnsavedData()) {
+                        this.$confirm(this.getUnsavedDataMessage(), '提示', {
+                            confirmButtonText: '确定切换',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }).then(() => {
+                            // 用户确认切换，清除所有编辑状态并显示资产列表
                     this.selectedNode = node;
-                    // 初始化资产列表
+                            this.clearAllEditingStates();
                     this.assetSearchKeyword = '';
                     this.assetSearchField = 'name';
                     this.searchAssets();
+                        }).catch(() => {
+                            // 用户取消切换，不做任何操作
+                            this.$message.info('已取消切换节点');
+                        });
+                    } else {
+                        // 没有未保存的数据，直接切换并显示资产列表
+                        this.selectedNode = node;
+                        this.clearAllEditingStates();
+                        this.assetSearchKeyword = '';
+                        this.assetSearchField = 'name';
+                        this.searchAssets();
+                    }
                 },
 
                 // 展开/收起节点
@@ -6149,6 +7505,688 @@
                     return total;
                 },
 
+                // 获取资产层级路径
+                getAssetPath() {
+                    if (!this.selectedNode) {
+                        return '';
+                    }
+                    
+                    const path = [];
+                    let currentNode = this.selectedNode;
+                    
+                    // 从当前节点向上遍历到根节点
+                    while (currentNode) {
+                        path.unshift(currentNode.name);
+                        currentNode = this.findParentNode(currentNode);
+                    }
+                    
+                    return path.join(' / ');
+                },
+
+                // 查找父节点
+                findParentNode(node) {
+                    return this.findNodeParent(this.treeData, node);
+                },
+
+                // 递归查找父节点
+                findNodeParent(nodes, targetNode) {
+                    for (let node of nodes) {
+                        if (node.children) {
+                            for (let child of node.children) {
+                                if (child.id === targetNode.id) {
+                                    return node;
+                                }
+                                const parent = this.findNodeParent([child], targetNode);
+                                if (parent) {
+                                    return parent;
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                },
+
+                // 获取资产操作图标
+                getAssetOperationIcon() {
+                    if (this.isAddingAsset) {
+                        return 'el-icon-plus';
+                    } else if (this.isViewingAsset) {
+                        return 'el-icon-view';
+                    } else if (this.isEditingAsset) {
+                        return 'el-icon-edit';
+                    }
+                    return 'el-icon-document';
+                },
+
+                // 获取资产操作文本
+                getAssetOperationText() {
+                    if (this.isAddingAsset) {
+                        return '新增资产';
+                    } else if (this.isViewingAsset) {
+                        return '查看资产';
+                    } else if (this.isEditingAsset) {
+                        return '编辑资产';
+                    }
+                    return '资产操作';
+                },
+
+                // 获取资产操作状态样式类
+                getAssetOperationStatusClass() {
+                    if (this.isAddingAsset) {
+                        return 'adding';
+                    } else if (this.isViewingAsset) {
+                        return 'viewing';
+                    } else if (this.isEditingAsset) {
+                        return 'editing';
+                    }
+                    return '';
+                },
+
+                // 获取资产名称
+                getAssetName() {
+                    if (this.isAddingAsset) {
+                        return '';
+                    } else if (this.isViewingAsset || this.isEditingAsset) {
+                        return this.assetForm.deviceName || '';
+                    }
+                    return '';
+                },
+
+                // 根据资产类型编码获取资产类型名称
+                getAssetTypeName(typeCode) {
+                    const assetType = this.assetTypes.find(type => type.value === typeCode);
+                    return assetType ? assetType.label : typeCode;
+                },
+
+                // 切换资产连接状态
+                toggleAssetConnection(asset) {
+                    const action = asset.isConnected ? '断开' : '接入';
+                    this.$confirm(`确定要${action}资产"${asset.name}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        asset.isConnected = !asset.isConnected;
+                        if (!asset.isConnected) {
+                            asset.status = '-';
+                        } else {
+                            asset.status = '运行中';
+                        }
+                        this.$message.success(`资产${action}成功`);
+                    }).catch(() => {
+                        this.$message.info('已取消操作');
+                    });
+                },
+
+                // 刷新资产状态
+                refreshAssetStatus(asset) {
+                    if (!asset.isConnected) {
+                        this.$message.warning('设备未接入，无法刷新状态');
+                        return;
+                    }
+                    
+                    // 模拟刷新状态
+                    this.$message.info('正在刷新设备状态...');
+                    setTimeout(() => {
+                        const statuses = ['运行中', '待机中', '故障中', '维护中'];
+                        asset.status = statuses[Math.floor(Math.random() * statuses.length)];
+                        this.$message.success('状态刷新成功');
+                    }, 1000);
+                },
+
+                // 定位到资产所在节点
+                locateToAssetNode(asset) {
+                    const targetNode = this.findNodeByName(this.treeData, asset.nodeName);
+                    if (targetNode) {
+                        this.selectNode(targetNode);
+                        this.$message.success(`已定位到节点: ${asset.nodePath}`);
+                    } else {
+                        this.$message.warning('无法找到对应的节点');
+                    }
+                },
+
+                // 根据节点名称查找节点
+                findNodeByName(nodes, nodeName) {
+                    for (let node of nodes) {
+                        if (node.name === nodeName) {
+                            return node;
+                        }
+                        if (node.children && node.children.length > 0) {
+                            const found = this.findNodeByName(node.children, nodeName);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                },
+
+                // 切换资产表单连接状态
+                toggleAssetFormConnection() {
+                    const action = this.assetForm.connectionStatus === '已接入' ? '断开' : '接入';
+                    this.$confirm(`确定要${action}设备吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        this.assetForm.connectionStatus = this.assetForm.connectionStatus === '已接入' ? '待接入' : '已接入';
+                        if (this.assetForm.connectionStatus === '待接入') {
+                            this.assetForm.runningStatus = '-';
+                        } else {
+                            this.assetForm.runningStatus = '运行中';
+                        }
+                        this.$message.success(`设备${action}成功`);
+                    }).catch(() => {
+                        this.$message.info('已取消操作');
+                    });
+                },
+
+                // 刷新资产表单状态
+                refreshAssetFormStatus() {
+                    if (this.assetForm.connectionStatus !== '已接入') {
+                        this.$message.warning('设备未接入，无法刷新状态');
+                        return;
+                    }
+                    
+                    // 模拟刷新状态
+                    this.$message.info('正在刷新设备状态...');
+                    setTimeout(() => {
+                        const statuses = ['运行中', '待机中', '故障中', '维护中'];
+                        this.assetForm.runningStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                        this.$message.success('状态刷新成功');
+                    }, 1000);
+                },
+
+                // 获取运行状态标签类型
+                getRunningStatusType() {
+                    switch (this.assetForm.runningStatus) {
+                        case '运行中': return 'success';
+                        case '待机中': return 'warning';
+                        case '故障中': return 'danger';
+                        case '维护中': return 'info';
+                        default: return 'info';
+                    }
+                },
+
+                // 获取运行状态实心圆
+                getRunningStatusCircle() {
+                    switch (this.assetForm.runningStatus) {
+                        case '运行中': return 'status-circle status-running';
+                        case '待机中': return 'status-circle status-standby';
+                        case '故障中': return 'status-circle status-fault';
+                        case '维护中': return 'status-circle status-maintenance';
+                        default: return 'status-circle status-dash';
+                    }
+                },
+
+                // 新增动态变量参数
+                addDynamicVariable() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.dynamicVariables) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+
+                    const newVariable = {
+                        name: '',
+                        code: '',
+                        type: '数值',
+                        unit: '',
+                        precision: '0.1',
+                        frequency: '1秒',
+                        dataCategory: '生产',
+                        businessCategory: '生产',
+                        valueCycle: '1秒',
+                        valueMethod: '瞬时值',
+                        dataBinding: '',
+                        dataTransform: '',
+                        isEditing: true,
+                        isNew: true
+                    };
+
+                    this.selectedAssetType.dynamicVariables.unshift(newVariable);
+                    this.$message.success('新增参数成功，请填写参数信息');
+                },
+
+                // 显示数据点位批量新增抽屉
+                showDataPointBatchAdd() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.dynamicVariables) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+                    
+                    this.dataPointBatchAddDrawerVisible = true;
+                    this.dataPointSearchKeyword = '';
+                    this.dataPointSearchDataSource = '';
+                    this.dataPointSearchType = '';
+                    this.selectedDataPoints = [];
+                    this.filteredDataPoints = [...this.dataPoints];
+                },
+
+                // 搜索数据点位
+                searchDataPoints() {
+                    const keyword = this.dataPointSearchKeyword.toLowerCase();
+                    const dataSource = this.dataPointSearchDataSource;
+                    const type = this.dataPointSearchType;
+                    
+                    this.filteredDataPoints = this.dataPoints.filter(point => {
+                        const nameMatch = !keyword || point.name.toLowerCase().includes(keyword);
+                        const codeMatch = !keyword || point.code.toLowerCase().includes(keyword);
+                        const dataSourceMatch = !dataSource || point.dataSource === dataSource;
+                        const typeMatch = !type || point.dataType === type;
+                        
+                        return (nameMatch || codeMatch) && dataSourceMatch && typeMatch;
+                    });
+                },
+
+                // 清空数据点位搜索
+                clearDataPointSearch() {
+                    this.dataPointSearchKeyword = '';
+                    this.dataPointSearchDataSource = '';
+                    this.dataPointSearchType = '';
+                    this.filteredDataPoints = [...this.dataPoints];
+                },
+
+                // 处理数据点位选择变化
+                handleDataPointSelectionChange(selection) {
+                    this.selectedDataPoints = selection;
+                },
+
+                // 清空选中的数据点位
+                clearSelectedDataPoints() {
+                    this.selectedDataPoints = [];
+                    // 清空表格选择
+                    this.$nextTick(() => {
+                        this.$refs.dataPointTable && this.$refs.dataPointTable.clearSelection();
+                    });
+                },
+
+                // 确认批量新增数据点位
+                confirmBatchAddDataPoints() {
+                    if (this.selectedDataPoints.length === 0) {
+                        this.$message.warning('请选择要新增的数据点位');
+                        return;
+                    }
+
+                    // 批量新增动态变量
+                    this.selectedDataPoints.forEach(dataPoint => {
+                        const newVariable = {
+                            name: dataPoint.name,
+                            code: dataPoint.code,
+                            type: this.convertDataType(dataPoint.dataType),
+                            unit: dataPoint.unit || '',
+                            precision: '0.1',
+                            frequency: '1秒',
+                            dataCategory: '生产',
+                            businessCategory: '生产',
+                            valueCycle: '1秒',
+                            valueMethod: '瞬时值',
+                            dataBinding: `${dataPoint.dataSource}.${dataPoint.code}`,
+                            dataTransform: '',
+                            isEditing: false,
+                            isNew: false
+                        };
+
+                        this.selectedAssetType.dynamicVariables.push(newVariable);
+                    });
+
+                    this.$message.success(`成功批量新增 ${this.selectedDataPoints.length} 个参数`);
+                    this.dataPointBatchAddDrawerVisible = false;
+                },
+
+                // 转换数据类型
+                convertDataType(dataType) {
+                    const typeMap = {
+                        'Float': '数值',
+                        'Int': '数值',
+                        'String': '字符串',
+                        'Boolean': '布尔值',
+                        'Enum': '枚举'
+                    };
+                    return typeMap[dataType] || '数值';
+                },
+
+                // 获取数据源标签类型
+                getDataSourceTagType(dataSource) {
+                    const typeMap = {
+                        'DCS': 'primary',
+                        'SCADA': 'success',
+                        'PLC': 'warning',
+                        'RTU': 'info',
+                        'OPC': 'danger',
+                        'MODBUS': ''
+                    };
+                    return typeMap[dataSource] || '';
+                },
+
+                // 获取数据源显示标签
+                getDataSourceLabel(dataSource) {
+                    const labelMap = {
+                        'DCS': 'DCS系统',
+                        'SCADA': 'SCADA系统',
+                        'PLC': 'PLC系统',
+                        'RTU': 'RTU设备',
+                        'OPC': 'OPC服务器',
+                        'MODBUS': 'Modbus设备'
+                    };
+                    return labelMap[dataSource] || dataSource;
+                },
+
+                // 获取数据类型标签类型
+                getDataTypeTagType(dataType) {
+                    const typeMap = {
+                        'Float': 'primary',
+                        'Int': 'success',
+                        'String': 'warning',
+                        'Boolean': 'info',
+                        'Enum': 'danger'
+                    };
+                    return typeMap[dataType] || '';
+                },
+
+                // 获取数据类型显示标签
+                getDataTypeLabel(dataType) {
+                    const labelMap = {
+                        'Float': '数值',
+                        'Int': '整数',
+                        'String': '字符串',
+                        'Boolean': '布尔值',
+                        'Enum': '枚举'
+                    };
+                    return labelMap[dataType] || dataType;
+                },
+
+                // 事件规则相关方法
+                // 处理事件规则选择变化
+                handleEventRuleSelectionChange(selection) {
+                    this.selectedEventRules = selection;
+                },
+
+                // 获取事件规则行样式
+                getEventRuleRowClassName({ row }) {
+                    if (row.isEditing) {
+                        return 'is-editing';
+                    }
+                    return '';
+                },
+
+                // 新增事件规则
+                addEventRule() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.eventRules) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+
+                    const newRule = {
+                        id: Date.now(),
+                        name: '',
+                        code: '',
+                        category: '安全告警',
+                        description: '',
+                        triggerCondition: '',
+                        severity: 'medium',
+                        enabled: true,
+                        actions: ['发送告警', '记录日志'],
+                        isEditing: true,
+                        isNew: true
+                    };
+
+                    this.selectedAssetType.eventRules.unshift(newRule);
+                    this.$message.success('新增事件规则成功，请填写规则信息');
+                },
+
+                // 进入事件规则编辑模式
+                enterEventRuleEditMode(rule) {
+                    if (!this.selectedAssetType) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+
+                    // 保存原始数据
+                    rule._originalData = { ...rule };
+                    rule.isEditing = true;
+                    this.$forceUpdate();
+                },
+
+                // 保存事件规则编辑
+                saveEventRuleEdit(rule) {
+                    // 验证必填字段
+                    if (!rule.name || !rule.code || !rule.category || !rule.triggerCondition) {
+                        this.$message.warning('请填写必填字段：规则名称、编码、分类、触发条件');
+                        return;
+                    }
+
+                    rule.isEditing = false;
+                    delete rule._originalData;
+
+                    // 如果是新增的规则，移除isNew标记
+                    if (rule.isNew) {
+                        delete rule.isNew;
+                    }
+
+                    this.$message.success('保存成功');
+                },
+
+                // 取消事件规则编辑
+                cancelEventRuleEdit(rule) {
+                    if (rule.isNew) {
+                        // 如果是新增的规则，直接删除
+                        const index = this.selectedAssetType.eventRules.indexOf(rule);
+                        if (index > -1) {
+                            this.selectedAssetType.eventRules.splice(index, 1);
+                        }
+                        this.$message.info('已取消新增');
+                    } else if (rule._originalData) {
+                        // 恢复原始数据
+                        Object.assign(rule, rule._originalData);
+                        delete rule._originalData;
+                        this.$message.info('已取消编辑');
+                    }
+                    rule.isEditing = false;
+                },
+
+                // 删除事件规则
+                deleteEventRule(rule) {
+                    this.$confirm('确定要删除该事件规则吗？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const index = this.selectedAssetType.eventRules.indexOf(rule);
+                        if (index > -1) {
+                            this.selectedAssetType.eventRules.splice(index, 1);
+                            this.$message.success('删除成功');
+                        }
+                    }).catch(() => {
+                        // 用户取消删除
+                    });
+                },
+
+                // 批量删除事件规则
+                batchDeleteEventRules() {
+                    if (this.selectedEventRules.length === 0) {
+                        this.$message.warning('请选择要删除的事件规则');
+                        return;
+                    }
+
+                    this.$confirm(`确定要删除选中的 ${this.selectedEventRules.length} 个事件规则吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.selectedEventRules.forEach(rule => {
+                            const index = this.selectedAssetType.eventRules.indexOf(rule);
+                            if (index > -1) {
+                                this.selectedAssetType.eventRules.splice(index, 1);
+                            }
+                        });
+                        this.selectedEventRules = [];
+                        this.$message.success(`成功删除 ${this.selectedEventRules.length} 个事件规则`);
+                    }).catch(() => {
+                        // 用户取消删除
+                    });
+                },
+
+                // 获取事件规则分类标签类型
+                getEventRuleCategoryTagType(category) {
+                    const typeMap = {
+                        '安全告警': 'danger',
+                        '运行监控': 'warning',
+                        '状态监控': 'info',
+                        '库存告警': 'warning',
+                        '安全监控': 'danger',
+                        '质量监控': 'success',
+                        '能耗监控': 'primary'
+                    };
+                    return typeMap[category] || '';
+                },
+
+                // 获取事件规则严重程度标签类型
+                getEventRuleSeverityTagType(severity) {
+                    const typeMap = {
+                        'high': 'danger',
+                        'medium': 'warning',
+                        'low': 'info'
+                    };
+                    return typeMap[severity] || '';
+                },
+
+                // 获取事件规则严重程度显示标签
+                getEventRuleSeverityLabel(severity) {
+                    const labelMap = {
+                        'high': '高',
+                        'medium': '中',
+                        'low': '低'
+                    };
+                    return labelMap[severity] || severity;
+                },
+
+                // 显示事件规则配置抽屉
+                showEventRuleConfig(rule) {
+                    if (!this.selectedAssetType) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+                    
+                    // 可以在这里保存当前选中的规则，供配置页面使用
+                    this.currentConfigEventRule = rule;
+                    this.eventRuleConfigDrawerVisible = true;
+                },
+
+                // 切换事件规则状态
+                toggleEventRuleStatus(rule) {
+                    const action = rule.enabled ? '停用' : '启用';
+                    const ruleName = rule.name;
+                    
+                    this.$confirm(`确定要${action}事件规则"${ruleName}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        rule.enabled = !rule.enabled;
+                        this.$message.success(`已${action}事件规则"${ruleName}"`);
+                    }).catch(() => {
+                        // 用户取消操作
+                    });
+                },
+
+                // 告警相关方法
+                // 刷新告警
+                refreshAlarms() {
+                    this.$message.success('告警数据已刷新');
+                },
+
+                // 检索告警
+                searchAlarms() {
+                    // 这里可以添加实际的检索逻辑
+                    this.$message.success('告警检索完成');
+                },
+
+                // 清空告警检索条件
+                clearAlarmSearch() {
+                    this.alarmSearchKeyword = '';
+                    this.alarmSearchLevel = '';
+                    this.alarmSearchStatus = 'unhandled';
+                    this.alarmSearchTimeRange = '3days';
+                },
+
+                // 查看告警详情
+                viewAlarmDetail(alarm) {
+                    this.currentAlarm = alarm;
+                    this.alarmDetailDrawerVisible = true;
+                },
+
+                // 处理告警
+                handleAlarm(alarm) {
+                    this.$prompt('请输入处理备注', '处理告警', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        inputPlaceholder: '请输入处理备注...'
+                    }).then(({ value }) => {
+                        alarm.isHandled = true;
+                        alarm.handler = '当前用户';
+                        alarm.status = 'handled';
+                        alarm.handleTime = new Date().toLocaleString();
+                        alarm.handleNote = value || '';
+                        this.$message.success('告警已处理');
+                    }).catch(() => {
+                        // 用户取消操作
+                    });
+                },
+
+                // 忽略告警
+                ignoreAlarm(alarm) {
+                    this.$confirm('确定要忽略该告警吗？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        alarm.isHandled = true;
+                        alarm.handler = '当前用户';
+                        alarm.status = 'ignored';
+                        alarm.handleTime = new Date().toLocaleString();
+                        alarm.handleNote = '忽略，不做处理';
+                        this.$message.success('告警已忽略');
+                    }).catch(() => {
+                        // 用户取消操作
+                    });
+                },
+
+                // 标记为误报
+                markAsFalseAlarm(alarm) {
+                    this.$confirm('确定要将该告警标记为误报吗？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        alarm.isHandled = true;
+                        alarm.handler = '当前用户';
+                        alarm.status = 'false_alarm';
+                        alarm.handleTime = new Date().toLocaleString();
+                        alarm.handleNote = '误报';
+                        this.$message.success('告警已标记为误报');
+                    }).catch(() => {
+                        // 用户取消操作
+                    });
+                },
+
+                // 获取告警级别标签类型
+                getAlarmLevelTagType(level) {
+                    const typeMap = {
+                        'high': 'danger',
+                        'medium': 'warning',
+                        'low': 'info'
+                    };
+                    return typeMap[level] || '';
+                },
+
+                // 获取告警级别显示标签
+                getAlarmLevelLabel(level) {
+                    const labelMap = {
+                        'high': '高',
+                        'medium': '中',
+                        'low': '低'
+                    };
+                    return labelMap[level] || level;
+                },
+
                 // 添加资产
                 addAsset() {
                     if (!this.selectedNode) {
@@ -6167,9 +8205,11 @@
                     this.activeTab = 'basicInfo';
                 },
                 
-                // 取消添加资产
-                cancelAddAsset() {
+                // 取消资产表单
+                cancelAssetForm() {
                     this.isAddingAsset = false;
+                    this.isViewingAsset = false;
+                    this.isEditingAsset = false;
                     this.assetForm = {
                         assetType: '',
                         deviceCode: '',
@@ -6177,6 +8217,125 @@
                         connectionStatus: '待接入',
                         runningStatus: '-'
                     };
+                },
+
+                // 清除所有编辑状态
+                clearAllEditingStates() {
+                    // 清除资产表单状态
+                    this.cancelAssetForm();
+                    
+                    // 清除静态属性、动态变量、业务属性、指标的编辑状态
+                    if (this.selectedAssetType) {
+                        // 清除静态属性编辑状态
+                        if (this.selectedAssetType.staticProperties) {
+                            this.selectedAssetType.staticProperties.forEach(prop => {
+                                prop.isEditing = false;
+                            });
+                        }
+                        
+                        // 清除动态变量编辑状态
+                        if (this.selectedAssetType.dynamicVariables) {
+                            this.selectedAssetType.dynamicVariables.forEach(variable => {
+                                variable.isEditing = false;
+                            });
+                        }
+                        
+                        // 清除业务属性编辑状态
+                        if (this.selectedAssetType.businessProperties) {
+                            this.selectedAssetType.businessProperties.forEach(prop => {
+                                prop.isEditing = false;
+                            });
+                        }
+                        
+                        // 清除指标编辑状态
+                        if (this.selectedAssetType.indicators) {
+                            this.selectedAssetType.indicators.forEach(indicator => {
+                                indicator.isEditing = false;
+                            });
+                        }
+
+                        // 清除事件规则编辑状态
+                        if (this.selectedAssetType.eventRules) {
+                            this.selectedAssetType.eventRules.forEach(rule => {
+                                rule.isEditing = false;
+                            });
+                        }
+                    }
+                },
+
+                // 查看资产
+                viewAsset(asset) {
+                    // 自动选中资产所在节点
+                    if (asset.nodeName && asset.nodeName !== this.selectedNode.name) {
+                        const targetNode = this.findNodeByName(this.treeData, asset.nodeName);
+                        if (targetNode) {
+                            this.selectNode(targetNode);
+                        }
+                    }
+                    
+                    this.isAddingAsset = false;
+                    this.isViewingAsset = true;
+                    this.isEditingAsset = false;
+                    
+                    // 填充表单数据
+                    this.assetForm = {
+                        assetType: asset.type || '',
+                        deviceCode: asset.code || '',
+                        deviceName: asset.name || '',
+                        connectionStatus: asset.isConnected ? '已接入' : '待接入',
+                        runningStatus: asset.status || '-'
+                    };
+                    
+                    this.activeTab = 'basicInfo';
+                },
+
+                // 编辑资产
+                editAsset(asset) {
+                    // 自动选中资产所在节点
+                    if (asset.nodeName && asset.nodeName !== this.selectedNode.name) {
+                        const targetNode = this.findNodeByName(this.treeData, asset.nodeName);
+                        if (targetNode) {
+                            this.selectNode(targetNode);
+                        }
+                    }
+                    
+                    this.isAddingAsset = false;
+                    this.isViewingAsset = false;
+                    this.isEditingAsset = true;
+                    
+                    // 保存当前编辑的资产对象
+                    this.currentEditingAsset = asset;
+                    
+                    // 填充表单数据
+                    this.assetForm = {
+                        assetType: asset.type || '',
+                        deviceCode: asset.code || '',
+                        deviceName: asset.name || '',
+                        connectionStatus: asset.isConnected ? '已接入' : '待接入',
+                        runningStatus: asset.status || '-'
+                    };
+                    
+                    this.activeTab = 'basicInfo';
+                },
+
+                // 删除资产
+                deleteAsset(asset) {
+                    this.$confirm(`确定要删除资产"${asset.name}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        if (this.selectedNode && this.selectedNode.assets) {
+                            const index = this.selectedNode.assets.findIndex(item => item.id === asset.id);
+                            if (index > -1) {
+                                this.selectedNode.assets.splice(index, 1);
+                                this.searchAssets();
+                                this.$message.success('资产删除成功');
+                            }
+                        }
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
                 },
                 
                 // 保存资产
@@ -6194,6 +8353,7 @@
                         return;
                     }
                     
+                    if (this.isAddingAsset) {
                     // 创建新资产对象
                     const newAsset = {
                         id: Date.now().toString(),
@@ -6214,13 +8374,27 @@
                         this.selectedNode.assets = [];
                     }
                     this.selectedNode.assets.push(newAsset);
+                        
+                        this.$message.success('资产添加成功');
+                    } else if (this.isEditingAsset && this.currentEditingAsset) {
+                        // 更新现有资产
+                        this.currentEditingAsset.name = this.assetForm.deviceName;
+                        this.currentEditingAsset.code = this.assetForm.deviceCode;
+                        this.currentEditingAsset.type = this.assetForm.assetType;
+                        this.currentEditingAsset.isConnected = this.assetForm.connectionStatus === '已接入';
+                        this.currentEditingAsset.status = this.assetForm.runningStatus;
+                        
+                        this.$message.success('资产修改成功');
+                    }
                     
                     // 更新过滤后的资产列表
                     this.searchAssets();
                     
-                    // 退出添加模式
+                    // 退出所有模式
                     this.isAddingAsset = false;
-                    this.$message.success('资产添加成功');
+                    this.isViewingAsset = false;
+                    this.isEditingAsset = false;
+                    this.currentEditingAsset = null;
                 },
 
                 // 获取资产图标样式类
@@ -6778,13 +8952,116 @@
 
                 // 保存行编辑
                 saveRowEdit(row) {
+                    // 验证必填字段
+                    if (!row.name || !row.code || !row.type) {
+                        this.$message.warning('请填写必填字段：变量名称、编码、数据类型');
+                        return;
+                    }
+                    
                     row.isEditing = false;
                     delete row._originalData;
+                    
+                    // 如果是新增的参数，移除isNew标记
+                    if (row.isNew) {
+                        delete row.isNew;
+                    }
+                    
                     this.$message.success('保存成功');
                 },
 
                 // 取消行编辑
                 cancelRowEdit(row) {
+                    if (row.isNew) {
+                        // 如果是新增的参数，直接删除
+                        const index = this.selectedAssetType.dynamicVariables.indexOf(row);
+                        if (index > -1) {
+                            this.selectedAssetType.dynamicVariables.splice(index, 1);
+                        }
+                        this.$message.info('已取消新增');
+                    } else if (row._originalData) {
+                        // 恢复原始数据
+                        Object.assign(row, row._originalData);
+                        delete row._originalData;
+                        this.$message.info('已取消编辑');
+                    }
+                    row.isEditing = false;
+                },
+
+                // 双击行进入动态变量编辑模式
+                enterDynamicVariableEditMode(row) {
+                    if (!this.assetForm.assetType) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+                    if (!this.selectedAssetType || !this.selectedAssetType.dynamicVariables) {
+                        this.$message.warning('资产类型数据加载失败，请重新选择资产类型');
+                        return;
+                    }
+                    
+                    // 先退出其他行的编辑模式
+                    this.selectedAssetType.dynamicVariables.forEach(item => {
+                        if (item !== row) {
+                            item.isEditing = false;
+                            delete item._originalData;
+                        }
+                    });
+                    
+                    // 进入当前行编辑模式
+                    row.isEditing = true;
+                    // 保存原始数据用于取消编辑
+                    row._originalData = { ...row };
+                    
+                    // 强制更新视图
+                    this.$forceUpdate();
+                },
+
+                // 双击行进入业务属性编辑模式
+                enterBusinessPropertyEditMode(row) {
+                    console.log('进入业务属性编辑模式:', row);
+                    if (!this.assetForm.assetType) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+                    if (!this.selectedAssetType || !this.selectedAssetType.businessProperties) {
+                        console.log('selectedAssetType 或 businessProperties 不存在');
+                        this.$message.warning('资产类型数据加载失败，请重新选择资产类型');
+                        return;
+                    }
+                    
+                    // 先退出其他行的编辑模式
+                    this.selectedAssetType.businessProperties.forEach(item => {
+                        if (item !== row) {
+                            item.isEditing = false;
+                            delete item._originalData;
+                        }
+                    });
+                    
+                    // 进入当前行编辑模式
+                    row.isEditing = true;
+                    // 保存原始数据用于取消编辑
+                    row._originalData = { ...row };
+                    
+                    // 强制更新视图
+                    this.$forceUpdate();
+                    console.log('业务属性编辑模式已设置:', row.isEditing);
+                },
+
+                // 保存业务属性行编辑
+                saveBusinessPropertyRow(row) {
+                    // 验证必填字段
+                    if (!row.name || !row.code || !row.type) {
+                        this.$message.warning('请填写必填字段：属性名称、编码、数据类型');
+                        return;
+                    }
+                    
+                    row.isEditing = false;
+                    delete row._originalData;
+                    
+                    this.$message.success('保存成功');
+                },
+
+                // 取消业务属性行编辑
+                cancelBusinessPropertyEdit(row) {
                     if (row._originalData) {
                         // 恢复原始数据
                         Object.assign(row, row._originalData);
@@ -6792,6 +9069,41 @@
                     }
                     row.isEditing = false;
                     this.$message.info('已取消编辑');
+                },
+
+                // 删除业务属性
+                deleteBusinessProperty(row) {
+                    this.$confirm(`确定要删除业务属性"${row.name}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        if (this.selectedAssetType && this.selectedAssetType.businessProperties) {
+                            const index = this.selectedAssetType.businessProperties.indexOf(row);
+                            if (index > -1) {
+                                this.selectedAssetType.businessProperties.splice(index, 1);
+                                this.$message.success('业务属性删除成功');
+                            }
+                        }
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+
+                // 获取动态变量表格行样式类名
+                getDynamicVariableRowClassName({ row }) {
+                    if (row.isEditing) {
+                        return 'is-editing';
+                    }
+                    return '';
+                },
+
+                // 获取业务属性表格行样式类名
+                getBusinessPropertyRowClassName({ row }) {
+                    if (row.isEditing) {
+                        return 'is-editing';
+                    }
+                    return '';
                 },
 
                 // 删除行
@@ -6828,10 +9140,14 @@
 
                 // 新增指标
                 addIndicator() {
-                    this.isIndicatorEditMode = false;
-                    this.isIndicatorViewMode = false;
-                    this.indicatorForm = {
-                        id: null,
+                    // 生成新的ID
+                    const newId = this.selectedAssetType && this.selectedAssetType.indicators 
+                        ? Math.max(...this.selectedAssetType.indicators.map(item => item.id)) + 1 
+                        : 1;
+                    
+                    // 创建新的指标对象
+                    const newIndicator = {
+                        id: newId,
                         name: '',
                         code: '',
                         category: '',
@@ -6841,9 +9157,90 @@
                         updateFrequency: '',
                         participatingVariables: [],
                         formula: '',
-                        description: ''
+                        description: '',
+                        isEditing: true, // 标记为编辑模式
+                        isNew: true // 标记为新行
                     };
-                    this.indicatorDrawerVisible = true;
+                    
+                    // 添加到指标列表
+                    if (this.selectedAssetType && this.selectedAssetType.indicators) {
+                        this.selectedAssetType.indicators.unshift(newIndicator);
+                    } else if (this.selectedAssetType) {
+                        this.selectedAssetType.indicators = [newIndicator];
+                    }
+                },
+
+                // 双击行进入指标编辑模式
+                enterIndicatorEditMode(row) {
+                    console.log('进入指标编辑模式:', row);
+                    if (!this.assetForm.assetType) {
+                        this.$message.warning('请先选择资产类型');
+                        return;
+                    }
+                    if (!this.selectedAssetType || !this.selectedAssetType.indicators) {
+                        console.log('selectedAssetType 或 indicators 不存在');
+                        this.$message.warning('资产类型数据加载失败，请重新选择资产类型');
+                        return;
+                    }
+                    
+                    // 先退出其他行的编辑模式
+                    this.selectedAssetType.indicators.forEach(item => {
+                        if (item !== row) {
+                            item.isEditing = false;
+                            delete item._originalData;
+                        }
+                    });
+                    
+                    // 进入当前行编辑模式
+                    row.isEditing = true;
+                    // 保存原始数据用于取消编辑
+                    row._originalData = { ...row };
+                    
+                    // 强制更新视图
+                    this.$forceUpdate();
+                    console.log('指标编辑模式已设置:', row.isEditing);
+                },
+
+                // 保存指标行编辑
+                saveIndicatorRow(row) {
+                    // 验证必填字段
+                    if (!row.name || !row.code || !row.category || !row.direction) {
+                        this.$message.warning('请填写必填字段：指标名称、编码、分类、方向');
+                        return;
+                    }
+                    
+                    row.isEditing = false;
+                    delete row._originalData;
+                    delete row.isNew;
+                    
+                    this.$message.success('保存成功');
+                },
+
+                // 取消指标行编辑
+                cancelIndicatorEdit(row) {
+                    if (row.isNew) {
+                        // 如果是新行，直接删除
+                        if (this.selectedAssetType && this.selectedAssetType.indicators) {
+                            const index = this.selectedAssetType.indicators.indexOf(row);
+                            if (index > -1) {
+                                this.selectedAssetType.indicators.splice(index, 1);
+                            }
+                        }
+                    } else if (row._originalData) {
+                        // 恢复原始数据
+                        Object.assign(row, row._originalData);
+                        delete row._originalData;
+                    }
+                    row.isEditing = false;
+                    this.$message.info('已取消编辑');
+                },
+
+                // 获取指标表格行样式类名
+                getIndicatorRowClassName({ row }) {
+                    if (row.isEditing) {
+                        return 'is-editing';
+                    }
+                    return '';
                 },
 
                 // 编辑指标

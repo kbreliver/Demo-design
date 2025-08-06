@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工厂模型模板管理 - 数字孪生平台</title>
+    <link rel="preload" href="assets/fonts/element-icons.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="assets/fonts/element-icons.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        .template-management-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .header-actions .el-button {
+            margin: 0;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .content-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .form-section {
+            padding: 20px;
+            border-bottom: 1px solid #e4e7ed;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 8px;
+            color: #409eff;
+        }
+
+        .hierarchy-tree {
+            border: 1px solid #e4e7ed;
+            border-radius: 6px;
+            padding: 16px;
+            background-color: #fafafa;
+            min-height: 300px;
+        }
+
+        .node-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background-color: #fff;
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .node-item:hover {
+            border-color: #409eff;
+            box-shadow: 0 2px 4px rgba(64, 158, 255, 0.1);
+        }
+
+        .node-item.selected {
+            border-color: #409eff;
+            background-color: #f0f9ff;
+        }
+
+        .node-item.dragging {
+            opacity: 0.5;
+        }
+
+        .node-item.drag-over {
+            border-color: #67c23a;
+            background-color: #f0f9ff;
+        }
+
+        .node-expand-icon {
+            margin-right: 8px;
+            color: #909399;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 16px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .node-expand-icon:hover {
+            color: #409eff;
+        }
+
+        .node-expand-icon.expanded {
+            color: #409eff;
+        }
+
+        .node-expand-icon.leaf {
+            color: transparent;
+            cursor: default;
+        }
+
+        .node-icon {
+            margin-right: 8px;
+            color: #409eff;
+        }
+
+        .node-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .node-name {
+            font-weight: 500;
+            color: #303133;
+            min-width: 120px;
+        }
+
+        .node-type {
+            background-color: #e1f3ff;
+            color: #409eff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .node-description {
+            color: #606266;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .node-actions {
+            display: none;
+            gap: 4px;
+        }
+
+        .node-item:hover .node-actions {
+            display: flex;
+        }
+
+        .node-actions .el-button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .hierarchy-actions {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: #c0c4cc;
+            margin-right: 8px;
+        }
+
+        .drag-handle:hover {
+            color: #409eff;
+        }
+
+        .node-level-1 { margin-left: 0; }
+        .node-level-2 { margin-left: 20px; }
+        .node-level-3 { margin-left: 40px; }
+        .node-level-4 { margin-left: 60px; }
+        .node-level-5 { margin-left: 80px; }
+
+        .empty-hierarchy {
+            text-align: center;
+            padding: 40px 20px;
+            color: #909399;
+        }
+
+        .empty-hierarchy i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-hierarchy-text {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .form-actions {
+            padding: 20px;
+            text-align: right;
+            border-top: 1px solid #e4e7ed;
+            background-color: #fafafa;
+        }
+
+        .form-actions .el-button {
+            margin-left: 12px;
+        }
+
+        /* 抽屉遮罩层 */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .drawer-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 右侧抽屉样式 */
+        .node-drawer {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100vh;
+            background-color: #fff;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .node-drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .drawer-close {
+            cursor: pointer;
+            color: #909399;
+            font-size: 20px;
+        }
+
+        .drawer-close:hover {
+            color: #409eff;
+        }
+
+        .drawer-content {
+            padding: 20px;
+        }
+
+        .drawer-footer {
+            padding: 20px;
+            border-top: 1px solid #e4e7ed;
+            text-align: right;
+            background-color: #fafafa;
+        }
+
+        .drawer-footer .el-button {
+            margin-left: 12px;
+        }
+
+        @media (max-width: 1400px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .header-actions {
+                align-self: flex-end;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+                align-self: stretch;
+                justify-content: flex-end;
+            }
+            
+            .header-actions .el-button {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .node-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .node-actions {
+                margin-top: 8px;
+            }
+
+            .node-drawer {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="template-management-container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="page-title">{{ pageTitle }}</h1>
+                    <!-- <p class="page-description">{{ pageDescription }}</p> -->
+                </div>
+                <div class="header-actions">
+                    <el-button type="success" @click="instantiateFactoryModel" icon="el-icon-s-management">
+                        实例化工厂模型
+                    </el-button>
+                    <el-button type="primary" @click="saveTemplate" icon="el-icon-document-checked">
+                        保存模板
+                    </el-button>
+                    <el-button @click="goBack" icon="el-icon-arrow-left">
+                        返回列表
+                    </el-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="content-card">
+            <!-- 模板基本信息 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="el-icon-info"></i>
+                    基本信息
+                </div>
+                
+                <el-form :model="template" label-width="100px">
+                    <el-form-item label="模板名称">
+                        <el-input v-model="template.name" placeholder="请输入模板名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="模板描述">
+                        <el-input 
+                            type="textarea" 
+                            v-model="template.description" 
+                            placeholder="请输入模板描述"
+                            :rows="3">
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="模板类型">
+                        <el-input v-model="template.categoryDisplay" readonly placeholder="模板类型" style="width: 100%;">
+                            <template slot="prepend">
+                                <i class="el-icon-info"></i>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label="发布状态">
+                        <el-switch
+                            v-model="template.status"
+                            active-value="published"
+                            inactive-value="unpublished"
+                            active-text="已发布"
+                            inactive-text="未发布">
+                        </el-switch>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <!-- 层级结构管理 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="el-icon-s-operation"></i>
+                    层级结构管理
+                </div>
+
+                <div class="hierarchy-actions">
+                    <el-button @click="expandAll" icon="el-icon-s-unfold">
+                        全部展开
+                    </el-button>
+                    <el-button @click="collapseAll" icon="el-icon-s-fold">
+                        全部收起
+                    </el-button>
+                </div>
+
+                <div class="hierarchy-tree" 
+                     @dragover="onDragOver" 
+                     @drop="onDrop"
+                     @dragleave="onDragLeave">
+                    <div v-if="!hasRootNode" class="empty-hierarchy">
+                        <i class="el-icon-folder-opened"></i>
+                        <div class="empty-hierarchy-text">暂无层级结构，请添加根节点</div>
+                        <el-button type="primary" @click="addRootNode">
+                            添加第一个节点
+                        </el-button>
+                    </div>
+                    
+                    <div v-else>
+                        <div 
+                            v-for="(node, index) in visibleNodes" 
+                            :key="node.id"
+                            class="node-item"
+                            :class="[
+                                'node-level-' + node.level, 
+                                { 
+                                    selected: selectedNode === node,
+                                    dragging: draggingNode === node,
+                                    'drag-over': dragOverNode === node
+                                }
+                            ]"
+                            :data-node-id="node.id"
+                            :draggable="true"
+                            @click="selectNode(node)"
+                            @dragstart="onDragStart($event, node)"
+                            @dragend="onDragEnd">
+                            
+                            <i class="el-icon-rank drag-handle"></i>
+                            
+                            <i class="node-expand-icon"
+                               :class="[
+                                   hasChildren(node) ? (isExpanded(node) ? 'el-icon-arrow-down expanded' : 'el-icon-arrow-right') : 'leaf'
+                               ]"
+                               @click.stop="toggleExpand(node)">
+                            </i>
+                            
+                            <i class="node-icon" :class="getNodeIcon(node.type)"></i>
+                            
+                            <div class="node-content">
+                                <span class="node-name">{{ node.name }}</span>
+                                <span class="node-type">{{ node.type }}</span>
+                                <span class="node-description">{{ node.description }}</span>
+                            </div>
+                            
+                                                         <div class="node-actions">
+                                 <el-button 
+                                     type="text" 
+                                     size="mini" 
+                                     icon="el-icon-plus"
+                                     @click.stop="addChildNode(node)">
+                                     添加子节点
+                                 </el-button>
+                                 <el-button 
+                                     type="text" 
+                                     size="mini" 
+                                     icon="el-icon-edit"
+                                     @click.stop="editNode(node)">
+                                     编辑
+                                 </el-button>
+                                 <el-button 
+                                     type="text" 
+                                     size="mini" 
+                                     icon="el-icon-document-copy"
+                                     @click.stop="copyNode(node)"
+                                     style="color: #409eff;">
+                                     复制
+                                 </el-button>
+                                 <el-button 
+                                     type="text" 
+                                     size="mini" 
+                                     icon="el-icon-delete"
+                                     @click.stop="deleteNode(node)"
+                                     style="color: #f56c6c;">
+                                     删除
+                                 </el-button>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="form-actions">
+                <el-button @click="goBack">取消</el-button>
+                <el-button type="primary" @click="saveTemplate">保存模板</el-button>
+            </div>
+        </div>
+
+        <!-- 抽屉遮罩层 -->
+        <div class="drawer-backdrop" 
+             :class="{ show: nodeDrawerVisible }" 
+             @click="closeNodeDrawer">
+        </div>
+
+        <!-- 节点编辑右侧抽屉 -->
+        <div class="node-drawer" :class="{ open: nodeDrawerVisible }" @click="stopPropagation">
+            <div class="drawer-header">
+                <h3 class="drawer-title">{{ editingNode ? '编辑节点' : '添加节点' }}</h3>
+                <i class="el-icon-close drawer-close" @click="closeNodeDrawer"></i>
+            </div>
+            
+            <div class="drawer-content">
+                <el-form :model="nodeForm" :rules="nodeFormRules" ref="nodeForm" label-width="100px">
+                    <el-form-item label="节点名称" prop="name">
+                        <el-input v-model="nodeForm.name" placeholder="请输入节点名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="节点类型" prop="type">
+                        <el-select v-model="nodeForm.type" placeholder="请选择节点类型" style="width: 100%;">
+                            <el-option 
+                                v-for="type in availableNodeTypes" 
+                                :key="type.value" 
+                                :label="type.label" 
+                                :value="type.value">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="节点描述" prop="description">
+                        <el-input 
+                            type="textarea" 
+                            v-model="nodeForm.description" 
+                            placeholder="请输入节点描述"
+                            :rows="3">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </div>
+            
+            <div class="drawer-footer">
+                <el-button @click="closeNodeDrawer">取消</el-button>
+                <el-button type="primary" @click="saveNode">确定</el-button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Vue和Element UI -->
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+    
+    <script>
+        // 数据层 - 定义所有数据
+        const data = {
+            // 页面信息
+            pageTitle: '工厂模型模板管理',
+            pageDescription: '管理模板的基本信息和层级结构',
+            
+            // 模板数据
+            template: {
+                id: '',
+                name: '水泥工厂标准模板',
+                description: '针对水泥行业特点，包含原料处理、烧成、粉磨等核心工艺环节。',
+                category: 'standard',
+                categoryDisplay: '标准模板',
+                status: 'published',
+                createTime: '2024-01-20'
+            },
+            
+            // 层级结构节点
+            hierarchyNodes: [
+                {
+                    id: '1',
+                    name: '水泥工厂',
+                    type: '工厂',
+                    description: '水泥生产工厂',
+                    level: 1,
+                    parentId: null
+                },
+                {
+                    id: '2',
+                    name: '原料处理车间',
+                    type: '车间',
+                    description: '处理石灰石、粘土等原料',
+                    level: 2,
+                    parentId: '1'
+                },
+                {
+                    id: '3',
+                    name: '破碎工段',
+                    type: '工段',
+                    description: '破碎石灰石等原料',
+                    level: 3,
+                    parentId: '2'
+                },
+                {
+                    id: '4',
+                    name: '破碎机',
+                    type: '设备',
+                    description: '破碎设备',
+                    level: 4,
+                    parentId: '3'
+                },
+                {
+                    id: '5',
+                    name: '烧成车间',
+                    type: '车间',
+                    description: '水泥熟料烧成',
+                    level: 2,
+                    parentId: '1'
+                },
+                {
+                    id: '6',
+                    name: '回转窑',
+                    type: '设备',
+                    description: '水泥熟料烧成设备',
+                    level: 3,
+                    parentId: '5'
+                }
+            ],
+            
+            // 可用节点类型
+            availableNodeTypes: [
+                { value: '集团', label: '集团' },
+                { value: '公司', label: '公司' },
+                { value: '工厂', label: '工厂' },
+                { value: '产线', label: '产线' },
+                { value: '车间', label: '车间' },
+                { value: '工段', label: '工段' },
+                { value: '实验室', label: '实验室' },
+                { value: '仓库', label: '仓库' },
+                { value: '设备', label: '设备' },
+                { value: '其它', label: '其它' }
+            ],
+            
+            // 状态数据
+            selectedNode: null,
+            nodeDrawerVisible: false,
+            editingNode: null,
+            
+            // 节点表单数据
+            nodeForm: {
+                name: '',
+                type: '',
+                description: ''
+            },
+            
+            // 节点表单验证规则
+            nodeFormRules: {
+                name: [
+                    { required: true, message: '请输入节点名称', trigger: 'blur' }
+                ],
+                type: [
+                    { required: true, message: '请选择节点类型', trigger: 'change' }
+                ],
+                description: [
+                    { required: true, message: '请输入节点描述', trigger: 'blur' }
+                ]
+            },
+
+            // 折叠展开状态 - 默认全部展开
+            expandedNodes: ['1', '2', '5'], // 默认展开所有有子节点的节点
+            
+            // 拖拽相关状态
+            draggingNode: null,
+            dragOverNode: null
+        };
+
+        // 逻辑层 - Vue实例
+        new Vue({
+            el: '#app',
+            data: data,
+            computed: {
+                // 检查是否存在根节点
+                hasRootNode() {
+                    return this.hierarchyNodes.some(node => node.level === 1);
+                },
+                
+                // 计算可见的节点（根据折叠状态）
+                visibleNodes() {
+                    const visible = [];
+                    const stack = [...this.hierarchyNodes.filter(n => n.level === 1)];
+                    
+                    while (stack.length > 0) {
+                        const node = stack.pop();
+                        visible.push(node);
+                        
+                        // 如果节点是展开的，添加其子节点到栈中
+                        if (this.isExpanded(node)) {
+                            const children = this.hierarchyNodes.filter(n => n.parentId === node.id);
+                            // 将子节点按相反顺序添加到栈中，以保持原有顺序
+                            for (let i = children.length - 1; i >= 0; i--) {
+                                stack.push(children[i]);
+                            }
+                        }
+                    }
+                    
+                    console.log('可见节点数量:', visible.length, '展开状态:', this.expandedNodes);
+                    return visible;
+                }
+            },
+            methods: {
+                // 获取节点图标
+                getNodeIcon(type) {
+                    const iconMap = {
+                        '集团': 'el-icon-office-building',
+                        '公司': 'el-icon-office-building',
+                        '工厂': 'el-icon-office-building',
+                        '产线': 'el-icon-s-operation',
+                        '车间': 'el-icon-s-shop',
+                        '工段': 'el-icon-s-operation',
+                        '实验室': 'el-icon-s-home',
+                        '仓库': 'el-icon-s-home',
+                        '设备': 'el-icon-s-platform',
+                        '其它': 'el-icon-s-help'
+                    };
+                    return iconMap[type] || 'el-icon-s-platform';
+                },
+                
+                // 选择节点
+                selectNode(node) {
+                    this.selectedNode = node;
+                },
+                
+                // 检查节点是否有子节点
+                hasChildren(node) {
+                    return this.hierarchyNodes.some(n => n.parentId === node.id);
+                },
+                
+                // 检查节点是否展开
+                isExpanded(node) {
+                    return this.expandedNodes.includes(node.id);
+                },
+                
+                // 切换节点展开状态
+                toggleExpand(node) {
+                    if (this.hasChildren(node)) {
+                        if (this.isExpanded(node)) {
+                            // 从数组中移除节点ID
+                            const index = this.expandedNodes.indexOf(node.id);
+                            if (index > -1) {
+                                this.expandedNodes.splice(index, 1);
+                            }
+                            console.log('收起节点:', node.name, '展开状态:', this.expandedNodes);
+                        } else {
+                            // 添加到数组中
+                            this.expandedNodes.push(node.id);
+                            console.log('展开节点:', node.name, '展开状态:', this.expandedNodes);
+                        }
+                    }
+                },
+                
+                // 全部展开
+                expandAll() {
+                    this.hierarchyNodes.forEach(node => {
+                        if (this.hasChildren(node) && !this.isExpanded(node)) {
+                            this.expandedNodes.push(node.id);
+                        }
+                    });
+                },
+                
+                // 全部收起
+                collapseAll() {
+                    this.expandedNodes = [];
+                },
+                
+                // 添加根节点
+                addRootNode() {
+                    // 检查是否已存在根节点
+                    const existingRootNodes = this.hierarchyNodes.filter(node => node.level === 1);
+                    if (existingRootNodes.length > 0) {
+                        this.$message.warning('只能有一个根节点，当前已存在根节点：' + existingRootNodes[0].name);
+                        return;
+                    }
+                    
+                    this.editingNode = null;
+                    this.resetNodeForm();
+                    this.nodeDrawerVisible = true;
+                },
+                
+                // 添加子节点
+                addChildNode(parentNode) {
+                    this.editingNode = null;
+                    this.resetNodeForm();
+                    this.nodeForm.parentId = parentNode.id;
+                    this.nodeForm.level = parentNode.level + 1;
+                    this.nodeDrawerVisible = true;
+                },
+                
+                // 编辑节点
+                editNode(node) {
+                    this.editingNode = node;
+                    this.nodeForm = {
+                        name: node.name,
+                        type: node.type,
+                        description: node.description
+                    };
+                    this.nodeDrawerVisible = true;
+                },
+                
+                // 关闭节点抽屉
+                closeNodeDrawer() {
+                    this.nodeDrawerVisible = false;
+                    this.resetNodeForm();
+                },
+                
+                // 阻止抽屉内容点击事件冒泡
+                stopPropagation(event) {
+                    event.stopPropagation();
+                },
+                
+                // 复制节点
+                copyNode(node) {
+                    this.$confirm(`确定要复制节点"${node.name}"及其所有子节点吗？`, '确认复制', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        this.copyNodeAndChildren(node);
+                        this.$message.success('复制成功');
+                    }).catch(() => {
+                        this.$message.info('已取消复制');
+                    });
+                },
+                
+                // 复制节点及其子节点
+                copyNodeAndChildren(sourceNode) {
+                    // 生成新的根节点ID
+                    const newRootId = 'node_' + Date.now();
+                    
+                    // 复制根节点
+                    const newNode = {
+                        ...sourceNode,
+                        id: newRootId,
+                        name: sourceNode.name + '_副本',
+                        parentId: sourceNode.parentId,
+                        level: sourceNode.level
+                    };
+                    
+                    // 添加到层级结构中
+                    this.hierarchyNodes.push(newNode);
+                    
+                    // 递归复制所有子节点
+                    this.copyChildrenRecursively(sourceNode.id, newRootId);
+                },
+                
+                // 递归复制子节点
+                copyChildrenRecursively(oldParentId, newParentId) {
+                    const children = this.hierarchyNodes.filter(n => n.parentId === oldParentId);
+                    
+                    children.forEach(child => {
+                        const newChildId = 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        
+                        const newChild = {
+                            ...child,
+                            id: newChildId,
+                            name: child.name + '_副本',
+                            parentId: newParentId
+                        };
+                        
+                        this.hierarchyNodes.push(newChild);
+                        
+                        // 递归复制子节点的子节点
+                        this.copyChildrenRecursively(child.id, newChildId);
+                    });
+                },
+                
+                // 删除节点
+                deleteNode(node) {
+                    this.$confirm(`确定要删除节点"${node.name}"吗？删除后将同时删除其所有子节点。`, '警告', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.deleteNodeAndChildren(node.id);
+                        this.$message.success('删除成功');
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 删除节点及其子节点
+                deleteNodeAndChildren(nodeId) {
+                    const nodesToDelete = this.getNodeAndChildren(nodeId);
+                    nodesToDelete.forEach(id => {
+                        const index = this.hierarchyNodes.findIndex(n => n.id === id);
+                        if (index > -1) {
+                            this.hierarchyNodes.splice(index, 1);
+                        }
+                    });
+                },
+                
+                // 获取节点及其所有子节点ID
+                getNodeAndChildren(nodeId) {
+                    const result = [nodeId];
+                    const children = this.hierarchyNodes.filter(n => n.parentId === nodeId);
+                    children.forEach(child => {
+                        result.push(...this.getNodeAndChildren(child.id));
+                    });
+                    return result;
+                },
+                
+                // 保存节点
+                saveNode() {
+                    this.$refs.nodeForm.validate((valid) => {
+                        if (valid) {
+                            if (this.editingNode) {
+                                // 编辑现有节点
+                                Object.assign(this.editingNode, this.nodeForm);
+                                this.$message.success('节点更新成功');
+                            } else {
+                                // 添加新节点
+                                const newNode = {
+                                    id: 'node_' + Date.now(),
+                                    ...this.nodeForm,
+                                    level: this.nodeForm.level || 1,
+                                    parentId: this.nodeForm.parentId || null
+                                };
+                                
+                                // 如果是根节点，检查是否已存在根节点
+                                if (newNode.level === 1) {
+                                    const existingRootNodes = this.hierarchyNodes.filter(node => node.level === 1);
+                                    if (existingRootNodes.length > 0) {
+                                        this.$message.warning('只能有一个根节点，当前已存在根节点：' + existingRootNodes[0].name);
+                                        return;
+                                    }
+                                }
+                                
+                                this.hierarchyNodes.push(newNode);
+                                this.$message.success('节点添加成功');
+                            }
+                            this.closeNodeDrawer();
+                        }
+                    });
+                },
+                
+                // 重置节点表单
+                resetNodeForm() {
+                    this.nodeForm = {
+                        name: '',
+                        type: '',
+                        description: ''
+                    };
+                    this.$refs.nodeForm && this.$refs.nodeForm.resetFields();
+                },
+                
+                // 拖拽开始
+                onDragStart(event, node) {
+                    this.draggingNode = node;
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', node.id);
+                },
+                
+                // 拖拽结束
+                onDragEnd() {
+                    this.draggingNode = null;
+                    this.dragOverNode = null;
+                },
+                
+                // 拖拽悬停
+                onDragOver(event) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                },
+                
+                // 拖拽离开
+                onDragLeave(event) {
+                    // 检查是否真的离开了拖拽区域
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                        this.dragOverNode = null;
+                    }
+                },
+                
+                // 拖拽放置
+                onDrop(event) {
+                    event.preventDefault();
+                    const draggedNodeId = event.dataTransfer.getData('text/plain');
+                    const draggedNode = this.hierarchyNodes.find(n => n.id === draggedNodeId);
+                    
+                    if (!draggedNode) return;
+                    
+                    // 找到放置位置的节点
+                    const targetElement = event.target.closest('.node-item');
+                    if (!targetElement) return;
+                    
+                    const targetNodeId = targetElement.getAttribute('data-node-id');
+                    const targetNode = this.hierarchyNodes.find(n => n.id === targetNodeId);
+                    
+                    if (!targetNode || draggedNode.id === targetNode.id) return;
+                    
+                    // 检查是否试图将父节点拖拽到子节点下
+                    if (this.isDescendant(draggedNode, targetNode)) {
+                        this.$message.warning('不能将父节点拖拽到子节点下');
+                        return;
+                    }
+                    
+                    const oldParentId = draggedNode.parentId;
+                    const newParentId = targetNode.id;
+                    
+                    // 判断是改变父节点还是调整顺序
+                    if (oldParentId === newParentId) {
+                        // 同层级调整顺序
+                        this.reorderNodes(draggedNode, targetNode);
+                    } else if (oldParentId === targetNode.parentId) {
+                        // 拖拽到同层级的其他节点上，调整顺序
+                        this.reorderNodes(draggedNode, targetNode);
+                    } else {
+                        // 改变父节点，需要确认
+                        this.confirmParentChange(draggedNode, targetNode, oldParentId, newParentId);
+                    }
+                },
+                
+                // 确认父节点变化
+                confirmParentChange(draggedNode, targetNode, oldParentId, newParentId) {
+                    const oldParent = oldParentId ? this.hierarchyNodes.find(n => n.id === oldParentId) : null;
+                    const newParent = targetNode;
+                    
+                    const oldParentName = oldParent ? oldParent.name : '根节点';
+                    const newParentName = newParent.name;
+                    
+                    this.$confirm(
+                        `确定要将节点"${draggedNode.name}"从"${oldParentName}"移动到"${newParentName}"吗？`,
+                        '确认移动',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    ).then(() => {
+                        // 更新节点的父节点和层级
+                        const newLevel = targetNode.level + 1;
+                        this.updateNodeLevel(draggedNode, newParentId, newLevel);
+                        this.$message.success('节点移动成功');
+                    }).catch(() => {
+                        this.$message.info('已取消移动');
+                    });
+                },
+                
+                // 调整同层级节点顺序
+                reorderNodes(draggedNode, targetNode) {
+                    // 获取同层级的所有节点
+                    const siblings = this.hierarchyNodes.filter(n => n.parentId === draggedNode.parentId);
+                    
+                    // 找到拖拽节点和目标节点在兄弟节点中的位置
+                    const draggedIndex = siblings.findIndex(n => n.id === draggedNode.id);
+                    const targetIndex = siblings.findIndex(n => n.id === targetNode.id);
+                    
+                    if (draggedIndex === -1 || targetIndex === -1) return;
+                    
+                    // 重新排序兄弟节点
+                    siblings.splice(draggedIndex, 1);
+                    siblings.splice(targetIndex, 0, draggedNode);
+                    
+                    // 更新层级结构数组中的顺序
+                    this.updateNodesOrder(siblings);
+                    
+                    this.$message.success('节点顺序调整成功');
+                },
+                
+                // 更新节点顺序
+                updateNodesOrder(orderedNodes) {
+                    // 获取所有节点
+                    const allNodes = [...this.hierarchyNodes];
+                    
+                    // 移除同层级的节点
+                    const parentId = orderedNodes[0]?.parentId;
+                    this.hierarchyNodes = allNodes.filter(n => n.parentId !== parentId);
+                    
+                    // 重新添加排序后的节点
+                    orderedNodes.forEach(node => {
+                        this.hierarchyNodes.push(node);
+                    });
+                },
+                
+                // 检查是否为后代节点
+                isDescendant(parent, child) {
+                    if (child.parentId === parent.id) return true;
+                    const childParent = this.hierarchyNodes.find(n => n.id === child.parentId);
+                    return childParent ? this.isDescendant(parent, childParent) : false;
+                },
+                
+                // 更新节点及其子节点的层级
+                updateNodeLevel(node, newParentId, newLevel) {
+                    node.parentId = newParentId;
+                    node.level = newLevel;
+                    
+                    // 更新所有子节点
+                    const children = this.hierarchyNodes.filter(n => n.parentId === node.id);
+                    children.forEach(child => {
+                        this.updateNodeLevel(child, node.id, newLevel + 1);
+                    });
+                },
+                
+                // 保存模板
+                saveTemplate() {
+                    this.$message.success('模板保存成功');
+                    console.log('保存的模板数据:', {
+                        template: this.template,
+                        hierarchyNodes: this.hierarchyNodes
+                    });
+                },
+                
+                // 加载模板数据
+                loadTemplateData(templateId) {
+                    // 模拟从后端加载模板数据
+                    const mockTemplates = {
+                        'cement_plant_standard': {
+                            id: 'cement_plant_standard',
+                            name: '水泥工厂标准模板',
+                            description: '针对水泥行业特点，包含原料处理、烧成、粉磨等核心工艺环节。',
+                            category: 'standard',
+                            status: 'published',
+                            createTime: '2024-01-20'
+                        },
+                        'cement_plant_advanced': {
+                            id: 'cement_plant_advanced',
+                            name: '水泥工厂高级模板',
+                            description: '包含完整的生产流程和辅助系统，适用于大型水泥工厂。',
+                            category: 'standard',
+                            status: 'published',
+                            createTime: '2024-01-21'
+                        },
+                        'cement_plant_mini': {
+                            id: 'cement_plant_mini',
+                            name: '水泥工厂迷你模板',
+                            description: '适用于小型水泥工厂的简化模板。',
+                            category: 'standard',
+                            status: 'unpublished',
+                            createTime: '2024-01-22'
+                        },
+                        'cement_plant_custom': {
+                            id: 'cement_plant_custom',
+                            name: '水泥工厂自定义模板',
+                            description: '用户自定义的水泥工厂模板。',
+                            category: 'custom',
+                            status: 'published',
+                            createTime: '2024-01-23'
+                        }
+                    };
+                    
+                    if (mockTemplates[templateId]) {
+                        this.template = { ...mockTemplates[templateId] };
+                        this.updateCategoryDisplay();
+                        this.$message.success('模板数据加载成功');
+                    } else {
+                        this.$message.warning('未找到指定的模板，使用默认数据');
+                    }
+                },
+                
+                // 更新模板类型显示
+                updateCategoryDisplay() {
+                    const categoryMap = {
+                        'standard': '标准模板',
+                        'custom': '自定义模板'
+                    };
+                    this.template.categoryDisplay = categoryMap[this.template.category] || '未知类型';
+                },
+                
+                // 实例化工厂模型
+                instantiateFactoryModel() {
+                    this.$message.info('请先保存模板，然后可以基于此模板创建工厂模型实例');
+                },
+                
+                // 保存模板
+                saveTemplate() {
+                    // 这里可以添加保存逻辑，比如验证表单、发送到后端等
+                    this.$message.success('模板保存成功');
+                },
+                
+                // 返回列表
+                goBack() {
+                    this.$confirm('确定要返回吗？未保存的更改将丢失。', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        window.history.back();
+                    }).catch(() => {
+                        this.$message.info('已取消返回');
+                    });
+                }
+            },
+            mounted() {
+                // 组件挂载后的初始化
+                console.log('工厂模型模板管理页面已加载');
+                
+                // 从URL参数获取模板ID和操作类型
+                const urlParams = new URLSearchParams(window.location.search);
+                const templateId = urlParams.get('id');
+                const action = urlParams.get('action');
+                const copyData = urlParams.get('data');
+                
+                if (action === 'create') {
+                    console.log('创建新模板');
+                    // 创建新模板，使用默认数据
+                    this.template = {
+                        id: 'template_new_' + Date.now(),
+                        name: '新建模板',
+                        description: '请输入模板描述',
+                        category: 'custom',
+                        categoryDisplay: '自定义模板',
+                        status: 'unpublished',
+                        createTime: new Date().toLocaleDateString()
+                    };
+                    // 新建模板时，层级结构为空
+                    this.hierarchyNodes = [];
+                    this.expandedNodes = [];
+                    this.$message.info('已创建新模板，请填写模板信息');
+                } else if (action === 'copy' && copyData) {
+                    console.log('复制模板');
+                    try {
+                        // 解析复制的模板数据
+                        const copyTemplateData = JSON.parse(decodeURIComponent(copyData));
+                        this.template = {
+                            ...copyTemplateData,
+                            category: 'custom', // 确保复制后为自定义模板
+                            categoryDisplay: '自定义模板'
+                        };
+                        
+                        // 如果有层级结构数据，也需要复制
+                        if (copyTemplateData.hierarchyNodes) {
+                            this.hierarchyNodes = [...copyTemplateData.hierarchyNodes];
+                            // 重新生成节点ID以避免冲突
+                            this.hierarchyNodes.forEach(node => {
+                                node.id = 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            });
+                        } else {
+                            this.hierarchyNodes = [];
+                        }
+                        
+                        this.expandedNodes = [];
+                        this.$message.success('已复制模板，请根据需要修改信息');
+                    } catch (error) {
+                        console.error('解析复制数据失败:', error);
+                        this.$message.error('复制模板失败，请重试');
+                    }
+                } else if (templateId) {
+                    console.log('编辑模板ID:', templateId);
+                    this.loadTemplateData(templateId);
+                }
+                
+                // 更新模板类型显示
+                this.updateCategoryDisplay();
+                
+                // 默认展开所有节点
+                this.expandAll();
+            }
+        });
+    </script>
+</body>
+</html> 

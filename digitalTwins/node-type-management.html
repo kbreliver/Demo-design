@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节点类型管理 - 数字孪生平台</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #303133;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .content-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .table-container {
+            padding: 20px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #f0f9ff;
+            color: #409eff;
+        }
+
+        .status-inactive {
+            background-color: #fef0f0;
+            color: #f56c6c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 自定义Element UI样式覆盖 */
+        .el-table th {
+            background-color: #fafafa !important;
+        }
+
+        .el-table--border th {
+            border-right: 1px solid #ebeef5 !important;
+        }
+
+        .el-table td {
+            border-bottom: 1px solid #ebeef5 !important;
+        }
+
+        /* 抽屉样式 */
+        .drawer-content {
+            padding: 20px;
+            height: calc(100% - 120px);
+            overflow-y: auto;
+        }
+
+        .drawer-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: #fff;
+            border-top: 1px solid #e4e7ed;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- 页面头部 -->
+        <!-- <div class="page-header">
+            <h1 class="page-title">{{ pageTitle }}</h1>
+            <p class="page-description">{{ pageDescription }}</p>
+        </div> -->
+
+        <!-- 主要内容 -->
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="card-title">节点类型列表</h2>
+                <el-button type="primary" @click="openAddModal">
+                    <i class="el-icon-plus"></i> 新增节点类型
+                </el-button>
+            </div>
+
+            <div class="table-container">
+                <el-table :data="nodeTypes" style="width: 100%" border>
+                    <el-table-column prop="name" label="节点类型名称" width="120"></el-table-column>
+                    <el-table-column prop="code" label="类型编码" width="120"></el-table-column>
+                    <el-table-column prop="description" label="描述" width="200"></el-table-column>
+                    <el-table-column prop="assetType" label="资产类型" width="120">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.assetType">{{ scope.row.assetType }}</span>
+                            <span v-else style="color: #c0c4cc;">-</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="allowedChildren" label="允许子节点类型" width="150">
+                        <template slot-scope="scope">
+                            {{ formatAllowedChildren(scope.row.allowedChildren) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="status" label="状态" width="100">
+                        <template slot-scope="scope">
+                            <span :class="['status-badge', scope.row.status === '启用' ? 'status-active' : 'status-inactive']">
+                                {{ scope.row.status }}
+                            </span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="createTime" label="创建时间" width="120"></el-table-column>
+                    <el-table-column label="操作" width="150">
+                        <template slot-scope="scope">
+                            <div class="action-buttons">
+                                <el-button size="mini" @click="editNodeType(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="deleteNodeType(scope.row)">删除</el-button>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </div>
+
+        <!-- 新增/编辑节点类型抽屉 -->
+        <el-drawer
+            :title="dialogTitle"
+            :visible.sync="dialogVisible"
+            direction="rtl"
+            size="500px"
+            :before-close="handleClose">
+            <div class="drawer-content">
+                <el-form :model="formData" :rules="formRules" ref="nodeTypeForm" label-width="120px">
+                    <el-form-item label="节点类型名称" prop="name">
+                        <el-input v-model="formData.name" placeholder="请输入节点类型名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="类型编码" prop="code">
+                        <el-input v-model="formData.code" placeholder="请输入类型编码"></el-input>
+                    </el-form-item>
+                    <el-form-item label="描述" prop="description">
+                        <el-input type="textarea" v-model="formData.description" placeholder="请输入描述"></el-input>
+                    </el-form-item>
+                    <el-form-item label="资产类型" prop="assetType">
+                        <el-select v-model="formData.assetType" placeholder="请选择资产类型" style="width: 100%">
+                            <el-option label="工厂" value="工厂"></el-option>
+                            <el-option label="产线" value="产线"></el-option>
+                            <el-option label="工艺段" value="工艺段"></el-option>
+                            <el-option label="工艺单元" value="工艺单元"></el-option>
+                            <el-option label="设备" value="设备"></el-option>
+                            <el-option label="部件" value="部件"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="允许子节点类型" prop="allowedChildren">
+                        <el-select v-model="formData.allowedChildren" multiple placeholder="请选择允许的子节点类型" style="width: 100%">
+                            <el-option
+                                v-for="item in availableNodeTypes"
+                                :key="item.code"
+                                :label="item.name"
+                                :value="item.code">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="状态" prop="status">
+                        <el-radio-group v-model="formData.status">
+                            <el-radio label="启用">启用</el-radio>
+                            <el-radio label="禁用">禁用</el-radio>
+                        </el-radio-group>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <div class="drawer-footer">
+                <el-button @click="dialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="submitForm">确 定</el-button>
+            </div>
+        </el-drawer>
+    </div>
+
+    <!-- 引入Vue.js和Element UI -->
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+
+    <!-- 数据定义 -->
+    <script>
+        // 节点类型数据
+        const nodeTypeData = {
+            pageTitle: '节点类型管理',
+            pageDescription: '管理工厂模型中的节点类型，包括预设标准类型和自定义类型，控制建模层级合规性',
+            
+            // 节点类型列表数据
+            nodeTypes: [
+                {
+                    id: 1,
+                    name: '工厂',
+                    code: 'FACTORY',
+                    description: '企业级工厂节点，顶级组织单位',
+                    assetType: '工厂',
+                    allowedChildren: ['WORKSHOP', 'ENERGY_ZONE'],
+                    status: '启用',
+                    createTime: '2024-01-15'
+                },
+               
+                {
+                    id: 3,
+                    name: '产线',
+                    code: 'PRODUCTION_LINE',
+                    description: '生产线，包含多个工段',
+                    assetType: '产线',
+                    allowedChildren: ['SECTION', 'EQUIPMENT'],
+                    status: '启用',
+                    createTime: '2024-01-15'
+                },
+                {
+                    id: 4,
+                    name: '工段',
+                    code: 'SECTION',
+                    description: '生产工段，包含多个设备',
+                    assetType: '工艺段',
+                    allowedChildren: ['EQUIPMENT','SECTION'],
+                    status: '启用',
+                    createTime: '2024-01-15'
+                },
+                {
+                    id: 5,
+                    name: '设备',
+                    code: 'EQUIPMENT',
+                    description: '生产设备，最小业务单元',
+                    assetType: '设备',
+                    allowedChildren: ['EQUIPMENT'],
+                    status: '启用',
+                    createTime: '2024-01-15'
+                }
+            ],
+
+            // 可选的节点类型（用于下拉选择）
+            availableNodeTypes: [
+                { name: '工厂', code: 'FACTORY' },
+                { name: '车间', code: 'WORKSHOP' },
+                { name: '产线', code: 'PRODUCTION_LINE' },
+                { name: '工段', code: 'SECTION' },
+                { name: '设备', code: 'EQUIPMENT' },
+                { name: '能耗区域', code: 'ENERGY_ZONE' }
+            ]
+        };
+    </script>
+
+    <!-- 交互逻辑 -->
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 页面信息
+                    pageTitle: nodeTypeData.pageTitle,
+                    pageDescription: nodeTypeData.pageDescription,
+                    
+                    // 节点类型列表
+                    nodeTypes: [...nodeTypeData.nodeTypes],
+                    availableNodeTypes: nodeTypeData.availableNodeTypes,
+                    
+                    // 对话框相关
+                    dialogVisible: false,
+                    dialogTitle: '新增节点类型',
+                    isEdit: false,
+                    editIndex: -1,
+                    
+                    // 表单数据
+                    formData: {
+                        name: '',
+                        code: '',
+                        description: '',
+                        assetType: '',
+                        allowedChildren: [],
+                        status: '启用'
+                    },
+                    
+                    // 表单验证规则
+                    formRules: {
+                        name: [
+                            { required: true, message: '请输入节点类型名称', trigger: 'blur' },
+                            { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+                        ],
+                        code: [
+                            { required: true, message: '请输入类型编码', trigger: 'blur' },
+                            { pattern: /^[A-Z_]+$/, message: '编码只能包含大写字母和下划线', trigger: 'blur' }
+                        ],
+                        description: [
+                            { required: true, message: '请输入描述', trigger: 'blur' },
+                            { max: 200, message: '描述不能超过200个字符', trigger: 'blur' }
+                        ],
+                        assetType: [
+                            { required: true, message: '请选择资产类型', trigger: 'change' }
+                        ],
+                        status: [
+                            { required: true, message: '请选择状态', trigger: 'change' }
+                        ]
+                    }
+                };
+            },
+            
+            methods: {
+                // 抽屉关闭处理
+                handleClose(done) {
+                    this.$confirm('确认关闭？未保存的数据将会丢失')
+                        .then(_ => {
+                            done();
+                        })
+                        .catch(_ => {});
+                },
+                
+                // 格式化允许的子节点类型显示
+                formatAllowedChildren(allowedChildren) {
+                    if (!allowedChildren || allowedChildren.length === 0) {
+                        return '无';
+                    }
+                    return allowedChildren.map(code => {
+                        const nodeType = this.availableNodeTypes.find(item => item.code === code);
+                        return nodeType ? nodeType.name : code;
+                    }).join('、');
+                },
+                
+                // 打开新增对话框
+                openAddModal() {
+                    this.dialogTitle = '新增节点类型';
+                    this.isEdit = false;
+                    this.resetForm();
+                    this.dialogVisible = true;
+                },
+                
+                // 编辑节点类型
+                editNodeType(row) {
+                    this.dialogTitle = '编辑节点类型';
+                    this.isEdit = true;
+                    this.editIndex = this.nodeTypes.findIndex(item => item.id === row.id);
+                    this.formData = {
+                        name: row.name,
+                        code: row.code,
+                        description: row.description,
+                        assetType: row.assetType || '',
+                        allowedChildren: [...row.allowedChildren],
+                        status: row.status
+                    };
+                    this.dialogVisible = true;
+                },
+                
+                // 删除节点类型
+                deleteNodeType(row) {
+                    this.$confirm('确定要删除这个节点类型吗？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const index = this.nodeTypes.findIndex(item => item.id === row.id);
+                        if (index > -1) {
+                            this.nodeTypes.splice(index, 1);
+                            this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                        }
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        });
+                    });
+                },
+                
+                // 重置表单
+                resetForm() {
+                    this.formData = {
+                        name: '',
+                        code: '',
+                        description: '',
+                        assetType: '',
+                        allowedChildren: [],
+                        status: '启用'
+                    };
+                    this.$nextTick(() => {
+                        this.$refs.nodeTypeForm && this.$refs.nodeTypeForm.clearValidate();
+                    });
+                },
+                
+                // 提交表单
+                submitForm() {
+                    this.$refs.nodeTypeForm.validate((valid) => {
+                        if (valid) {
+                            if (this.isEdit) {
+                                // 编辑模式
+                                const nodeType = this.nodeTypes[this.editIndex];
+                                Object.assign(nodeType, {
+                                    name: this.formData.name,
+                                    code: this.formData.code,
+                                    description: this.formData.description,
+                                    assetType: this.formData.assetType,
+                                    allowedChildren: [...this.formData.allowedChildren],
+                                    status: this.formData.status
+                                });
+                                this.$message({
+                                    type: 'success',
+                                    message: '编辑成功!'
+                                });
+                            } else {
+                                // 新增模式
+                                const newNodeType = {
+                                    id: Date.now(), // 简单的ID生成
+                                    name: this.formData.name,
+                                    code: this.formData.code,
+                                    description: this.formData.description,
+                                    assetType: this.formData.assetType,
+                                    allowedChildren: [...this.formData.allowedChildren],
+                                    status: this.formData.status,
+                                    createTime: new Date().toISOString().split('T')[0]
+                                };
+                                this.nodeTypes.push(newNodeType);
+                                this.$message({
+                                    type: 'success',
+                                    message: '新增成功!'
+                                });
+                            }
+                            this.dialogVisible = false;
+                        } else {
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式输入模式测试 V2 - 改进版</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        
+        .test-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .test-section {
+            margin-bottom: 32px;
+            padding: 20px;
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 16px;
+        }
+        
+        /* 输入模式切换样式 */
+        .input-mode-tabs {
+            margin-bottom: 16px;
+        }
+        
+        .input-mode-tabs .el-tabs__header {
+            margin-bottom: 16px;
+        }
+        
+        .input-mode-tabs .el-tabs__nav-wrap {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 4px;
+        }
+        
+        .input-mode-tabs .el-tabs__item {
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        
+        .input-mode-tabs .el-tabs__item.is-active {
+            background-color: #409eff;
+            color: white;
+            border-radius: 4px;
+        }
+        
+        /* 自然语言输入样式 */
+        .natural-language-input {
+            position: relative;
+        }
+        
+        .ai-translation-actions {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ai-translation-status {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .translating {
+            color: #e6a23c;
+        }
+        
+        .translated {
+            color: #67c23a;
+        }
+        
+        /* 可视化输入样式 */
+        .visual-input {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .visual-formula-display {
+            background-color: #f8f9fa;
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            padding: 12px;
+            min-height: 60px;
+        }
+        
+        .formula-preview {
+            display: flex;
+            align-items: center;
+            min-height: 36px;
+        }
+        
+        .formula-blocks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .formula-block {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            background-color: #f0f9ff;
+            border: 1px solid #409eff;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #409eff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .formula-block:hover {
+            background-color: #e6f7ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+        }
+        
+        .formula-block.selected {
+            background-color: #409eff;
+            color: white;
+            border-color: #409eff;
+        }
+        
+        .block-content {
+            margin-right: 4px;
+        }
+        
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: #f56c6c;
+            padding: 0;
+            margin-left: 4px;
+        }
+        
+        .formula-block:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .formula-block.selected .delete-btn {
+            opacity: 1;
+            color: white;
+        }
+        
+        .insert-hint {
+            color: #909399;
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        .visual-input-tools {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .variable-section, .number-section {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            color: #606266;
+            font-weight: 500;
+            min-width: 40px;
+            margin-top: 4px;
+        }
+        
+        .variable-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .variable-item {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #e1f3d8;
+            border: 1px solid #67c23a;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #67c23a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .variable-item:hover {
+            background-color: #67c23a;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(103, 194, 58, 0.3);
+        }
+        
+        .number-input {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* 运算符样式 - 紧凑版 */
+        .operators {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .operator-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 6px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e4e7ed;
+        }
+        
+        .operator-label {
+            font-size: 11px;
+            color: #606266;
+            font-weight: 500;
+            margin-right: 6px;
+            min-width: 40px;
+        }
+        
+        .operator-btn {
+            min-width: 28px;
+            height: 24px;
+            font-size: 11px;
+            font-weight: 500;
+            margin: 1px;
+            padding: 0 4px;
+            border: 1px solid;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 算术运算符样式 */
+        .operator-btn.arithmetic {
+            background-color: #e1f3d8;
+            border-color: #67c23a;
+            color: #67c23a;
+        }
+        
+        .operator-btn.arithmetic:hover {
+            background-color: #67c23a;
+            border-color: #67c23a;
+            color: white;
+        }
+        
+        /* 逻辑运算符样式 */
+        .operator-btn.logical {
+            background-color: #fdf6ec;
+            border-color: #e6a23c;
+            color: #e6a23c;
+        }
+        
+        .operator-btn.logical:hover {
+            background-color: #e6a23c;
+            border-color: #e6a23c;
+            color: white;
+        }
+        
+        /* 条件运算符样式 */
+        .operator-btn.conditional {
+            background-color: #f0f9ff;
+            border-color: #409eff;
+            color: #409eff;
+        }
+        
+        .operator-btn.conditional:hover {
+            background-color: #409eff;
+            border-color: #409eff;
+            color: white;
+        }
+        
+        /* 测试结果样式 */
+        .test-results {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #409eff;
+        }
+        
+        .result-item {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #303133;
+        }
+        
+        .result-value {
+            color: #606266;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .formula-validation {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="test-container">
+            <h1 class="test-title">公式输入模式测试 V2 - 改进版</h1>
+            
+            <div class="test-section">
+                <h2 class="section-title">1. 三种输入模式演示（改进版）</h2>
+                
+                <!-- 输入模式切换 -->
+                <div class="input-mode-tabs">
+                    <el-tabs v-model="formulaInputMode" @tab-click="handleInputModeChange">
+                        <el-tab-pane label="自然语言输入" name="natural">
+                            <div class="natural-language-input">
+                                <el-input
+                                    v-model="naturalLanguageInput"
+                                    type="textarea"
+                                    :rows="3"
+                                    placeholder="请用自然语言描述计算公式，例如：温度传感器1的值加上温度传感器2的值除以2">
+                                </el-input>
+                                <div class="ai-translation-actions">
+                                    <div class="ai-translation-status">
+                                        <span v-if="isTranslating" class="translating">
+                                            <i class="el-icon-loading"></i> AI正在翻译...
+                                        </span>
+                                        <span v-else-if="translatedExpression" class="translated">
+                                            <i class="el-icon-success"></i> 已转换为表达式
+                                        </span>
+                                    </div>
+                                    <el-button 
+                                        type="primary" 
+                                        size="small"
+                                        @click="handleNaturalLanguageInput"
+                                        :loading="isTranslating"
+                                        :disabled="!naturalLanguageInput.trim()">
+                                        <i class="el-icon-magic-stick"></i> AI转换
+                                    </el-button>
+                                </div>
+                            </div>
+                        </el-tab-pane>
+                        
+                        <el-tab-pane label="可视化输入" name="visual">
+                            <div class="visual-input">
+                                <div class="visual-formula-display">
+                                    <div class="formula-preview">
+                                        <div class="formula-blocks">
+                                            <div 
+                                                v-for="(part, index) in visualFormulaParts" 
+                                                :key="index"
+                                                class="formula-block"
+                                                @click="selectBlock(index)"
+                                                :class="{ 'selected': selectedBlockIndex === index }">
+                                                <span class="block-content">
+                                                    <span v-if="part.type === 'variable'">[{{ part.dataSource }}].[{{ part.name }}]</span>
+                                                    <span v-else>{{ part.value }}</span>
+                                                </span>
+                                                <el-button 
+                                                    type="text" 
+                                                    size="mini" 
+                                                    class="delete-btn"
+                                                    @click.stop="deleteBlock(index)">
+                                                    <i class="el-icon-close"></i>
+                                                </el-button>
+                                            </div>
+                                            <div class="insert-hint" v-if="visualFormulaParts.length === 0">
+                                                请双击变量或点击运算符来构建公式
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="visual-input-tools">
+                                    <div class="variable-section">
+                                        <span class="section-title">变量：</span>
+                                        <div class="variable-list">
+                                            <span 
+                                                v-for="point in mockDataPoints" 
+                                                :key="point.code"
+                                                class="variable-item"
+                                                @dblclick="insertVariable(point)">
+                                                {{ point.name }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="number-section">
+                                        <span class="section-title">数字：</span>
+                                        <div class="number-input">
+                                            <el-input
+                                                v-model="numberInput"
+                                                size="mini"
+                                                placeholder="输入数字"
+                                                style="width: 80px; margin-right: 8px;">
+                                            </el-input>
+                                            <el-button 
+                                                size="mini" 
+                                                type="primary"
+                                                @click="insertNumber">
+                                                添加
+                                            </el-button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="formula-validation">
+                                    <el-button size="small" @click="validateFormula" type="primary">验证公式</el-button>
+                                    <el-button size="small" @click="clearFormula" style="margin-left: 8px;">清空公式</el-button>
+                                </div>
+                            </div>
+                        </el-tab-pane>
+                        
+                        <el-tab-pane label="表达式输入" name="expression">
+                            <div class="expression-input">
+                                <el-input
+                                    v-model="formula"
+                                    type="textarea"
+                                    :rows="3"
+                                    placeholder="请输入计算公式，可使用变量和运算符"
+                                    class="formula-input">
+                                </el-input>
+                                <div class="formula-validation">
+                                    <el-button size="small" @click="validateFormula" type="primary">验证公式</el-button>
+                                    <el-button size="small" @click="clearFormula" style="margin-left: 8px;">清空公式</el-button>
+                                </div>
+                            </div>
+                        </el-tab-pane>
+                    </el-tabs>
+                </div>
+                
+                <!-- 运算符工具栏 - 只在可视化输入时显示 -->
+                <div class="formula-tools" v-if="formulaInputMode === 'visual'">
+                    <div class="operators">
+                        <div class="operator-group">
+                            <span class="operator-label">算术：</span>
+                            <button 
+                                v-for="op in arithmeticOperators" 
+                                :key="op"
+                                @click="insertOperator(op)"
+                                class="operator-btn arithmetic">
+                                {{ op }}
+                            </button>
+                        </div>
+                        <div class="operator-group">
+                            <span class="operator-label">逻辑：</span>
+                            <button 
+                                v-for="op in logicalOperators" 
+                                :key="op"
+                                @click="insertOperator(op)"
+                                class="operator-btn logical">
+                                {{ op }}
+                            </button>
+                        </div>
+                        <div class="operator-group">
+                            <span class="operator-label">条件：</span>
+                            <button 
+                                v-for="op in conditionalOperators" 
+                                :key="op"
+                                @click="insertOperator(op)"
+                                class="operator-btn conditional">
+                                {{ op }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+            
+            <div class="test-section">
+                <h2 class="section-title">2. 测试结果</h2>
+                <div class="test-results">
+                    <div class="result-item">
+                        <span class="result-label">当前输入模式：</span>
+                        <span class="result-value">{{ getInputModeName(formulaInputMode) }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">最终表达式：</span>
+                        <span class="result-value">{{ formula || '暂无' }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">自然语言输入：</span>
+                        <span class="result-value">{{ naturalLanguageInput || '暂无' }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">可视化部分数量：</span>
+                        <span class="result-value">{{ visualFormulaParts.length }} 个</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">选中的块索引：</span>
+                        <span class="result-value">{{ selectedBlockIndex >= 0 ? selectedBlockIndex : '无' }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">包含逻辑运算符：</span>
+                        <span class="result-value">{{ hasLogicalOperators ? '是' : '否' }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">包含条件运算符：</span>
+                        <span class="result-value">{{ hasConditionalOperators ? '是' : '否' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+    
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                formula: '',
+                formulaInputMode: 'expression',
+                naturalLanguageInput: '',
+                isTranslating: false,
+                translatedExpression: '',
+                visualFormulaParts: [],
+                numberInput: '',
+                selectedBlockIndex: -1,
+                
+                arithmeticOperators: ['+', '-', '*', '/', '(', ')', '=', '%', '**'],
+                logicalOperators: ['and', 'or', '!', '==', '!=', '>', '<', '>=', '<='],
+                conditionalOperators: ['if', 'then', 'else'],
+                
+                mockDataPoints: [
+                    { name: '温度传感器1', code: 'TEMP_001', dataSource: 'RTU' },
+                    { name: '温度传感器2', code: 'TEMP_002', dataSource: 'RTU' },
+                    { name: '压力传感器1', code: 'PRESS_001', dataSource: 'RTU' },
+                    { name: '电流传感器1', code: 'CURRENT_001', dataSource: 'RTU' }
+                ]
+            },
+            computed: {
+                hasLogicalOperators() {
+                    return this.logicalOperators.some(op => this.formula.includes(op));
+                },
+                
+                hasConditionalOperators() {
+                    return this.conditionalOperators.some(op => this.formula.includes(op));
+                }
+            },
+            methods: {
+                getInputModeName(mode) {
+                    const names = {
+                        'natural': '自然语言输入',
+                        'visual': '可视化输入',
+                        'expression': '表达式输入'
+                    };
+                    return names[mode] || mode;
+                },
+                
+                handleInputModeChange(tab) {
+                    if (tab.name === 'visual' && this.formula) {
+                        this.syncExpressionToVisual();
+                    } else if (tab.name === 'expression' && this.visualFormulaParts.length > 0) {
+                        this.syncVisualToExpression();
+                    }
+                },
+                
+                handleNaturalLanguageInput() {
+                    if (!this.naturalLanguageInput.trim()) {
+                        this.translatedExpression = '';
+                        return;
+                    }
+                    
+                    this.isTranslating = true;
+                    
+                    setTimeout(() => {
+                        const translated = this.translateNaturalLanguage(this.naturalLanguageInput);
+                        this.translatedExpression = translated;
+                        this.formula = translated;
+                        this.isTranslating = false;
+                        this.$message.success('自然语言已转换为表达式');
+                        // AI转换成功后自动跳转到表达式输入模式
+                        this.formulaInputMode = 'expression';
+                    }, 1000);
+                },
+                
+                translateNaturalLanguage(text) {
+                    const lowerText = text.toLowerCase();
+                    let result = '';
+                    
+                    // 简单的自然语言翻译规则
+                    if (lowerText.includes('温度传感器1') || lowerText.includes('温度1')) {
+                        result += '[RTU].[温度传感器1]';
+                    }
+                    if (lowerText.includes('温度传感器2') || lowerText.includes('温度2')) {
+                        if (result) result += ' ';
+                        result += '[RTU].[温度传感器2]';
+                    }
+                    if (lowerText.includes('压力传感器1') || lowerText.includes('压力1')) {
+                        if (result) result += ' ';
+                        result += '[RTU].[压力传感器1]';
+                    }
+                    if (lowerText.includes('电流传感器1') || lowerText.includes('电流1')) {
+                        if (result) result += ' ';
+                        result += '[RTU].[电流传感器1]';
+                    }
+                    
+                    // 运算符翻译
+                    if (lowerText.includes('加上') || lowerText.includes('加') || lowerText.includes('+')) {
+                        result += ' + ';
+                    }
+                    if (lowerText.includes('减去') || lowerText.includes('减') || lowerText.includes('-')) {
+                        result += ' - ';
+                    }
+                    if (lowerText.includes('乘以') || lowerText.includes('乘') || lowerText.includes('*')) {
+                        result += ' * ';
+                    }
+                    if (lowerText.includes('除以') || lowerText.includes('除') || lowerText.includes('/')) {
+                        result += ' / ';
+                    }
+                    if (lowerText.includes('大于') || lowerText.includes('>')) {
+                        result += ' > ';
+                    }
+                    if (lowerText.includes('小于') || lowerText.includes('<')) {
+                        result += ' < ';
+                    }
+                    if (lowerText.includes('等于') || lowerText.includes('=')) {
+                        result += ' = ';
+                    }
+                    if (lowerText.includes('并且') || lowerText.includes('且') || lowerText.includes('and')) {
+                        result += ' and ';
+                    }
+                    if (lowerText.includes('或者') || lowerText.includes('或') || lowerText.includes('or')) {
+                        result += ' or ';
+                    }
+                    
+                    // 数字提取
+                    const numbers = text.match(/\d+/g);
+                    if (numbers && numbers.length > 0) {
+                        result += ' ' + numbers[0];
+                    }
+                    
+                    return result.trim();
+                },
+                
+                insertVariable(point) {
+                    this.insertBlockAtPosition({
+                        type: 'variable',
+                        dataSource: point.dataSource,
+                        name: point.name,
+                        code: point.code
+                    });
+                    this.syncVisualToExpression();
+                },
+                
+                insertNumber() {
+                    if (!this.numberInput.trim()) {
+                        this.$message.warning('请输入数字');
+                        return;
+                    }
+                    
+                    const num = parseFloat(this.numberInput);
+                    if (isNaN(num)) {
+                        this.$message.error('请输入有效的数字');
+                        return;
+                    }
+                    
+                    this.insertBlockAtPosition({
+                        type: 'number',
+                        value: this.numberInput
+                    });
+                    
+                    this.numberInput = '';
+                    this.syncVisualToExpression();
+                    this.$message.success('数字已添加');
+                },
+                
+                insertOperator(operator) {
+                    if (this.formulaInputMode === 'visual') {
+                        this.insertBlockAtPosition({
+                            type: 'operator',
+                            value: operator
+                        });
+                        this.syncVisualToExpression();
+                    } else {
+                        if (this.logicalOperators.includes(operator) || this.conditionalOperators.includes(operator)) {
+                            if (this.formula && !this.formula.endsWith(' ')) {
+                                this.formula += ' ';
+                            }
+                            this.formula += operator + ' ';
+                        } else {
+                            this.formula += operator;
+                        }
+                    }
+                },
+                
+                selectBlock(index) {
+                    this.selectedBlockIndex = index;
+                },
+                
+                deleteBlock(index) {
+                    this.visualFormulaParts.splice(index, 1);
+                    this.selectedBlockIndex = -1;
+                    this.syncVisualToExpression();
+                    this.$message.success('已删除公式块');
+                },
+                
+                insertBlockAtPosition(block) {
+                    if (this.selectedBlockIndex >= 0) {
+                        // 在选中块之后插入
+                        this.visualFormulaParts.splice(this.selectedBlockIndex + 1, 0, block);
+                    } else {
+                        // 在末尾插入
+                        this.visualFormulaParts.push(block);
+                    }
+                },
+                
+                syncVisualToExpression() {
+                    this.formula = this.visualFormulaParts.map(part => {
+                        if (part.type === 'variable') {
+                            return `[${part.dataSource}].[${part.name}]`;
+                        } else if (part.type === 'operator') {
+                            return part.value;
+                        } else if (part.type === 'number') {
+                            return part.value;
+                        }
+                        return part.value;
+                    }).join(' ');
+                },
+                
+                syncExpressionToVisual() {
+                    this.visualFormulaParts = [];
+                    this.selectedBlockIndex = -1;
+                    if (this.formula) {
+                        this.visualFormulaParts.push({
+                            type: 'expression',
+                            value: this.formula
+                        });
+                    }
+                },
+                
+                validateFormula() {
+                    const formula = this.formula.trim();
+                    
+                    if (!formula) {
+                        this.$message.warning('请先输入公式');
+                        return;
+                    }
+                    
+                    let isValid = true;
+                    let errors = [];
+                    
+                    // 检查括号匹配
+                    const leftBrackets = (formula.match(/\[/g) || []).length;
+                    const rightBrackets = (formula.match(/\]/g) || []).length;
+                    if (leftBrackets !== rightBrackets) {
+                        isValid = false;
+                        errors.push('方括号不匹配');
+                    }
+                    
+                    const leftParens = (formula.match(/\(/g) || []).length;
+                    const rightParens = (formula.match(/\)/g) || []).length;
+                    if (leftParens !== rightParens) {
+                        isValid = false;
+                        errors.push('圆括号不匹配');
+                    }
+                    
+                    if (formula.includes('if') && !formula.includes('then')) {
+                        isValid = false;
+                        errors.push('if语句缺少then');
+                    }
+                    
+                    if (formula.includes('then') && !formula.includes('if')) {
+                        isValid = false;
+                        errors.push('then语句缺少if');
+                    }
+                    
+                    if (isValid) {
+                        this.$message.success('公式语法正确');
+                    } else {
+                        this.$message.error('公式语法错误：' + errors.join('，'));
+                    }
+                },
+                
+                clearFormula() {
+                    this.formula = '';
+                    this.naturalLanguageInput = '';
+                    this.visualFormulaParts = [];
+                    this.translatedExpression = '';
+                    this.selectedBlockIndex = -1;
+                    this.$message.success('公式已清空');
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

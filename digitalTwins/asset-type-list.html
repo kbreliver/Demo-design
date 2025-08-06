@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产类型列表管理 - 数字孪生平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 上方标题和操作区域 */
+        .page-header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ebeef5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12), 0 0 6px rgba(0,0,0,0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #ffffff;
+            color: #606266;
+            line-height: 1;
+            white-space: nowrap;
+            outline: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            color: #409eff;
+            border-color: #c6e2ff;
+            background-color: #ecf5ff;
+        }
+
+        .btn-primary {
+            background: #409eff;
+            border-color: #409eff;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #66b1ff;
+            border-color: #66b1ff;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: #67c23a;
+            border-color: #67c23a;
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background: #85ce61;
+            border-color: #85ce61;
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background: #f56c6c;
+            border-color: #f56c6c;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #f78989;
+            border-color: #f78989;
+            color: #ffffff;
+        }
+
+        /* 筛选区域 */
+        .filter-section {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            color: #606266;
+            font-weight: 500;
+        }
+
+        .form-input, .form-select {
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #303133;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 180px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #409eff;
+        }
+
+        .filter-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 表格区域 */
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            margin: 15px;
+            border-radius: 4px;
+            border: 1px solid #ebeef5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            color: #303133;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .table th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+            color: #606266;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .table tbody tr.selected {
+            background-color: #ecf5ff;
+        }
+
+        .checkbox-cell {
+            width: 40px;
+        }
+
+        .operation-cell {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .operation-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            color: #409eff;
+        }
+
+        .asset-link { color: #409eff; text-decoration: none; }
+.asset-link:hover { text-decoration: underline; }
+.operation-btn:hover {
+            background-color: #ecf5ff;
+        }
+
+        .operation-btn.delete {
+            color: #f56c6c;
+        }
+
+        .operation-btn.delete:hover {
+            background-color: #fef0f0;
+        }
+
+        .operation-btn.publish {
+            color: #67c23a;
+        }
+
+        .operation-btn.publish:hover {
+            background-color: #f0f9eb;
+        }
+
+        /* 分页控件 */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 15px 30px;
+            background: white;
+            border-top: 1px solid #ebeef5;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #606266;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: 1px solid #dcdfe6;
+            background: white;
+            color: #606266;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(.disabled) {
+            border-color: #409eff;
+            color: #409eff;
+        }
+
+        .page-btn.active {
+            background-color: #409eff;
+            color: white;
+            border-color: #409eff;
+        }
+
+        .page-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: #f0f9ff;
+            color: #409eff;
+            border: 1px solid #e0f2fe;
+        }
+
+        .status-draft {
+            background-color: #fdf6ec;
+            color: #e6a23c;
+            border: 1px solid #fef0e0;
+        }
+
+        .status-deprecated {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fee2e2;
+        }
+
+        /* 批量操作栏 */
+        .batch-operation {
+            background: #f5f7fa;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .batch-count {
+            font-size: 14px;
+            color: #606266;
+            font-weight: 500;
+        }
+
+        .batch-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 版本历史弹窗 */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .modal-backdrop.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: 6px;
+            width: 800px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+
+        .modal-backdrop.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #909399;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #f56c6c;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #ebeef5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 版本历史表格 */
+        .version-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .version-table th,
+        .version-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ebeef5;
+            font-size: 14px;
+        }
+
+        .version-table th {
+            background-color: #f5f7fa;
+            color: #606266;
+            font-weight: 600;
+        }
+
+        .version-item:hover {
+            background-color: #f5f7fa;
+        }
+
+        .version-item.current {
+            background-color: #ecf5ff;
+        }
+
+        .rollback-btn {
+            color: #409eff;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        .rollback-btn:hover {
+            background-color: #ecf5ff;
+        }
+
+        /* 统计信息卡片 */
+        .stats-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background-color: #f5f7fa;
+            border-radius: 6px;
+            padding: 15px;
+            border: 1px solid #ebeef5;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #909399;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .stat-desc {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题和操作按钮 -->
+        <div class="page-header">
+            <h1 class="page-title">资产类型</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="alert('创建新的资产类型，打开资产类型编辑页面')">
+                    <i>+</i> 新建资产类型
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label class="filter-label">名称:</label>
+                <input type="text" class="form-input" placeholder="请输入资产类型名称">
+            </div>
+                <div class="filter-group">
+                <label class="filter-label">编码:</label>
+                <input type="text" class="form-input" placeholder="请输入资产类型编码">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">分类:</label>
+                    <select class="form-select">
+                        <option value="">全部分类</option>
+                    <option value="equipment">设备</option>
+                        <option value="pipeline">管道</option>
+                        <option value="valve">阀门</option>
+                    <option value="motor">电机</option>
+                    <option value="pump">泵</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">状态:</label>
+                    <select class="form-select">
+                        <option value="">全部状态</option>
+                    <option value="active">已发布</option>
+                        <option value="draft">草稿</option>
+                    <option value="deprecated">已废弃</option>
+                    </select>
+                </div>
+            <div class="filter-actions">
+                <button class="btn" onclick="alert('重置筛选条件，清空所有输入框和选择框')">重置</button>
+                <button class="btn btn-primary" onclick="alert('根据筛选条件查询资产类型列表数据')">查询</button>
+            </div>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-operation" id="batch-operation" style="display: none;">
+            <div class="batch-count">已选择 <span id="selected-count">0</span> 项</div>
+            <div class="batch-btns">
+                <button class="btn" id="batch-copy">批量复制</button>
+                <button class="btn btn-danger" id="batch-delete">批量删除</button>
+                <button class="btn btn-success" id="batch-publish">批量发布</button>
+            </div>
+                    </div>
+
+        <!-- 表格区域 -->
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell"><input type="checkbox" id="select-all"></th>
+                        <th>名称</th>
+                        <th>编码</th>
+                        <th>分类</th>
+                        <th>版本</th>
+                        <th>状态</th>
+                        <th>实例化次数</th>
+                        <th>被继承次数</th>
+                        <th>创建时间</th>
+                        <th>最后修改</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-id="1">
+                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
+                        <td><a href="asset-type-mgt.html" class="asset-link">水泥磨机</a></td>
+                        <td>cement_mill_001</td>
+                        <td>设备,粉磨</td>
+                        <td>v1.2.0</td>
+                        <td><span class="status-badge status-active">已发布</span></td>
+                        <td>24</td>
+                        <td>8</td>
+                        <td>2024-01-15</td>
+                        <td>2024-01-20</td>
+                        <td class="operation-cell">
+                            <button class="operation-btn" onclick="showVersionHistory('水泥磨机')">版本</button>
+                            <button class="operation-btn publish" onclick="alert('发布当前资产类型，使其状态变为已发布')">发布</button>
+                            <button class="operation-btn" onclick="alert('复制当前资产类型，创建新的资产类型草稿')">复制</button>
+                            <button class="operation-btn delete" onclick="alert('删除当前资产类型，此操作不可撤销')">删除</button>
+                        </td>
+                    </tr>
+                    <tr data-id="2">
+                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
+                        <td><a href="asset-type-list.html" class="asset-link">回转窑</a></td>
+                        <td>rotary_kiln_001</td>
+                        <td>设备,煅烧</td>
+                        <td>v1.0.1</td>
+                        <td><span class="status-badge status-active">已发布</span></td>
+                        <td>18</td>
+                        <td>5</td>
+                        <td>2024-01-10</td>
+                        <td>2024-01-18</td>
+                        <td class="operation-cell">
+                            <button class="operation-btn" onclick="showVersionHistory('回转窑')">版本</button>
+                            <button class="operation-btn publish">发布</button>
+                            <button class="operation-btn">复制</button>
+                            <button class="operation-btn delete">删除</button>
+                        </td>
+                    </tr>
+                    <tr data-id="3">
+                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
+                        <td><a href="asset-type-list.html" class="asset-link">原料仓</a></td>
+                        <td>raw_material_bin_001</td>
+                        <td>设备,仓储</td>
+                        <td>v0.9.2</td>
+                        <td><span class="status-badge status-draft">草稿</span></td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>2024-01-22</td>
+                        <td>2024-01-22</td>
+                        <td class="operation-cell">
+                            <button class="operation-btn" onclick="showVersionHistory('原料仓')">版本</button>
+                            <button class="operation-btn publish">发布</button>
+                            <button class="operation-btn">复制</button>
+                            <button class="operation-btn delete">删除</button>
+                        </td>
+                    </tr>
+                    <tr data-id="4">
+                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
+                        <td><a href="" class="asset-link">篦冷机</a></td>
+                        <td>grate_cooler_001</td>
+                        <td>设备,冷却</td>
+                        <td>v1.1.0</td>
+                        <td><span class="status-badge status-active">已发布</span></td>
+                        <td>15</td>
+                        <td>3</td>
+                        <td>2023-12-05</td>
+                        <td>2024-01-15</td>
+                        <td class="operation-cell">
+                            <button class="operation-btn" onclick="showVersionHistory('篦冷机')">版本</button>
+                            <button class="operation-btn publish">发布</button>
+                            <button class="operation-btn">复制</button>
+                            <button class="operation-btn delete">删除</button>
+                        </td>
+                    </tr>
+                    <tr data-id="5">
+                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
+                        <td><a href="asset-type-list.html" class="asset-link">水泥仓</a></td>
+                        <td>cement_bin_001</td>
+                        <td>设备,仓储</td>
+                        <td>v1.0.0</td>
+                        <td><span class="status-badge status-deprecated">已废弃</span></td>
+                        <td>32</td>
+                        <td>2</td>
+                        <td>2023-11-20</td>
+                        <td>2024-01-05</td>
+                        <td class="operation-cell">
+                            <button class="operation-btn" onclick="showVersionHistory('水泥仓')">版本</button>
+                            <button class="operation-btn publish">发布</button>
+                            <button class="operation-btn">复制</button>
+                            <button class="operation-btn delete">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+                </div>
+
+        <!-- 分页控件 -->
+        <div class="pagination">
+            <div class="pagination-info">显示 1-5 条，共 23 条</div>
+            <div class="pagination-controls">
+                <button class="page-btn disabled" onclick="alert('导航到第一页资产类型列表')"><<</button><button class="page-btn disabled" onclick="alert('导航到上一页资产类型列表')"><</button>
+                <button class="page-btn active" onclick="alert('导航到第1页资产类型列表')">1</button>
+                <button class="page-btn" onclick="alert('导航到第2页资产类型列表')">2</button>
+                <button class="page-btn" onclick="alert('导航到第3页资产类型列表')">3</button>
+                <button class="page-btn" onclick="alert('导航到第4页资产类型列表')">4</button>
+                <button class="page-btn" onclick="alert('导航到第5页资产类型列表')">5</button>
+                <button class="page-btn" onclick="alert('导航到下一页资产类型列表')">></button><button class="page-btn" onclick="alert('导航到最后一页资产类型列表')">>></button>
+            </div>
+                </div>
+            </div>
+
+    <!-- 版本历史弹窗 -->
+    <div class="modal-backdrop" id="version-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="version-modal-title">资产类型版本历史 - 水泥磨机</h3>
+                <button class="modal-close" id="version-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table class="version-table">
+                    <thead>
+                        <tr>
+                            <th>版本号</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>创建人</th>
+                            <th>更新说明</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="version-item current">
+                            <td>v1.2.0</td>
+                            <td><span class="status-badge status-active">当前版本</span></td>
+                            <td>2024-01-20</td>
+                            <td>张三</td>
+                            <td>优化性能指标</td>
+                            <td>-</td>
+                        </tr>
+                        <tr class="version-item">
+                            <td>v1.1.0</td>
+                            <td><span class="status-badge status-draft">历史版本</span></td>
+                            <td>2024-01-10</td>
+                            <td>李四</td>
+                            <td>添加新的告警规则</td>
+                            <td><span class="rollback-btn" onclick="alert('将资产类型回滚到此历史版本')">回滚到此版本</span></td>
+                        </tr>
+                        <tr class="version-item">
+                            <td>v1.0.0</td>
+                            <td><span class="status-badge status-draft">历史版本</span></td>
+                            <td>2024-01-15</td>
+                            <td>王五</td>
+                            <td>初始版本创建</td>
+                            <td><span class="rollback-btn">回滚到此版本</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="version-modal-cancel">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全选功能
+        document.getElementById('select-all').addEventListener('change', function(e) {
+            const checkboxes = document.querySelectorAll('.row-select');
+            const batchOperation = document.getElementById('batch-operation');
+            const selectedCount = document.getElementById('selected-count');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+
+            // 更新批量操作栏显示
+            if (e.target.checked) {
+                batchOperation.style.display = 'flex';
+                selectedCount.textContent = checkboxes.length;
+            } else {
+                updateBatchOperation();
+            }
+
+            // 更新行选中状态
+            updateSelectedRows();
+        });
+
+        // 行选择功能
+        document.querySelectorAll('.row-select').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateBatchOperation();
+                updateSelectedRows();
+            });
+        });
+
+        // 更新批量操作栏显示
+        function updateBatchOperation() {
+            const checkboxes = document.querySelectorAll('.row-select:checked');
+            const batchOperation = document.getElementById('batch-operation');
+            const selectedCount = document.getElementById('selected-count');
+            const selectAllCheckbox = document.getElementById('select-all');
+
+            if (checkboxes.length > 0) {
+                batchOperation.style.display = 'flex';
+                selectedCount.textContent = checkboxes.length;
+            } else {
+                batchOperation.style.display = 'none';
+            }
+
+            // 更新全选框状态
+            selectAllCheckbox.checked = checkboxes.length === document.querySelectorAll('.row-select').length && checkboxes.length > 0;
+        }
+
+        // 更新行选中状态
+        function updateSelectedRows() {
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const checkbox = row.querySelector('.row-select');
+                if (checkbox.checked) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            });
+        }
+
+        // 版本历史弹窗控制
+        function showVersionHistory(assetName) {
+            const modal = document.getElementById('version-modal');
+            const modalTitle = document.getElementById('version-modal-title');
+            modalTitle.textContent = `资产类型版本历史 - ${assetName}`;
+            modal.classList.add('active');
+        }
+
+        document.getElementById('version-modal-close').addEventListener('click', function() {
+            document.getElementById('version-modal').classList.remove('active');
+        });
+
+        document.getElementById('version-modal-cancel').addEventListener('click', function() {
+            document.getElementById('version-modal').classList.remove('active');
+        });
+
+        // 点击模态框背景关闭
+        document.getElementById('version-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+
+        // 批量操作按钮事件
+        document.getElementById('batch-copy').addEventListener('click', function() {
+            const selectedCount = document.getElementById('selected-count').textContent;
+            alert(`批量复制 ${selectedCount} 项资产类型`);
+        });
+
+        document.getElementById('batch-delete').addEventListener('click', function() {
+            const selectedCount = document.getElementById('selected-count').textContent;
+            if (confirm(`确定要批量删除 ${selectedCount} 项资产类型吗？此操作不可撤销。`)) {
+                alert(`批量删除 ${selectedCount} 项资产类型`);
+            }
+        });
+
+        document.getElementById('batch-publish').addEventListener('click', function() {
+            const selectedCount = document.getElementById('selected-count').textContent;
+            alert(`批量发布 ${selectedCount} 项资产类型`);
+        });
+    </script>
+</body>
+</html> 

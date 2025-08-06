@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能运维能力演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 2rem;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* 页面头部样式 */
+        .module-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .module-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+        }
+
+        .module-title .icon {
+            margin-right: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .ai-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .module-content {
+            padding: 1.5rem;
+        }
+
+        /* 设备管理页面样式 */
+        .page-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            width: 200px;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .action-btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #3182ce;
+        }
+
+        .ai-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .ai-btn:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-normal { background: #c6f6d5; color: #22543d; }
+        .status-warning { background: #faf089; color: #744210; }
+        .status-danger { background: #fed7d7; color: #c53030; }
+
+        /* 预测结果面板 */
+        .prediction-panel {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+        }
+
+        .prediction-title {
+            font-weight: 600;
+            color: #c53030;
+            margin-bottom: 0.8rem;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #ed8936;
+        }
+
+        .prediction-item.high-risk {
+            border-left-color: #f56565;
+        }
+
+        .prediction-item.medium-risk {
+            border-left-color: #ed8936;
+        }
+
+        .prediction-item.low-risk {
+            border-left-color: #48bb78;
+        }
+
+        /* 工单分析图表 */
+        .chart-container {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .chart-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: end;
+            gap: 1rem;
+            height: 120px;
+            margin-bottom: 1rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #4299e1, #63b3ed);
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+        }
+
+        .chart-labels {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chart-label {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        /* 报告生成界面 */
+        .report-form {
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.3rem;
+        }
+
+        .form-input {
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .report-preview {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        /* 巡检界面 */
+        .inspection-upload {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .inspection-upload:hover {
+            border-color: #4299e1;
+            background: #f7fafc;
+        }
+
+        .inspection-results {
+            margin-top: 1rem;
+        }
+
+        .inspection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .inspection-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #4299e1;
+        }
+
+        .inspection-item.warning {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .inspection-item.danger {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>🤖 AI智能运维能力演示</h1>
+            <p>基于真实平台功能的AI能力集成展示</p>
+        </div>
+
+        <div class="modules-grid">
+            <!-- 设备管理 - AI故障预测 -->
+            <div class="module-card fade-in">
+                <div class="module-header">
+                    <div class="module-title">
+                        <span class="icon">🔧</span>
+                        设备管理
+                    </div>
+                    <div class="ai-badge">AI预测</div>
+                </div>
+                <div class="module-content">
+                    <div class="page-controls">
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="搜索设备编号或名称">
+                            <select class="filter-select">
+                                <option>全部设备</option>
+                                <option>运行中</option>
+                                <option>维护中</option>
+                                <option>故障</option>
+                            </select>
+                        </div>
+                        <button class="action-btn ai-btn" onclick="runPrediction()">🔮 AI故障预测</button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>设备编号</th>
+                                <th>设备名称</th>
+                                <th>运行时长</th>
+                                <th>当前状态</th>
+                                <th>最后维护</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>P001</td>
+                                <td>离心泵</td>
+                                <td>2,340小时</td>
+                                <td><span class="status-badge status-normal">正常</span></td>
+                                <td>2024-01-05</td>
+                            </tr>
+                            <tr>
+                                <td>C002</td>
+                                <td>压缩机</td>
+                                <td>1,876小时</td>
+                                <td><span class="status-badge status-warning">预警</span></td>
+                                <td>2024-01-12</td>
+                            </tr>
+                            <tr>
+                                <td>M003</td>
+                                <td>电机</td>
+                                <td>890小时</td>
+                                <td><span class="status-badge status-normal">正常</span></td>
+                                <td>2024-01-20</td>
+                            </tr>
+                            <tr>
+                                <td>F004</td>
+                                <td>风机</td>
+                                <td>3,120小时</td>
+                                <td><span class="status-badge status-danger">异常</span></td>
+                                <td>2023-12-28</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="prediction-results" class="prediction-panel" style="display: none;">
+                        <div class="prediction-title">🔮 AI故障预测分析结果</div>
+                        <div class="prediction-item high-risk">
+                            <div>
+                                <strong>离心泵 P001</strong><br>
+                                <small>预测7天内故障概率68%，建议立即安排维护</small>
+                            </div>
+                            <span class="status-badge status-danger">高风险</span>
+                        </div>
+                        <div class="prediction-item medium-risk">
+                            <div>
+                                <strong>压缩机 C002</strong><br>
+                                <small>预测14天内故障概率45%，建议关注监控</small>
+                            </div>
+                            <span class="status-badge status-warning">中风险</span>
+                        </div>
+                        <div class="prediction-item low-risk">
+                            <div>
+                                <strong>电机 M003</strong><br>
+                                <small>预测30天内故障概率20%，状态良好</small>
+                            </div>
+                            <span class="status-badge status-normal">低风险</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工单管理 - AI分析 -->
+            <div class="module-card fade-in">
+                <div class="module-header">
+                    <div class="module-title">
+                        <span class="icon">📋</span>
+                        工单管理
+                    </div>
+                    <div class="ai-badge">AI分析</div>
+                </div>
+                <div class="module-content">
+                    <div class="page-controls">
+                        <div class="search-bar">
+                            <select class="filter-select">
+                                <option>全部工单</option>
+                                <option>处理中</option>
+                                <option>已超时</option>
+                                <option>已完成</option>
+                            </select>
+                        </div>
+                        <button class="action-btn ai-btn" onclick="runAnalysis()">📊 AI超时分析</button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>工单编号</th>
+                                <th>设备</th>
+                                <th>问题描述</th>
+                                <th>创建时间</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>WO-2024-001</td>
+                                <td>离心泵 P001</td>
+                                <td>异响故障</td>
+                                <td>2024-01-15 09:00</td>
+                                <td><span class="status-badge status-danger">超时36h</span></td>
+                            </tr>
+                            <tr>
+                                <td>WO-2024-002</td>
+                                <td>压缩机 C002</td>
+                                <td>温度过高</td>
+                                <td>2024-01-16 14:30</td>
+                                <td><span class="status-badge status-warning">处理中</span></td>
+                            </tr>
+                            <tr>
+                                <td>WO-2024-003</td>
+                                <td>风机 F004</td>
+                                <td>振动异常</td>
+                                <td>2024-01-17 10:15</td>
+                                <td><span class="status-badge status-normal">已完成</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="analysis-results" class="chart-container" style="display: none;">
+                        <div class="chart-header">🎯 超时工单原因分析</div>
+                        <div class="chart-bars">
+                            <div class="chart-bar" style="height: 80px;">45%</div>
+                            <div class="chart-bar" style="height: 60px;">30%</div>
+                            <div class="chart-bar" style="height: 30px;">15%</div>
+                            <div class="chart-bar" style="height: 20px;">10%</div>
+                        </div>
+                        <div class="chart-labels">
+                            <div class="chart-label">备件缺货</div>
+                            <div class="chart-label">流程审批</div>
+                            <div class="chart-label">人员不足</div>
+                            <div class="chart-label">其他因素</div>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 0.8rem; background: #ebf8ff; border-radius: 6px; font-size: 0.9rem;">
+                            <strong>💡 AI分析结论：</strong>备件缺货是主要原因，建议优化库存管理和供应商响应机制
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 报告中心 - AI生成 -->
+            <div class="module-card fade-in">
+                <div class="module-header">
+                    <div class="module-title">
+                        <span class="icon">📝</span>
+                        报告中心
+                    </div>
+                    <div class="ai-badge">AI生成</div>
+                </div>
+                <div class="module-content">
+                    <div class="report-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">报告类型</label>
+                                <select class="form-input">
+                                    <option>设备维护报告</option>
+                                    <option>故障统计报告</option>
+                                    <option>运维周报</option>
+                                    <option selected>运维月报</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">时间范围</label>
+                                <select class="form-input">
+                                    <option>最近7天</option>
+                                    <option>最近30天</option>
+                                    <option selected>本月</option>
+                                    <option>上月</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">设备范围</label>
+                                <select class="form-input">
+                                    <option selected>全部设备</option>
+                                    <option>生产线A</option>
+                                    <option>生产线B</option>
+                                    <option>公用设施</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">报告格式</label>
+                                <select class="form-input">
+                                    <option>PDF</option>
+                                    <option selected>Excel</option>
+                                    <option>Word</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="action-btn ai-btn" onclick="generateReport()" style="width: 100%;">
+                            🤖 AI智能生成报告
+                        </button>
+                    </div>
+
+                    <div id="report-preview" class="report-preview" style="display: none;">
+                        <h4>📊 2024年1月运维月报</h4>
+                        <div style="color: #718096; font-size: 0.9rem; margin: 0.5rem 0;">生成时间：2024-02-01 10:30 | 报告类型：AI自动生成</div>
+                        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <h5 style="color: #4a5568; margin-bottom: 0.5rem;">📈 关键指标</h5>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                                <div style="text-align: center; padding: 0.8rem; background: #f7fafc; border-radius: 6px;">
+                                    <div style="font-size: 1.3rem; font-weight: 600; color: #2d3748;">245</div>
+                                    <div style="font-size: 0.8rem; color: #718096;">设备总数</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: #f7fafc; border-radius: 6px;">
+                                    <div style="font-size: 1.3rem; font-weight: 600; color: #2d3748;">98.2%</div>
+                                    <div style="font-size: 0.8rem; color: #718096;">设备完好率</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: #f7fafc; border-radius: 6px;">
+                                    <div style="font-size: 1.3rem; font-weight: 600; color: #2d3748;">12</div>
+                                    <div style="font-size: 0.8rem; color: #718096;">故障次数</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: #f7fafc; border-radius: 6px;">
+                                    <div style="font-size: 1.3rem; font-weight: 600; color: #2d3748;">4.2h</div>
+                                    <div style="font-size: 0.8rem; color: #718096;">平均修复时间</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h5 style="color: #4a5568; margin-bottom: 0.5rem;">🔧 主要维保活动</h5>
+                            <ul style="margin-left: 1.5rem; line-height: 1.6;">
+                                <li>完成预防性维护 156 项，较上月增长 12%</li>
+                                <li>处理突发故障 12 起，平均修复时间 4.2 小时</li>
+                                <li>设备升级改造 3 台，提升整体效率 8%</li>
+                                <li>安全隐患整改 8 项，确保生产安全</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 巡检管理 - AI识别 -->
+            <div class="module-card fade-in">
+                <div class="module-header">
+                    <div class="module-title">
+                        <span class="icon">👁️</span>
+                        巡检管理
+                    </div>
+                    <div class="ai-badge">AI识别</div>
+                </div>
+                <div class="module-content">
+                    <div class="page-controls">
+                        <div class="search-bar">
+                            <select class="filter-select">
+                                <option>今日巡检</option>
+                                <option>本周巡检</option>
+                                <option>历史记录</option>
+                            </select>
+                        </div>
+                        <button class="action-btn">📋 巡检计划</button>
+                        <button class="action-btn ai-btn" onclick="startInspection()">📷 AI智能巡检</button>
+                    </div>
+
+                    <div class="inspection-upload">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem;">📷</div>
+                        <div style="font-size: 1.1rem; margin-bottom: 0.5rem;">点击上传设备巡检图像</div>
+                        <div style="font-size: 0.9rem; color: #718096;">
+                            支持拍摄或上传皮带、轴承、电缆、管道等设备图像，AI将自动识别异常
+                        </div>
+                        <div style="margin-top: 1rem; font-size: 0.8rem; color: #a0aec0;">
+                            支持格式：JPG, PNG, JPEG (最大10MB)
+                        </div>
+                    </div>
+
+                    <div id="inspection-results" class="inspection-results" style="display: none;">
+                        <h4 style="margin-bottom: 1rem;">🎯 AI智能识别结果</h4>
+                        <div class="inspection-grid">
+                            <div class="inspection-item warning">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong>皮带磨损检测</strong>
+                                    <span class="status-badge status-warning">异常</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: #744210;">
+                                    检测置信度: 87%<br>
+                                    发现轻微磨损，建议近期更换
+                                </div>
+                            </div>
+                            <div class="inspection-item">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong>轴承状态检测</strong>
+                                    <span class="status-badge status-normal">正常</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: #4a5568;">
+                                    检测置信度: 94%<br>
+                                    运行状态良好，无异常
+                                </div>
+                            </div>
+                            <div class="inspection-item danger">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong>电缆外观检测</strong>
+                                    <span class="status-badge status-danger">严重</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: #c53030;">
+                                    检测置信度: 96%<br>
+                                    发现明显裂纹，需立即处理
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px;">
+                            <strong>⚠️ AI建议：</strong>电缆存在安全隐患，已自动生成紧急工单 <strong>WO-2024-004</strong>，请立即安排维修人员处理
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function runPrediction() {
+            const results = document.getElementById('prediction-results');
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function runAnalysis() {
+            const results = document.getElementById('analysis-results');
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function generateReport() {
+            const preview = document.getElementById('report-preview');
+            preview.style.display = 'block';
+            preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function startInspection() {
+            const results = document.getElementById('inspection-results');
+            
+            // 模拟上传和AI识别过程
+            setTimeout(() => {
+                results.style.display = 'block';
+                results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 1000);
+        }
+
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

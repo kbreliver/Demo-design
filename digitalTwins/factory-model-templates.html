@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工厂模型模板 - 数字孪生平台</title>
+    <link rel="preload" href="assets/fonts/element-icons.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="assets/fonts/element-icons.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        /* 样式层 - 只包含自定义样式 */
+        .template-container {
+            padding: 20px;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .content-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .search-bar {
+            padding: 20px;
+            border-bottom: 1px solid #e4e7ed;
+            background-color: #fafafa;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 12px;
+            justify-content: space-between;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .template-grid {
+            padding: 20px;
+        }
+
+        .template-card {
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+            background-color: #fff;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+        }
+
+        .template-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .template-header {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .template-title-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .template-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: color 0.3s;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .template-title:hover {
+            color: #409eff;
+        }
+
+        .template-subtitle {
+            font-size: 13px;
+            color: #909399;
+            line-height: 1.3;
+        }
+
+        .template-actions-header {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px solid #e4e7ed;
+            align-items: center;
+        }
+
+        .template-stats-mini {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stat-item-mini {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 35px;
+        }
+
+        .stat-number-mini {
+            font-size: 14px;
+            font-weight: 600;
+            color: #409eff;
+            line-height: 1;
+        }
+
+        .stat-label-mini {
+            font-size: 10px;
+            color: #909399;
+            margin-top: 2px;
+            line-height: 1;
+        }
+
+        .template-actions-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .template-actions-buttons .el-button {
+            margin: 0;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .template-actions-buttons .el-button i {
+            font-size: 14px;
+        }
+
+        .template-actions-buttons .el-button--primary.is-plain {
+            color: #409eff;
+            background-color: #fff;
+            border-color: #409eff;
+        }
+
+        .template-actions-buttons .el-button--primary.is-plain:hover {
+            color: #fff;
+            background-color: #409eff;
+            border-color: #409eff;
+        }
+
+        .template-actions-buttons .el-button--success.is-plain {
+            color: #67c23a;
+            background-color: #fff;
+            border-color: #67c23a;
+        }
+
+        .template-actions-buttons .el-button--success.is-plain:hover {
+            color: #fff;
+            background-color: #67c23a;
+            border-color: #67c23a;
+        }
+
+        .template-actions-buttons .el-button--danger {
+            color: #fff;
+            background-color: #f56c6c;
+            border-color: #f56c6c;
+        }
+
+        .template-actions-buttons .el-button--danger:hover {
+            background-color: #f78989;
+            border-color: #f78989;
+        }
+
+        .template-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .template-description {
+            font-size: 14px;
+            color: #606266;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            flex: 1;
+        }
+
+        .template-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #909399;
+            margin-bottom: 16px;
+        }
+
+        .template-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #f0f0f0;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .template-footer .el-button {
+            margin: 0;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .template-footer .el-button i {
+            font-size: 14px;
+        }
+
+        .template-footer .el-button--primary.is-plain {
+            color: #409eff;
+            background-color: #fff;
+            border-color: #409eff;
+        }
+
+        .template-footer .el-button--primary.is-plain:hover {
+            color: #fff;
+            background-color: #409eff;
+            border-color: #409eff;
+        }
+
+        .template-footer .el-button--success.is-plain {
+            color: #67c23a;
+            background-color: #fff;
+            border-color: #67c23a;
+        }
+
+        .template-footer .el-button--success.is-plain:hover {
+            color: #fff;
+            background-color: #67c23a;
+            border-color: #67c23a;
+        }
+
+        .template-footer .el-button--danger {
+            color: #fff;
+            background-color: #f56c6c;
+            border-color: #f56c6c;
+        }
+
+        .template-footer .el-button--danger:hover {
+            background-color: #f78989;
+            border-color: #f78989;
+        }
+
+        .template-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+
+        .tag-standard {
+            background-color: #e1f3ff;
+            color: #409eff;
+        }
+
+        .tag-custom {
+            background-color: #f0f9ff;
+            color: #67c23a;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #909399;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .template-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            justify-content: flex-start;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 12px;
+            border-radius: 8px;
+            min-width: auto;
+            min-height: auto;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            gap: 6px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card-text {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .stat-card-number {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        /* 总模板数 - 橙色系 */
+        .stat-card-total {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .stat-card-total .stat-card-number {
+            color: #e65100;
+        }
+
+        /* 标准模板 - 绿色系 */
+        .stat-card-standard {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .stat-card-standard .stat-card-number {
+            color: #2e7d32;
+        }
+
+        /* 自定义模板 - 粉色系 */
+        .stat-card-custom {
+            background-color: #fce4ec;
+            color: #c2185b;
+        }
+
+        .stat-card-custom .stat-card-number {
+            color: #c2185b;
+        }
+
+        /* 响应式布局优化 */
+        @media (max-width: 1400px) {
+            .template-header {
+                gap: 12px;
+            }
+            
+            .template-actions-header {
+                flex-direction: row;
+                gap: 6px;
+                align-items: center;
+                justify-content: space-between;
+            }
+            
+            .template-stats-mini {
+                gap: 10px;
+            }
+            
+            .stat-item-mini {
+                min-width: 30px;
+            }
+            
+            .stat-number-mini {
+                font-size: 12px;
+            }
+            
+            .stat-label-mini {
+                font-size: 9px;
+            }
+            
+            .template-actions-buttons .el-button {
+                width: auto;
+                margin: 0;
+            }
+            
+            .template-stats {
+                gap: 16px;
+            }
+            
+            .stat-card {
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            
+            .stat-card-text {
+                font-size: 11px;
+            }
+            
+            .stat-card-number {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .template-header {
+                gap: 10px;
+            }
+            
+            .template-actions-header {
+                margin-top: 0;
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 6px;
+            }
+            
+            .template-stats-mini {
+                gap: 6px;
+            }
+            
+            .stat-item-mini {
+                min-width: 25px;
+            }
+            
+            .template-body {
+                min-height: 100px;
+            }
+            
+            .template-stats {
+                gap: 12px;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+            
+            .stat-card {
+                padding: 5px 8px;
+                gap: 3px;
+            }
+            
+            .stat-card-text {
+                font-size: 10px;
+            }
+            
+            .stat-card-number {
+                font-size: 12px;
+            }
+            
+            .stat-number-mini {
+                font-size: 11px;
+            }
+            
+            .stat-label-mini {
+                font-size: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="template-container">
+        <!-- 页面头部
+        <div class="page-header">
+            <h1 class="page-title">{{ pageTitle }}</h1>
+            <p class="page-description">{{ pageDescription }}</p>
+        </div> -->
+
+        <!-- 主要内容 -->
+        <div class="content-card">
+            
+            <!-- 搜索和筛选 -->
+            <div class="search-bar">
+                <!-- 统计信息 -->
+                <div class="template-stats">
+                    <div class="stat-card stat-card-total">
+                        <span class="stat-card-text">总模板数</span>
+                        <span class="stat-card-number">{{ totalTemplates }}</span>
+                    </div>
+                    <div class="stat-card stat-card-standard">
+                        <span class="stat-card-text">标准模板</span>
+                        <span class="stat-card-number">{{ standardTemplates }}</span>
+                    </div>
+                    <div class="stat-card stat-card-custom">
+                        <span class="stat-card-text">自定义模板</span>
+                        <span class="stat-card-number">{{ customTemplates }}</span>
+                    </div>
+                </div>
+                
+                <div class="search-row">
+                    <div class="search-controls">
+                        <el-input 
+                            v-model="searchKeyword" 
+                            placeholder="搜索模板名称或描述..." 
+                            prefix-icon="el-icon-search"
+                            clearable
+                            style="width: 300px;">
+                        </el-input>
+                        <el-select v-model="selectedCategory" placeholder="选择分类" style="width: 150px;">
+                            <el-option label="全部分类" value="all"></el-option>
+                            <el-option label="标准模板" value="standard"></el-option>
+                            <el-option label="自定义模板" value="custom"></el-option>
+                        </el-select>
+                        <el-select v-model="selectedStatus" placeholder="选择状态" style="width: 120px;">
+                            <el-option label="全部状态" value="all"></el-option>
+                            <el-option label="已发布" value="published"></el-option>
+                            <el-option label="未发布" value="unpublished"></el-option>
+                        </el-select>
+                    </div>
+                    <el-button type="primary" @click="createCustomTemplate" icon="el-icon-plus">
+                        创建模板
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- 模板网格 -->
+            <div class="template-grid">
+                <el-row :gutter="24">
+                    <el-col 
+                        :xs="24" 
+                        :sm="12" 
+                        :md="8" 
+                        :lg="6" 
+                        v-for="template in filteredTemplates" 
+                        :key="template.id"
+                        style="margin-bottom: 24px;">
+                        <div class="template-card">
+                            <div class="template-header">
+                                <div class="template-title-section">
+                                    <div class="template-title" @click="openFactoryModel(template)">
+                                        {{ template.name }}
+                                        <span class="template-tag" :class="getTagClass(template.category)">
+                                            {{ template.category === 'standard' ? '标准' : '自定义' }}
+                                        </span>
+                                    </div>
+                                    <div class="template-subtitle">{{ template.subtitle }}</div>
+                                </div>
+                                <div class="template-actions-header">
+                                    <div class="template-stats-mini">
+                                        <div class="stat-item-mini">
+                                            <span class="stat-number-mini">{{ getNodeCount(template) }}</span>
+                                            <span class="stat-label-mini">节点数</span>
+                                        </div>
+                                        <div class="stat-item-mini">
+                                            <span class="stat-number-mini">{{ template.instanceCount || 0 }}</span>
+                                            <span class="stat-label-mini">实例化</span>
+                                        </div>
+                                        <div class="stat-item-mini">
+                                            <span class="stat-number-mini">{{ template.copyCount || 0 }}</span>
+                                            <span class="stat-label-mini">复制</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="template-body">
+                                <div class="template-description">
+                                    {{ template.description }}
+                                </div>
+                                <div class="template-meta">
+                                    <span>创建时间：{{ template.createTime }}</span>
+                                    <el-tag 
+                                        :type="template.status === 'published' ? 'success' : 'info'" 
+                                        size="small">
+                                        {{ template.status === 'published' ? '已发布' : '未发布' }}
+                                    </el-tag>
+                                </div>
+                            </div>
+                            <div class="template-footer">
+                                <el-tooltip :content="template.status === 'published' ? '创建工厂模型' : '只有已发布的模板才能创建工厂模型'" placement="top">
+                                    <el-button 
+                                        type="primary" 
+                                        size="small" 
+                                        icon="el-icon-s-management"
+                                        circle
+                                        @click="createFactoryModel(template)"
+                                        :disabled="template.status !== 'published'">
+                                    </el-button>
+                                </el-tooltip>
+                                <el-tooltip content="复制模板" placement="top">
+                                    <el-button 
+                                        type="success" 
+                                        size="small" 
+                                        icon="el-icon-document-copy"
+                                        circle
+                                        plain
+                                        @click="copyTemplate(template)">
+                                    </el-button>
+                                </el-tooltip>
+                                <el-tooltip content="编辑模板" placement="top" v-if="template.category === 'custom'">
+                                    <el-button 
+                                        type="primary" 
+                                        size="small" 
+                                        icon="el-icon-edit"
+                                        circle
+                                        plain
+                                        @click="editTemplate(template)">
+                                    </el-button>
+                                </el-tooltip>
+                                <el-tooltip content="删除模板" placement="top" v-if="template.category === 'custom'">
+                                    <el-button 
+                                        type="danger" 
+                                        size="small" 
+                                        icon="el-icon-delete"
+                                        circle
+                                        @click="deleteTemplate(template)">
+                                    </el-button>
+                                </el-tooltip>
+                            </div>
+                        </div>
+                    </el-col>
+                </el-row>
+
+                <!-- 空状态 -->
+                <div class="empty-state" v-if="filteredTemplates.length === 0">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-text">暂无符合条件的模板</div>
+                    <el-button type="primary" @click="createCustomTemplate">
+                        创建第一个模板
+                    </el-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模板详情对话框 -->
+        <el-dialog 
+            :title="selectedTemplate ? selectedTemplate.name : '模板详情'" 
+            :visible.sync="templateDetailVisible" 
+            width="600px">
+            <div v-if="selectedTemplate">
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="模板名称">{{ selectedTemplate.name }}</el-descriptions-item>
+                    <el-descriptions-item label="模板类型">
+                        <el-tag :type="selectedTemplate.category === 'standard' ? 'primary' : 'success'">
+                            {{ selectedTemplate.category === 'standard' ? '标准模板' : '自定义模板' }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="创建时间">{{ selectedTemplate.createTime }}</el-descriptions-item>
+                    <el-descriptions-item label="状态">
+                        <el-tag :type="selectedTemplate.status === 'published' ? 'success' : 'info'">
+                            {{ selectedTemplate.status === 'published' ? '已发布' : '未发布' }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="描述" :span="2">{{ selectedTemplate.description }}</el-descriptions-item>
+                </el-descriptions>
+                
+                <el-divider content-position="left">层级结构</el-divider>
+                <div class="structure-tree" v-html="selectedTemplate.structure"></div>
+                
+                <el-divider content-position="left">节点类型</el-divider>
+                <el-tag 
+                    v-for="nodeType in selectedTemplate.nodeTypes" 
+                    :key="nodeType"
+                    style="margin-right: 8px; margin-bottom: 8px;">
+                    {{ nodeType }}
+                </el-tag>
+            </div>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="templateDetailVisible = false">关闭</el-button>
+                <el-button type="primary" @click="useTemplate(selectedTemplate)">使用此模板</el-button>
+            </div>
+        </el-dialog>
+
+
+    </div>
+
+    <!-- 引入Vue和Element UI -->
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+    
+    <script>
+        // 数据层 - 定义所有数据
+        const data = {
+            // 页面信息
+            pageTitle: '工厂模型模板',
+            pageDescription: '选择预定义的工厂模型模板，快速构建企业级组织结构',
+            
+            // 模板数据
+            templates: [
+                {
+                    id: 'standard_manufacturing',
+                    name: '标准制造工厂',
+                    subtitle: '适用于传统制造企业',
+                    description: '基于"工厂-车间-产线-工段-设备"的标准层级结构，适用于大多数制造企业。',
+                    category: 'standard',
+                    status: 'published',
+                    createTime: '2024-01-15',
+                    structure: `工厂<br>
+├── 车间<br>
+│   ├── 产线<br>
+│   │   ├── 工段<br>
+│   │   └── 设备<br>
+│   └── 设备<br>
+└── 能耗区域<br>
+    └── 设备`,
+                    nodeTypes: ['工厂', '车间', '产线', '工段', '设备', '能耗区域'],
+                    instanceCount: 5, // 新增实例化数量
+                    copyCount: 2 // 新增复制数量
+                },
+                {
+                    id: 'cement_plant_standard',
+                    name: '水泥工厂标准模板',
+                    subtitle: '适用于水泥生产企业',
+                    description: '针对水泥行业特点，包含原料处理、烧成、粉磨等核心工艺环节。',
+                    category: 'standard',
+                    status: 'published',
+                    createTime: '2024-01-20',
+                    structure: `水泥工厂<br>
+├── 原料处理车间<br>
+│   ├── 破碎工段<br>
+│   │   ├── 破碎机<br>
+│   │   └── 输送设备<br>
+│   ├── 预均化工段<br>
+│   │   ├── 堆料机<br>
+│   │   └── 取料机<br>
+│   └── 粉磨工段<br>
+│       ├── 生料磨<br>
+│       └── 输送系统<br>
+├── 烧成车间<br>
+│   ├── 预热器<br>
+│   ├── 回转窑<br>
+│   ├── 冷却机<br>
+│   └── 废气处理<br>
+├── 粉磨车间<br>
+│   ├── 水泥磨<br>
+│   ├── 选粉机<br>
+│   └── 包装系统<br>
+└── 辅助设施<br>
+    ├── 电力系统<br>
+    ├── 水处理系统<br>
+    └── 环保设施`,
+                    nodeTypes: ['水泥工厂', '原料处理车间', '烧成车间', '粉磨车间', '辅助设施', '破碎工段', '预均化工段', '粉磨工段', '预热器', '回转窑', '冷却机', '水泥磨', '选粉机', '包装系统', '电力系统', '水处理系统', '环保设施'],
+                    instanceCount: 10, // 新增实例化数量
+                    copyCount: 3 // 新增复制数量
+                },
+                {
+                    id: 'cement_plant_advanced',
+                    name: '水泥工厂高级模板',
+                    subtitle: '适用于大型水泥企业',
+                    description: '包含完整的生产线管理，涵盖原料、烧成、粉磨、包装、物流等全流程。',
+                    category: 'standard',
+                    status: 'published',
+                    createTime: '2024-01-25',
+                    structure: `水泥工厂<br>
+├── 原料处理系统<br>
+│   ├── 石灰石破碎<br>
+│   ├── 粘土处理<br>
+│   ├── 铁粉处理<br>
+│   └── 原料配料<br>
+├── 生料制备系统<br>
+│   ├── 生料磨<br>
+│   ├── 生料均化库<br>
+│   └── 生料输送<br>
+├── 烧成系统<br>
+│   ├── 预热器系统<br>
+│   ├── 分解炉<br>
+│   ├── 回转窑<br>
+│   ├── 篦冷机<br>
+│   └── 废气处理<br>
+├── 水泥粉磨系统<br>
+│   ├── 熟料库<br>
+│   ├── 水泥磨<br>
+│   ├── 选粉机<br>
+│   └── 水泥库<br>
+├── 包装发运系统<br>
+│   ├── 包装机<br>
+│   ├── 散装系统<br>
+│   └── 发运设施<br>
+└── 辅助系统<br>
+    ├── 电力系统<br>
+    ├── 水处理系统<br>
+    ├── 压缩空气系统<br>
+    ├── 环保设施<br>
+    └── 实验室`,
+                    nodeTypes: ['水泥工厂', '原料处理系统', '生料制备系统', '烧成系统', '水泥粉磨系统', '包装发运系统', '辅助系统', '石灰石破碎', '粘土处理', '铁粉处理', '原料配料', '生料磨', '生料均化库', '预热器系统', '分解炉', '回转窑', '篦冷机', '熟料库', '水泥磨', '选粉机', '水泥库', '包装机', '散装系统', '电力系统', '水处理系统', '压缩空气系统', '环保设施', '实验室'],
+                    instanceCount: 15, // 新增实例化数量
+                    copyCount: 4 // 新增复制数量
+                },
+                {
+                    id: 'cement_plant_mini',
+                    name: '小型水泥工厂',
+                    subtitle: '适用于小型水泥企业',
+                    description: '简化的水泥生产流程，适合产能较小的水泥生产企业。',
+                    category: 'standard',
+                    status: 'unpublished',
+                    createTime: '2024-02-01',
+                    structure: `水泥工厂<br>
+├── 原料处理<br>
+│   ├── 破碎设备<br>
+│   └── 配料系统<br>
+├── 烧成系统<br>
+│   ├── 回转窑<br>
+│   └── 冷却设备<br>
+├── 粉磨系统<br>
+│   ├── 水泥磨<br>
+│   └── 包装设备<br>
+└── 辅助设施<br>
+    ├── 电力设备<br>
+    └── 环保设备`,
+                    nodeTypes: ['水泥工厂', '原料处理', '烧成系统', '粉磨系统', '辅助设施', '破碎设备', '配料系统', '回转窑', '冷却设备', '水泥磨', '包装设备', '电力设备', '环保设备'],
+                    instanceCount: 5, // 新增实例化数量
+                    copyCount: 1 // 新增复制数量
+                },
+                {
+                    id: 'cement_plant_custom',
+                    name: '水泥工厂定制模板',
+                    subtitle: '自定义模板',
+                    description: '可根据企业具体需求定制的水泥工厂模型，支持特殊工艺和设备配置。',
+                    category: 'custom',
+                    status: 'unpublished',
+                    createTime: '2024-02-05',
+                    structure: `水泥工厂<br>
+├── 原料系统<br>
+│   ├── 石灰石处理<br>
+│   ├── 辅助原料处理<br>
+│   └── 原料配料<br>
+├── 生料系统<br>
+│   ├── 生料磨<br>
+│   └── 生料均化<br>
+├── 烧成系统<br>
+│   ├── 预热器<br>
+│   ├── 分解炉<br>
+│   ├── 回转窑<br>
+│   └── 冷却机<br>
+├── 粉磨系统<br>
+│   ├── 水泥磨<br>
+│   └── 水泥储存<br>
+├── 包装发运<br>
+│   ├── 包装系统<br>
+│   └── 散装系统<br>
+└── 辅助系统<br>
+    ├── 电力系统<br>
+    ├── 水系统<br>
+    └── 环保系统`,
+                    nodeTypes: ['水泥工厂', '原料系统', '生料系统', '烧成系统', '粉磨系统', '包装发运', '辅助系统', '石灰石处理', '辅助原料处理', '原料配料', '生料磨', '生料均化', '预热器', '分解炉', '回转窑', '冷却机', '水泥磨', '水泥储存', '包装系统', '散装系统', '电力系统', '水系统', '环保系统'],
+                    instanceCount: 10, // 新增实例化数量
+                    copyCount: 2 // 新增复制数量
+                },
+                {
+                    id: 'chemical_plant',
+                    name: '化工工厂',
+                    subtitle: '适用于化工企业',
+                    description: '针对化工行业特点，增加了安全区域、环保区域等特殊节点类型。',
+                    category: 'standard',
+                    status: 'unpublished',
+                    createTime: '2024-01-20',
+                    structure: `工厂<br>
+├── 生产区域<br>
+│   ├── 装置<br>
+│   └── 设备<br>
+├── 安全区域<br>
+└── 环保区域`,
+                    nodeTypes: ['工厂', '生产区域', '装置', '设备', '安全区域', '环保区域'],
+                    instanceCount: 8, // 新增实例化数量
+                    copyCount: 1 // 新增复制数量
+                },
+                {
+                    id: 'steel_plant',
+                    name: '钢铁工厂',
+                    subtitle: '适用于钢铁企业',
+                    description: '针对钢铁行业特点，包含高炉、转炉、轧机等专业设备类型。',
+                    category: 'standard',
+                    status: 'unpublished',
+                    createTime: '2024-01-25',
+                    structure: `工厂<br>
+├── 炼铁车间<br>
+│   └── 高炉<br>
+├── 炼钢车间<br>
+│   └── 转炉<br>
+└── 轧钢车间<br>
+    └── 轧机`,
+                    nodeTypes: ['工厂', '炼铁车间', '炼钢车间', '轧钢车间', '高炉', '转炉', '轧机'],
+                    instanceCount: 12, // 新增实例化数量
+                    copyCount: 3 // 新增复制数量
+                },
+                {
+                    id: 'new_energy',
+                    name: '新能源工厂',
+                    subtitle: '自定义模板',
+                    description: '针对新能源行业特点，包含光伏、风电等专业设备类型。',
+                    category: 'custom',
+                    status: 'unpublished',
+                    createTime: '2024-02-01',
+                    structure: `工厂<br>
+├── 光伏区域<br>
+│   └── 光伏板<br>
+├── 风电区域<br>
+│   └── 风机<br>
+└── 储能区域<br>
+    └── 储能设备`,
+                    nodeTypes: ['工厂', '光伏区域', '风电区域', '储能区域', '光伏板', '风机', '储能设备'],
+                    instanceCount: 15, // 新增实例化数量
+                    copyCount: 4 // 新增复制数量
+                }
+            ],
+            
+            // 可用节点类型
+            availableNodeTypes: [
+                { value: '水泥工厂', label: '水泥工厂' },
+                { value: '原料处理车间', label: '原料处理车间' },
+                { value: '烧成车间', label: '烧成车间' },
+                { value: '粉磨车间', label: '粉磨车间' },
+                { value: '包装车间', label: '包装车间' },
+                { value: '辅助设施', label: '辅助设施' },
+                { value: '破碎工段', label: '破碎工段' },
+                { value: '预均化工段', label: '预均化工段' },
+                { value: '粉磨工段', label: '粉磨工段' },
+                { value: '预热器', label: '预热器' },
+                { value: '回转窑', label: '回转窑' },
+                { value: '冷却机', label: '冷却机' },
+                { value: '水泥磨', label: '水泥磨' },
+                { value: '选粉机', label: '选粉机' },
+                { value: '包装机', label: '包装机' },
+                { value: '电力系统', label: '电力系统' },
+                { value: '水处理系统', label: '水处理系统' },
+                { value: '环保设施', label: '环保设施' },
+                { value: '原料处理系统', label: '原料处理系统' },
+                { value: '生料制备系统', label: '生料制备系统' },
+                { value: '烧成系统', label: '烧成系统' },
+                { value: '水泥粉磨系统', label: '水泥粉磨系统' },
+                { value: '包装发运系统', label: '包装发运系统' },
+                { value: '辅助系统', label: '辅助系统' },
+                { value: '石灰石破碎', label: '石灰石破碎' },
+                { value: '粘土处理', label: '粘土处理' },
+                { value: '铁粉处理', label: '铁粉处理' },
+                { value: '原料配料', label: '原料配料' },
+                { value: '生料磨', label: '生料磨' },
+                { value: '生料均化库', label: '生料均化库' },
+                { value: '生料输送', label: '生料输送' },
+                { value: '预热器系统', label: '预热器系统' },
+                { value: '分解炉', label: '分解炉' },
+                { value: '篦冷机', label: '篦冷机' },
+                { value: '废气处理', label: '废气处理' },
+                { value: '熟料库', label: '熟料库' },
+                { value: '水泥库', label: '水泥库' },
+                { value: '散装系统', label: '散装系统' },
+                { value: '发运设施', label: '发运设施' },
+                { value: '压缩空气系统', label: '压缩空气系统' },
+                { value: '实验室', label: '实验室' },
+                { value: '原料系统', label: '原料系统' },
+                { value: '生料系统', label: '生料系统' },
+                { value: '粉磨系统', label: '粉磨系统' },
+                { value: '包装发运', label: '包装发运' },
+                { value: '石灰石处理', label: '石灰石处理' },
+                { value: '辅助原料处理', label: '辅助原料处理' },
+                { value: '生料均化', label: '生料均化' },
+                { value: '水泥储存', label: '水泥储存' },
+                { value: '水系统', label: '水系统' },
+                { value: '环保系统', label: '环保系统' }
+            ],
+            
+            // 状态数据
+            searchKeyword: '',
+            selectedCategory: 'all',
+            selectedStatus: 'all',
+            templateDetailVisible: false,
+            selectedTemplate: null
+        };
+
+        // 逻辑层 - Vue实例
+        new Vue({
+            el: '#app',
+            data: data,
+            computed: {
+                // 计算属性
+                filteredTemplates() {
+                    return this.templates.filter(template => {
+                        // 搜索过滤
+                        const searchMatch = !this.searchKeyword || 
+                            template.name.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
+                            template.description.toLowerCase().includes(this.searchKeyword.toLowerCase());
+                        
+                        // 分类过滤
+                        const categoryMatch = this.selectedCategory === 'all' || 
+                            template.category === this.selectedCategory;
+                        
+                        // 状态过滤
+                        const statusMatch = this.selectedStatus === 'all' || 
+                            template.status === this.selectedStatus;
+                        
+                        return searchMatch && categoryMatch && statusMatch;
+                    });
+                },
+                
+                totalTemplates() {
+                    return this.templates.length;
+                },
+                
+                standardTemplates() {
+                    return this.templates.filter(t => t.category === 'standard').length;
+                },
+                
+                customTemplates() {
+                    return this.templates.filter(t => t.category === 'custom').length;
+                },
+                
+                publishedTemplates() {
+                    return this.templates.filter(t => t.status === 'published').length;
+                }
+            },
+            methods: {
+                // 获取标签样式类
+                getTagClass(category) {
+                    return category === 'standard' ? 'tag-standard' : 'tag-custom';
+                },
+                
+                // 查看模板详情
+                viewTemplate(template) {
+                    this.selectedTemplate = template;
+                    this.templateDetailVisible = true;
+                },
+                
+                // 使用模板
+                useTemplate(template) {
+                    this.$confirm(`确定要使用模板"${template.name}"吗？这将创建新的工厂模型。`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        // 增加实例化数量
+                        if (!template.instanceCount) {
+                            template.instanceCount = 0;
+                        }
+                        template.instanceCount++;
+                        
+                        this.$message.success(`已使用模板: ${template.name}`);
+                        // 跳转到工厂模型管理页面
+                        window.location.href = 'factory-model-management.html?template=' + template.id + '&action=create';
+                    }).catch(() => {
+                        this.$message.info('已取消使用模板');
+                    });
+                },
+                
+                // 编辑模板
+                editTemplate(template) {
+                    if (template.category === 'standard') {
+                        this.$message.warning('标准模板不允许编辑');
+                        return;
+                    }
+                    // 跳转到模板管理页面
+                    window.location.href = 'factory-model-template-management.html?id=' + template.id;
+                },
+                
+                // 删除模板
+                deleteTemplate(template) {
+                    this.$confirm(`确定要删除模板"${template.name}"吗？此操作不可恢复。`, '警告', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const index = this.templates.findIndex(t => t.id === template.id);
+                        if (index > -1) {
+                            this.templates.splice(index, 1);
+                            this.$message.success('删除成功');
+                        }
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 创建自定义模板
+                createCustomTemplate() {
+                    // 跳转到模板管理页面，创建新模板
+                    window.location.href = 'factory-model-template-management.html?action=create';
+                },
+                
+
+
+                // 计算模板的节点数
+                getNodeCount(template) {
+                    return template.nodeTypes ? template.nodeTypes.length : 0;
+                },
+
+                // 打开工厂模型管理页面
+                openFactoryModel(template) {
+                    // 跳转到模板管理页面
+                    window.location.href = 'factory-model-template-management.html?id=' + template.id;
+                },
+                
+                // 创建工厂模型
+                createFactoryModel(template) {
+                    if (template.status !== 'published') {
+                        this.$message.warning('只有已发布的模板才能创建工厂模型。');
+                        return;
+                    }
+                    this.$confirm(`确定要使用模板"${template.name}"创建新的工厂模型吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        // 增加实例化数量
+                        if (!template.instanceCount) {
+                            template.instanceCount = 0;
+                        }
+                        template.instanceCount++;
+                        
+                        this.$message.success(`已使用模板"${template.name}"创建工厂模型`);
+                        // 这里可以跳转到工厂模型管理页面
+                        console.log('创建工厂模型:', template);
+                        // window.location.href = 'factory-model-management.html?template=' + template.id + '&action=create';
+                    }).catch(() => {
+                        this.$message.info('已取消创建工厂模型');
+                    });
+                },
+
+                // 复制模板
+                copyTemplate(template) {
+                    this.$confirm(`确定要复制模板"${template.name}"吗？这将创建一个新的自定义模板。`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        // 根据模板ID生成对应的层级结构数据
+                        const hierarchyNodes = this.generateHierarchyNodes(template.id);
+                        
+                        // 跳转到模板管理页面，传递复制模板的数据
+                        const copyData = {
+                            id: 'template_copy_' + Date.now(),
+                            name: `${template.name} (副本)`,
+                            subtitle: template.subtitle,
+                            description: template.description,
+                            category: 'custom', // 复制后自动设置为自定义模板
+                            status: 'unpublished',
+                            createTime: new Date().toLocaleDateString(),
+                            structure: template.structure,
+                            nodeTypes: [...template.nodeTypes], // 复制节点类型
+                            hierarchyNodes: hierarchyNodes, // 添加层级结构数据
+                            instanceCount: 0,
+                            copyCount: 0
+                        };
+                        
+                        // 将复制数据编码后传递到URL
+                        const encodedData = encodeURIComponent(JSON.stringify(copyData));
+                        window.location.href = `factory-model-template-management.html?action=copy&data=${encodedData}`;
+                    }).catch(() => {
+                        this.$message.info('已取消复制模板');
+                    });
+                },
+                
+                // 根据模板ID生成层级结构数据
+                generateHierarchyNodes(templateId) {
+                    const hierarchyMap = {
+                        'cement_plant_standard': [
+                            {
+                                id: '1',
+                                name: '水泥工厂',
+                                type: '工厂',
+                                description: '水泥生产工厂',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '原料处理车间',
+                                type: '车间',
+                                description: '处理石灰石、粘土等原料',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '破碎工段',
+                                type: '工段',
+                                description: '破碎石灰石等原料',
+                                level: 3,
+                                parentId: '2'
+                            },
+                            {
+                                id: '4',
+                                name: '破碎机',
+                                type: '设备',
+                                description: '破碎设备',
+                                level: 4,
+                                parentId: '3'
+                            },
+                            {
+                                id: '5',
+                                name: '烧成车间',
+                                type: '车间',
+                                description: '水泥熟料烧成',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '6',
+                                name: '回转窑',
+                                type: '设备',
+                                description: '水泥熟料烧成设备',
+                                level: 3,
+                                parentId: '5'
+                            }
+                        ],
+                        'cement_plant_advanced': [
+                            {
+                                id: '1',
+                                name: '水泥工厂',
+                                type: '工厂',
+                                description: '大型水泥生产企业',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '原料处理系统',
+                                type: '车间',
+                                description: '原料处理和管理',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '生料制备系统',
+                                type: '车间',
+                                description: '生料制备和均化',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '4',
+                                name: '烧成系统',
+                                type: '车间',
+                                description: '熟料烧成系统',
+                                level: 2,
+                                parentId: '1'
+                            }
+                        ],
+                        'cement_plant_mini': [ 
+                            {
+                                id: '1',
+                                name: '水泥工厂',
+                                type: '工厂',
+                                description: '小型水泥工厂',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '生产车间',
+                                type: '车间',
+                                description: '综合生产车间',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '主要设备',
+                                type: '设备',
+                                description: '核心生产设备',
+                                level: 3,
+                                parentId: '2'
+                            }
+                        ],
+                        'cement_plant_custom': [
+                            {
+                                id: '1',
+                                name: '水泥工厂',
+                                type: '工厂',
+                                description: '用户自定义水泥工厂',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '原料系统',
+                                type: '车间',
+                                description: '原料处理系统',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '生料系统',
+                                type: '车间',
+                                description: '生料制备系统',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '4',
+                                name: '烧成系统',
+                                type: '车间',
+                                description: '熟料烧成系统',
+                                level: 2,
+                                parentId: '1'
+                            }
+                        ],
+                        'chemical_plant': [
+                            {
+                                id: '1',
+                                name: '化工工厂',
+                                type: '工厂',
+                                description: '化工生产企业',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '生产区域',
+                                type: '车间',
+                                description: '主要生产区域',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '安全区域',
+                                type: '车间',
+                                description: '安全控制区域',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '4',
+                                name: '环保区域',
+                                type: '车间',
+                                description: '环保处理区域',
+                                level: 2,
+                                parentId: '1'
+                            }
+                        ],
+                        'steel_plant': [
+                            {
+                                id: '1',
+                                name: '钢铁工厂',
+                                type: '工厂',
+                                description: '钢铁生产企业',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '炼铁车间',
+                                type: '车间',
+                                description: '炼铁生产车间',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '炼钢车间',
+                                type: '车间',
+                                description: '炼钢生产车间',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '4',
+                                name: '轧钢车间',
+                                type: '车间',
+                                description: '轧钢生产车间',
+                                level: 2,
+                                parentId: '1'
+                            }
+                        ],
+                        'standard_manufacturing': [
+                            {
+                                id: '1',
+                                name: '标准制造工厂',
+                                type: '工厂',
+                                description: '标准制造企业',
+                                level: 1,
+                                parentId: null
+                            },
+                            {
+                                id: '2',
+                                name: '生产车间',
+                                type: '车间',
+                                description: '主要生产车间',
+                                level: 2,
+                                parentId: '1'
+                            },
+                            {
+                                id: '3',
+                                name: '设备区域',
+                                type: '车间',
+                                description: '设备管理区域',
+                                level: 2,
+                                parentId: '1'
+                            }
+                        ]
+                    };
+                    
+                    return hierarchyMap[templateId] || [];
+                }
+            },
+            mounted() {
+                // 组件挂载后的初始化
+                console.log('工厂模型模板页面已加载');
+                
+                // 检查字体加载状态
+                document.fonts.ready.then(() => {
+                    console.log('字体加载完成');
+                    if (document.fonts.check('1em element-icons')) {
+                        console.log('Element UI 图标字体加载成功');
+                    } else {
+                        console.warn('Element UI 图标字体加载失败');
+                    }
+                });
+                
+                // 监听字体加载事件
+                document.fonts.addEventListener('loadingdone', (event) => {
+                    console.log('字体加载事件:', event);
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

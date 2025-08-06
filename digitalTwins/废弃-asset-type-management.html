@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产类型管理 - 数字孪生平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧导航 */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-left-color: #fff;
+        }
+
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            border-left-color: #fff;
+            font-weight: 600;
+        }
+
+        .nav-link .icon {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        /* 表格样式 */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* 隐藏页面 */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 操作按钮 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>资产类型管理</h2>
+                <p>Asset Type Management</p>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#basic-info" class="nav-link active" data-page="basic-info">
+                        <span class="icon">📋</span>P1.1 类型基本信息
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#static-properties" class="nav-link" data-page="static-properties">
+                        <span class="icon">⚙️</span>P1.2 静态属性定义
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#dynamic-variables" class="nav-link" data-page="dynamic-variables">
+                        <span class="icon">📊</span>P1.3 动态变量模板
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#data-processing" class="nav-link" data-page="data-processing">
+                        <span class="icon">🔄</span>P1.4 数据加工规则
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#indicator-cards" class="nav-link" data-page="indicator-cards">
+                        <span class="icon">📈</span>P1.5 指标卡片模板
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#alarm-rules" class="nav-link" data-page="alarm-rules">
+                        <span class="icon">🚨</span>P1.6 告警规则模板
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#geometry-models" class="nav-link" data-page="geometry-models">
+                        <span class="icon">🎨</span>P1.7 几何/组态模型
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- P1.1 类型基本信息 -->
+            <div id="basic-info" class="page-content active">
+                <div class="page-header">
+                    <h1 class="page-title">类型基本信息</h1>
+                    <p class="page-subtitle">定义资产类型的基本信息和继承关系</p>
+                </div>
+                <div class="content-area">
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label">类型名称 *</label>
+                            <input type="text" class="form-input" placeholder="请输入资产类型名称" value="水泥磨机">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">类型描述</label>
+                            <textarea class="form-textarea" placeholder="请输入类型描述">用于水泥粉磨的设备类型，包括球磨机、立磨等</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">分类标签</label>
+                            <input type="text" class="form-input" placeholder="请输入分类标签，用逗号分隔" value="设备,粉磨,核心设备">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">父类型</label>
+                            <select class="form-select">
+                                <option value="">无父类型</option>
+                                <option value="equipment" selected>设备</option>
+                                <option value="pipeline">管道</option>
+                                <option value="valve">阀门</option>
+                            </select>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-primary">保存</button>
+                            <button type="button" class="btn btn-secondary">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- P1.2 静态属性定义 -->
+            <div id="static-properties" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">静态属性定义</h1>
+                    <p class="page-subtitle">定义资产类型的静态属性字段</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">属性列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>字段名</th>
+                                    <th>数据类型</th>
+                                    <th>单位</th>
+                                    <th>必填</th>
+                                    <th>显示优先级</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>设备编号</td>
+                                    <td>字符串</td>
+                                    <td>-</td>
+                                    <td><span class="status-badge status-active">是</span></td>
+                                    <td>1</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary" onclick="alert('此按钮应实现编辑静态属性字段功能')">编辑</button>
+                                            <button class="btn btn-sm btn-secondary" onclick="alert('此按钮应实现删除静态属性字段功能')">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>设备名称</td>
+                                    <td>字符串</td>
+                                    <td>-</td>
+                                    <td><span class="status-badge status-active">是</span></td>
+                                    <td>2</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>额定功率</td>
+                                    <td>数值</td>
+                                    <td>kW</td>
+                                    <td><span class="status-badge status-inactive">否</span></td>
+                                    <td>3</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="alert('此按钮应实现添加新的静态属性字段功能')">添加属性</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P1.3 动态变量模板定义 -->
+            <div id="dynamic-variables" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">动态变量模板定义</h1>
+                    <p class="page-subtitle">定义数据采集变量模板</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">变量模板列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>变量标识符</th>
+                                    <th>采集周期</th>
+                                    <th>数据类型</th>
+                                    <th>来源类型</th>
+                                    <th>单位</th>
+                                    <th>质量等级</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>motor_speed</td>
+                                    <td>1秒</td>
+                                    <td>浮点数</td>
+                                    <td>OT</td>
+                                    <td>rpm</td>
+                                    <td>高</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>motor_current</td>
+                                    <td>1秒</td>
+                                    <td>浮点数</td>
+                                    <td>OT</td>
+                                    <td>A</td>
+                                    <td>高</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>temperature</td>
+                                    <td>5秒</td>
+                                    <td>浮点数</td>
+                                    <td>OT</td>
+                                    <td>°C</td>
+                                    <td>中</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="alert('此按钮应实现添加新的动态变量模板功能')">添加变量模板</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P1.4 数据加工规则模板 -->
+            <div id="data-processing" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">数据加工规则模板</h1>
+                    <p class="page-subtitle">定义数据处理的图形化规则</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">规则模板列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>规则名称</th>
+                                    <th>处理类型</th>
+                                    <th>输入变量</th>
+                                    <th>输出变量</th>
+                                    <th>时窗参数</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>温度去噪</td>
+                                    <td>去噪</td>
+                                    <td>temperature</td>
+                                    <td>temp_filtered</td>
+                                    <td>10秒</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>速度聚合</td>
+                                    <td>聚合</td>
+                                    <td>motor_speed</td>
+                                    <td>speed_avg</td>
+                                    <td>1分钟</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="alert('此按钮应实现添加新的数据加工规则功能')">添加规则模板</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P1.5 指标卡片模板 -->
+            <div id="indicator-cards" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">指标卡片模板</h1>
+                    <p class="page-subtitle">定义监控指标的显示卡片</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">卡片模板列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>卡片名称</th>
+                                    <th>卡片类型</th>
+                                    <th>显示字段</th>
+                                    <th>计算规则</th>
+                                    <th>单位</th>
+                                    <th>异常阈值</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>电机转速</td>
+                                    <td>数字</td>
+                                    <td>当前值</td>
+                                    <td>实时值</td>
+                                    <td>rpm</td>
+                                    <td>1500-1800</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>温度趋势</td>
+                                    <td>图表</td>
+                                    <td>历史曲线</td>
+                                    <td>时间序列</td>
+                                    <td>°C</td>
+                                    <td>0-100</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>运行状态</td>
+                                    <td>状态灯</td>
+                                    <td>运行/停止</td>
+                                    <td>布尔值</td>
+                                    <td>-</td>
+                                    <td>运行</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;">添加卡片模板</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P1.6 告警规则模板 -->
+            <div id="alarm-rules" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">告警规则模板</h1>
+                    <p class="page-subtitle">定义异常告警的触发规则</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">告警规则列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>规则名称</th>
+                                    <th>触发条件</th>
+                                    <th>告警等级</th>
+                                    <th>联动操作</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>温度过高</td>
+                                    <td>temperature > 80°C</td>
+                                    <td>严重</td>
+                                    <td>通知+工单</td>
+                                    <td><span class="status-badge status-active">启用</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>转速异常</td>
+                                    <td>motor_speed < 1500 || motor_speed > 1800</td>
+                                    <td>警告</td>
+                                    <td>通知</td>
+                                    <td><span class="status-badge status-active">启用</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>连续异常</td>
+                                    <td>连续5次 temperature > 75°C</td>
+                                    <td>一般</td>
+                                    <td>通知</td>
+                                    <td><span class="status-badge status-inactive">禁用</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;">添加告警规则</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P1.7 几何/组态模型模板 -->
+            <div id="geometry-models" class="page-content">
+                <div class="page-header">
+                    <h1 class="page-title">几何/组态模型模板</h1>
+                    <p class="page-subtitle">管理3D模型和2D组态图</p>
+                </div>
+                <div class="content-area">
+                    <div class="card">
+                        <h3 class="card-title">模型模板列表</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>模型名称</th>
+                                    <th>模型类型</th>
+                                    <th>文件大小</th>
+                                    <th>映射点数</th>
+                                    <th>组件数量</th>
+                                    <th>上传时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>水泥磨机3D模型</td>
+                                    <td>3D模型</td>
+                                    <td>2.5MB</td>
+                                    <td>15</td>
+                                    <td>8</td>
+                                    <td>2024-01-15</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">预览</button>
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>磨机组态图</td>
+                                    <td>2D组态</td>
+                                    <td>1.2MB</td>
+                                    <td>12</td>
+                                    <td>6</td>
+                                    <td>2024-01-10</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-secondary">预览</button>
+                                            <button class="btn btn-sm btn-secondary">编辑</button>
+                                            <button class="btn btn-sm btn-secondary">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-primary" style="margin-top: 20px;">上传模型</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pageContents = document.querySelectorAll('.page-content');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有活动状态
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    pageContents.forEach(p => p.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    
+                    // 显示对应页面内容
+                    const targetPage = this.getAttribute('data-page');
+                    const targetContent = document.getElementById(targetPage);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

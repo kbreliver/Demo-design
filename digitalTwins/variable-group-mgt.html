@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>属性变量组管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 14px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .type-static {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-business {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .type-dynamic {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 行内编辑样式 */
+        .editable-row {
+            background-color: #fff3cd !important;
+        }
+
+        .editable-row input,
+        .editable-row select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .editable-row input:focus,
+        .editable-row select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        /* Drawer Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80vh;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .drawer-handle {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background-color: #ddd;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .drawer-handle:hover {
+            background-color: #bbb;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body {
+            padding: 5px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: #e74c3c;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* 基本信息区域样式 */
+        .group-info-section {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background-color: #fafafa;
+            display: none;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        /* Variable Management Styles */
+        .variable-section {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .variable-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .variable-section-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .variable-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        .variable-table th,
+        .variable-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .variable-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .variable-input-control {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .variable-input-control:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .variable-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-icon {
+            padding: 6px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            min-width: 32px;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+        }
+
+        /* 分页控件 */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 15px 30px;
+            background: white;
+            border-top: 1px solid #ebeef5;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #606266;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: 1px solid #dcdfe6;
+            background: white;
+            color: #606266;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(.disabled) {
+            border-color: #409eff;
+            color: #409eff;
+        }
+
+        .page-btn.active {
+            background-color: #409eff;
+            color: white;
+            border-color: #409eff;
+        }
+
+        .page-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- <div class="header">
+            <h1>属性变量组管理</h1>
+            <p>管理静态属性组、业务变量组和动态变量组，支持变量组的新增、编辑、删除和变量管理</p>
+        </div> -->
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索变量组名称...">
+                <div class="filter-group">
+                    <select class="filter-select" id="typeFilter">
+                        <option value="">全部类型</option>
+                        <option value="static">静态属性组</option>
+                        <option value="business">业务变量组</option>
+                        <option value="dynamic">动态变量组</option>
+                    </select>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">全部状态</option>
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">新增变量组</button>
+        </div>
+
+        <div class="content">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>变量组名称</th>
+                        <th>描述</th>
+                        <th>类型</th>
+                        <th>包含变量数</th>
+                        <th>显示顺序</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="groupTableBody">
+                    <!-- 数据将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <div class="pagination-info">显示 1-3 条，共 3 条</div>
+            <div class="pagination-controls">
+                <button class="page-btn disabled" onclick="changePage('first')"><<</button>
+                <button class="page-btn disabled" onclick="changePage('prev')"><</button>
+                <button class="page-btn active" onclick="changePage(1)">1</button>
+                <button class="page-btn" onclick="changePage(2)">2</button>
+                <button class="page-btn" onclick="changePage(3)">3</button>
+                <button class="page-btn" onclick="changePage('next')">></button>
+                <button class="page-btn" onclick="changePage('last')">>></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑变量组抽屉 -->
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="drawer-handle" onclick="closeModal()"></div>
+                <h3 class="modal-title" id="modalTitle"></h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- 变量组基本信息 -->
+                <div class="group-info-section">
+                    <h4 class="section-title">基本信息</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">变量组类型</label>
+                            <select class="form-select" id="groupType" required>
+                                <option value="">请选择类型</option>
+                                <option value="static">静态属性组</option>
+                                <option value="business">业务变量组</option>
+                                <option value="dynamic">动态变量组</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">变量组名称</label>
+                            <input type="text" class="form-input" id="groupName" placeholder="请输入变量组名称" required>
+                        </div>
+                    </div>
+                                         <div class="form-group">
+                         <label class="form-label">描述</label>
+                         <textarea class="form-textarea" id="groupDescription" placeholder="请输入变量组描述" rows="2"></textarea>
+                     </div>
+                </div>
+
+                <!-- 变量管理区域 -->
+                <div class="variable-section">
+                    <div class="variable-section-header">
+                        <h4 class="variable-section-title"></h4>
+                        <button type="button" class="btn btn-primary btn-small" onclick="addVariableRow()">添加变量</button>
+                    </div>
+                    
+                    <table class="variable-table" id="variableTable">
+                        <thead>
+                            <tr>
+                                <th>变量名称</th>
+                                <th>变量编码</th>
+                                <th>数据类型</th>
+                                <th>精度</th>
+                                <th>单位</th>
+                                <th>分类</th>
+                                <th>采集频率</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variableTableBody">
+                            <!-- 变量行将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+
+                    <div id="emptyVariableState" class="empty-state" style="display: none;">
+                        <p>暂无变量，点击"添加变量"开始添加</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveGroup()">保存变量</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentMode = 'add'; // 'add' 或 'edit'
+        let currentGroupId = null;
+        let variableCounter = 0;
+
+        // 模拟数据
+        const mockGroups = [
+            {
+                id: 1,
+                name: '设备基础信息',
+                description: '包含设备的基本属性信息',
+                type: 'static',
+                variableCount: 5,
+                displayOrder: 1,
+                status: 'active',
+                variables: [
+                    { name: '设备名称', code: 'DEVICE_NAME', dataType: 'string', precision: '', unit: '', category: '', frequency: '', description: '设备的标准名称' },
+                    { name: '设备编码', code: 'DEVICE_CODE', dataType: 'string', precision: '', unit: '', category: '', frequency: '', description: '设备的唯一编码' },
+                    { name: '设备型号', code: 'DEVICE_MODEL', dataType: 'string', precision: '', unit: '', category: '', frequency: '', description: '设备的型号规格' },
+                    { name: '制造商', code: 'MANUFACTURER', dataType: 'string', precision: '', unit: '', category: '', frequency: '', description: '设备制造商' },
+                    { name: '生产日期', code: 'PRODUCTION_DATE', dataType: 'date', precision: '', unit: '', category: '', frequency: '', description: '设备生产日期' }
+                ]
+            },
+            {
+                id: 2,
+                name: '运行状态变量',
+                description: '设备运行时的状态变量',
+                type: 'dynamic',
+                variableCount: 3,
+                displayOrder: 2,
+                status: 'active',
+                variables: [
+                    { name: '运行状态', code: 'RUN_STATUS', dataType: 'string', precision: '', unit: '', category: 'status', frequency: '1s', description: '设备当前运行状态' },
+                    { name: '温度', code: 'TEMPERATURE', dataType: 'number', precision: '2', unit: '℃', category: 'realtime', frequency: '5s', description: '设备运行温度' },
+                    { name: '转速', code: 'RPM', dataType: 'number', precision: '0', unit: 'rpm', category: 'realtime', frequency: '1s', description: '设备转速' }
+                ]
+            },
+            {
+                id: 3,
+                name: '业务统计变量',
+                description: '业务相关的统计变量',
+                type: 'business',
+                variableCount: 2,
+                displayOrder: 3,
+                status: 'active',
+                variables: [
+                    { name: '累计运行时间', code: 'TOTAL_RUNTIME', dataType: 'number', precision: '0', unit: '小时', category: 'cumulative', frequency: '1h', description: '设备累计运行时间' },
+                    { name: '效率指标', code: 'EFFICIENCY', dataType: 'number', precision: '2', unit: '%', category: 'calculated', frequency: '1h', description: '设备运行效率' }
+                ]
+            }
+        ];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGroups();
+            setupEventListeners();
+            setupDrawerEvents();
+        });
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索功能
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterGroups();
+            });
+
+            // 类型筛选
+            document.getElementById('typeFilter').addEventListener('change', function() {
+                filterGroups();
+            });
+
+            // 状态筛选
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                filterGroups();
+            });
+
+            // 变量组类型变化时更新分类选项
+            document.addEventListener('change', function(e) {
+                if (e.target.id === 'groupType') {
+                    updateVariableCategories();
+                }
+            });
+        }
+
+        // 设置抽屉拖拽事件
+        function setupDrawerEvents() {
+            const modalContent = document.querySelector('.modal-content');
+            
+            modalContent.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+
+            modalContent.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+                
+                if (deltaY > 0) { // 只允许向下拖拽
+                    modalContent.style.transform = `translateY(${deltaY}px)`;
+                }
+            });
+
+            modalContent.addEventListener('touchend', function(e) {
+                if (!isDragging) return;
+                
+                const deltaY = currentY - startY;
+                isDragging = false;
+                
+                if (deltaY > 100) { // 如果拖拽距离超过100px，关闭抽屉
+                    closeModal();
+                } else {
+                    // 重置位置
+                    modalContent.style.transform = 'translateY(0)';
+                }
+            });
+        }
+
+                // 加载变量组列表
+        function loadGroups() {
+            const tbody = document.getElementById('groupTableBody');
+            tbody.innerHTML = '';
+
+            mockGroups.forEach(group => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-group-id', group.id);
+                
+                const typeText = {
+                    'static': '静态属性组',
+                    'business': '业务变量组',
+                    'dynamic': '动态变量组'
+                }[group.type];
+
+                const statusText = group.status === 'active' ? '启用' : '禁用';
+                const statusClass = group.status === 'active' ? 'status-active' : 'status-inactive';
+                const typeClass = `type-${group.type}`;
+
+                row.innerHTML = `
+                    <td>${group.name}</td>
+                    <td>${group.description}</td>
+                    <td><span class="type-badge ${typeClass}">${typeText}</span></td>
+                    <td>${group.variableCount}</td>
+                    <td>${group.displayOrder}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-small" onclick="editGroup(${group.id})">变量管理</button>
+                            <button class="btn btn-secondary btn-small" onclick="editRow(${group.id})">编辑</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteGroup(${group.id})">删除</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 筛选变量组
+        function filterGroups() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const rows = document.querySelectorAll('#groupTableBody tr');
+            
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const type = row.cells[2].textContent;
+                const status = row.cells[5].textContent;
+
+                const matchesSearch = name.includes(searchTerm);
+                const matchesType = !typeFilter || type.includes(typeFilter === 'static' ? '静态' : typeFilter === 'business' ? '业务' : '动态');
+                const matchesStatus = !statusFilter || status.includes(statusFilter === 'active' ? '启用' : '禁用');
+
+                row.style.display = matchesSearch && matchesType && matchesStatus ? '' : 'none';
+            });
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            filterGroups();
+        }
+
+        // 打开新增抽屉
+        function openAddModal() {
+            currentMode = 'add';
+            currentGroupId = null;
+            document.getElementById('modalTitle').textContent = '新增变量组';
+            clearVariableTable();
+            clearGroupForm();
+            const modal = document.getElementById('groupModal');
+            modal.style.display = 'block';
+            // 添加动画效果
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+        }
+
+        // 编辑变量组
+        function editGroup(groupId) {
+            currentMode = 'edit';
+            currentGroupId = groupId;
+            document.getElementById('modalTitle').textContent = '编辑变量组';
+            
+            const group = mockGroups.find(g => g.id === groupId);
+            if (group) {
+                loadGroupForm(group);
+                loadVariables(group.variables);
+            }
+            
+            const modal = document.getElementById('groupModal');
+            modal.style.display = 'block';
+            // 添加动画效果
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+        }
+
+        // 关闭抽屉
+        function closeModal() {
+            const modal = document.getElementById('groupModal');
+            modal.classList.remove('show');
+            // 等待动画完成后隐藏
+            setTimeout(() => {
+                modal.style.display = 'none';
+                clearVariableTable();
+                clearGroupForm();
+            }, 300);
+        }
+
+        // 清空变量表格
+        function clearVariableTable() {
+            document.getElementById('variableTableBody').innerHTML = '';
+            document.getElementById('emptyVariableState').style.display = 'block';
+            variableCounter = 0;
+        }
+
+        // 清空基本信息表单
+        function clearGroupForm() {
+            document.getElementById('groupType').value = '';
+            document.getElementById('groupName').value = '';
+            document.getElementById('groupDescription').value = '';
+        }
+
+        // 加载基本信息表单
+        function loadGroupForm(group) {
+            document.getElementById('groupType').value = group.type;
+            document.getElementById('groupName').value = group.name;
+            document.getElementById('groupDescription').value = group.description;
+        }
+
+        // 加载变量列表
+        function loadVariables(variables) {
+            const tbody = document.getElementById('variableTableBody');
+            tbody.innerHTML = '';
+            
+            if (variables && variables.length > 0) {
+                variables.forEach(variable => {
+                    addVariableRow(variable);
+                });
+                document.getElementById('emptyVariableState').style.display = 'none';
+            } else {
+                document.getElementById('emptyVariableState').style.display = 'block';
+            }
+        }
+
+        // 添加变量行
+        function addVariableRow(variableData = null) {
+            variableCounter++;
+            const tbody = document.getElementById('variableTableBody');
+            const row = document.createElement('tr');
+            row.id = `variable-row-${variableCounter}`;
+            
+            // 根据当前模式确定变量组类型
+            let groupType = 'static'; // 默认值
+            if (currentMode === 'edit' && currentGroupId) {
+                const group = mockGroups.find(g => g.id === currentGroupId);
+                if (group) {
+                    groupType = group.type;
+                }
+            } else {
+                // 新增模式下，从表单获取类型
+                groupType = document.getElementById('groupType').value || 'static';
+            }
+            const categoryOptions = getCategoryOptions(groupType);
+            
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="variable-input-control" id="var-name-${variableCounter}" 
+                           placeholder="变量名称" value="${variableData ? variableData.name : ''}">
+                </td>
+                <td>
+                    <input type="text" class="variable-input-control" id="var-code-${variableCounter}" 
+                           placeholder="变量编码" value="${variableData ? variableData.code : ''}">
+                </td>
+                <td>
+                    <select class="variable-input-control" id="var-dataType-${variableCounter}">
+                        <option value="">选择类型</option>
+                        <option value="string" ${variableData && variableData.dataType === 'string' ? 'selected' : ''}>字符串</option>
+                        <option value="number" ${variableData && variableData.dataType === 'number' ? 'selected' : ''}>数值</option>
+                        <option value="boolean" ${variableData && variableData.dataType === 'boolean' ? 'selected' : ''}>布尔值</option>
+                        <option value="date" ${variableData && variableData.dataType === 'date' ? 'selected' : ''}>日期时间</option>
+                        <option value="array" ${variableData && variableData.dataType === 'array' ? 'selected' : ''}>数组</option>
+                        <option value="object" ${variableData && variableData.dataType === 'object' ? 'selected' : ''}>对象</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="variable-input-control" id="var-precision-${variableCounter}" 
+                           placeholder="精度" min="0" max="10" value="${variableData ? variableData.precision : ''}">
+                </td>
+                <td>
+                    <input type="text" class="variable-input-control" id="var-unit-${variableCounter}" 
+                           placeholder="单位" value="${variableData ? variableData.unit : ''}">
+                </td>
+                <td>
+                    <select class="variable-input-control" id="var-category-${variableCounter}">
+                        <option value="">选择分类</option>
+                        ${categoryOptions}
+                    </select>
+                </td>
+                <td>
+                    <select class="variable-input-control" id="var-frequency-${variableCounter}">
+                        <option value="">选择频率</option>
+                        <option value="1s" ${variableData && variableData.frequency === '1s' ? 'selected' : ''}>1秒</option>
+                        <option value="5s" ${variableData && variableData.frequency === '5s' ? 'selected' : ''}>5秒</option>
+                        <option value="10s" ${variableData && variableData.frequency === '10s' ? 'selected' : ''}>10秒</option>
+                        <option value="30s" ${variableData && variableData.frequency === '30s' ? 'selected' : ''}>30秒</option>
+                        <option value="1m" ${variableData && variableData.frequency === '1m' ? 'selected' : ''}>1分钟</option>
+                        <option value="5m" ${variableData && variableData.frequency === '5m' ? 'selected' : ''}>5分钟</option>
+                        <option value="10m" ${variableData && variableData.frequency === '10m' ? 'selected' : ''}>10分钟</option>
+                        <option value="1h" ${variableData && variableData.frequency === '1h' ? 'selected' : ''}>1小时</option>
+                        <option value="1d" ${variableData && variableData.frequency === '1d' ? 'selected' : ''}>1天</option>
+                        <option value="manual" ${variableData && variableData.frequency === 'manual' ? 'selected' : ''}>手动采集</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="variable-input-control" id="var-description-${variableCounter}" 
+                           placeholder="描述" value="${variableData ? variableData.description : ''}">
+                </td>
+                <td>
+                    <div class="variable-actions">
+                        <button type="button" class="btn-icon btn-save" onclick="saveVariable(${variableCounter})">✓</button>
+                        <button type="button" class="btn-icon btn-cancel" onclick="cancelVariable(${variableCounter})">✗</button>
+                        <button type="button" class="btn-icon btn-delete" onclick="deleteVariable(${variableCounter})">🗑</button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            document.getElementById('emptyVariableState').style.display = 'none';
+            
+            // 如果是编辑模式，设置分类值
+            if (variableData && variableData.category) {
+                document.getElementById(`var-category-${variableCounter}`).value = variableData.category;
+            }
+        }
+
+        // 获取分类选项
+        function getCategoryOptions(groupType) {
+            if (groupType === 'static') {
+                return '';
+            } else if (groupType === 'business') {
+                return `
+                    <option value="cumulative">累计数据</option>
+                    <option value="calculated">计算数据</option>
+                `;
+            } else if (groupType === 'dynamic') {
+                return `
+                    <option value="realtime">实时数据</option>
+                    <option value="cumulative">累计数据</option>
+                    <option value="status">状态数据</option>
+                    <option value="calculated">计算数据</option>
+                `;
+            }
+            return '';
+        }
+
+        // 更新变量分类选项
+        function updateVariableCategories() {
+            const groupType = document.getElementById('groupType').value;
+            const categorySelects = document.querySelectorAll('[id^="var-category-"]');
+            
+            categorySelects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">选择分类</option>' + getCategoryOptions(groupType);
+                // 如果当前值在新的选项中存在，则保持选中
+                if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+                    select.value = currentValue;
+                }
+            });
+        }
+
+
+
+        // 保存变量
+        function saveVariable(variableId) {
+            const name = document.getElementById(`var-name-${variableId}`).value.trim();
+            const code = document.getElementById(`var-code-${variableId}`).value.trim();
+            const dataType = document.getElementById(`var-dataType-${variableId}`).value;
+            
+            if (!name) {
+                alert('请输入变量名称');
+                return;
+            }
+            if (!code) {
+                alert('请输入变量编码');
+                return;
+            }
+            if (!dataType) {
+                alert('请选择数据类型');
+                return;
+            }
+            
+            // 检查编码唯一性
+            const allCodes = [];
+            document.querySelectorAll('[id^="var-code-"]').forEach(input => {
+                if (input.id !== `var-code-${variableId}`) {
+                    allCodes.push(input.value.trim());
+                }
+            });
+            
+            if (allCodes.includes(code)) {
+                alert('变量编码已存在，请使用不同的编码');
+                return;
+            }
+            
+            // 保存成功，可以添加视觉反馈
+            const saveBtn = document.querySelector(`#variable-row-${variableId} .btn-save`);
+            saveBtn.style.background = '#28a745';
+            setTimeout(() => {
+                saveBtn.style.background = '';
+            }, 1000);
+        }
+
+        // 取消变量编辑
+        function cancelVariable(variableId) {
+            const row = document.getElementById(`variable-row-${variableId}`);
+            if (row) {
+                row.remove();
+                
+                // 如果没有变量行了，显示空状态
+                const tbody = document.getElementById('variableTableBody');
+                if (tbody.children.length === 0) {
+                    document.getElementById('emptyVariableState').style.display = 'block';
+                }
+            }
+        }
+
+        // 删除变量
+        function deleteVariable(variableId) {
+            if (confirm('确定要删除这个变量吗？')) {
+                cancelVariable(variableId);
+            }
+        }
+
+        // 保存变量组
+        function saveGroup() {
+            // 验证基本信息
+            const groupType = document.getElementById('groupType').value;
+            const groupName = document.getElementById('groupName').value.trim();
+            const groupDescription = document.getElementById('groupDescription').value.trim();
+            
+            if (!groupType) {
+                alert('请选择变量组类型');
+                return;
+            }
+            if (!groupName) {
+                alert('请输入变量组名称');
+                return;
+            }
+            
+            // 收集变量数据
+            const variables = [];
+            document.querySelectorAll('[id^="var-name-"]').forEach(input => {
+                const variableId = input.id.split('-')[2];
+                const name = input.value.trim();
+                const code = document.getElementById(`var-code-${variableId}`).value.trim();
+                const dataType = document.getElementById(`var-dataType-${variableId}`).value;
+                const precision = document.getElementById(`var-precision-${variableId}`).value;
+                const unit = document.getElementById(`var-unit-${variableId}`).value.trim();
+                const category = document.getElementById(`var-category-${variableId}`).value;
+                const frequency = document.getElementById(`var-frequency-${variableId}`).value;
+                const description = document.getElementById(`var-description-${variableId}`).value.trim();
+                
+                if (name && code && dataType) {
+                    variables.push({
+                        name, code, dataType, precision, unit, category, frequency, description
+                    });
+                }
+            });
+            
+            // 模拟保存
+            if (currentMode === 'add') {
+                alert(`新增变量组成功！\n类型: ${groupType}\n名称: ${groupName}\n包含变量: ${variables.length}个`);
+            } else {
+                alert(`编辑变量组成功！\n类型: ${groupType}\n名称: ${groupName}\n包含变量: ${variables.length}个`);
+            }
+            
+            closeModal();
+            loadGroups(); // 重新加载列表
+        }
+
+        // 删除变量组
+        function deleteGroup(groupId) {
+            if (confirm('确定要删除这个变量组吗？删除后无法恢复。')) {
+                const group = mockGroups.find(g => g.id === groupId);
+                if (group) {
+                    alert(`已删除变量组: ${group.name}`);
+                    loadGroups(); // 重新加载列表
+                }
+            }
+        }
+
+        // 行内编辑功能
+        function editRow(groupId) {
+            const row = document.querySelector(`tr[data-group-id="${groupId}"]`);
+            if (!row) return;
+
+            const group = mockGroups.find(g => g.id === groupId);
+            if (!group) return;
+
+            // 保存原始数据
+            row.dataset.originalData = JSON.stringify({
+                name: group.name,
+                description: group.description,
+                type: group.type,
+                displayOrder: group.displayOrder,
+                status: group.status
+            });
+
+            // 设置编辑状态
+            row.classList.add('editable-row');
+
+            // 替换单元格内容为可编辑控件
+            const cells = row.cells;
+            
+            // 名称列
+            cells[0].innerHTML = `<input type="text" value="${group.name}" class="edit-name">`;
+            
+            // 描述列
+            cells[1].innerHTML = `<input type="text" value="${group.description}" class="edit-description">`;
+            
+            // 类型列
+            const typeOptions = {
+                'static': '静态属性组',
+                'business': '业务变量组',
+                'dynamic': '动态变量组'
+            };
+            const typeSelect = Object.entries(typeOptions).map(([value, text]) => 
+                `<option value="${value}" ${group.type === value ? 'selected' : ''}>${text}</option>`
+            ).join('');
+            cells[2].innerHTML = `<select class="edit-type">${typeSelect}</select>`;
+            
+            // 包含变量数列（只读）
+            cells[3].innerHTML = `<span>${group.variableCount}</span>`;
+            
+            // 显示顺序列
+            cells[4].innerHTML = `<input type="number" value="${group.displayOrder}" class="edit-display-order" min="1">`;
+            
+            // 状态列
+            const statusOptions = [
+                { value: 'active', text: '启用' },
+                { value: 'inactive', text: '禁用' }
+            ];
+            const statusSelect = statusOptions.map(option => 
+                `<option value="${option.value}" ${group.status === option.value ? 'selected' : ''}>${option.text}</option>`
+            ).join('');
+            cells[5].innerHTML = `<select class="edit-status">${statusSelect}</select>`;
+            
+            // 操作列
+            cells[6].innerHTML = `
+                <div class="edit-actions">
+                    <button class="btn btn-success btn-small" onclick="saveRow(${groupId})">保存</button>
+                    <button class="btn btn-secondary btn-small" onclick="cancelEdit(${groupId})">取消</button>
+                </div>
+            `;
+        }
+
+        // 保存行编辑
+        function saveRow(groupId) {
+            const row = document.querySelector(`tr[data-group-id="${groupId}"]`);
+            if (!row) return;
+
+            // 获取编辑后的数据
+            const name = row.querySelector('.edit-name').value.trim();
+            const description = row.querySelector('.edit-description').value.trim();
+            const type = row.querySelector('.edit-type').value;
+            const displayOrder = parseInt(row.querySelector('.edit-display-order').value);
+            const status = row.querySelector('.edit-status').value;
+
+            // 验证数据
+            if (!name) {
+                alert('请输入变量组名称');
+                return;
+            }
+            if (displayOrder < 1) {
+                alert('显示顺序必须大于0');
+                return;
+            }
+
+            // 更新模拟数据
+            const groupIndex = mockGroups.findIndex(g => g.id === groupId);
+            if (groupIndex !== -1) {
+                mockGroups[groupIndex] = {
+                    ...mockGroups[groupIndex],
+                    name,
+                    description,
+                    type,
+                    displayOrder,
+                    status
+                };
+            }
+
+            // 退出编辑状态
+            exitEditMode(row);
+            
+            // 重新加载列表以显示更新后的数据
+            loadGroups();
+            
+            alert('保存成功！');
+        }
+
+        // 取消编辑
+        function cancelEdit(groupId) {
+            const row = document.querySelector(`tr[data-group-id="${groupId}"]`);
+            if (!row) return;
+
+            // 恢复原始数据
+            const originalData = JSON.parse(row.dataset.originalData || '{}');
+            const groupIndex = mockGroups.findIndex(g => g.id === groupId);
+            if (groupIndex !== -1 && originalData.name) {
+                mockGroups[groupIndex] = {
+                    ...mockGroups[groupIndex],
+                    ...originalData
+                };
+            }
+
+            // 退出编辑状态
+            exitEditMode(row);
+            
+            // 重新加载列表
+            loadGroups();
+        }
+
+        // 退出编辑模式
+        function exitEditMode(row) {
+            row.classList.remove('editable-row');
+            delete row.dataset.originalData;
+        }
+
+        // 分页功能
+        function changePage(page) {
+            // 这里可以实现分页逻辑
+            console.log('导航到第' + page + '页变量组列表');
+            
+            // 更新分页按钮状态
+            const pageButtons = document.querySelectorAll('.pagination-controls .page-btn');
+            pageButtons.forEach(btn => {
+                btn.classList.remove('active', 'disabled');
+            });
+            
+            // 根据页面设置活动状态
+            if (page === 1) {
+                pageButtons[2].classList.add('active'); // 第1页按钮
+                pageButtons[0].classList.add('disabled'); // 首页按钮
+                pageButtons[1].classList.add('disabled'); // 上一页按钮
+            } else if (page === 2) {
+                pageButtons[3].classList.add('active'); // 第2页按钮
+            } else if (page === 3) {
+                pageButtons[4].classList.add('active'); // 第3页按钮
+                pageButtons[5].classList.add('disabled'); // 下一页按钮
+                pageButtons[6].classList.add('disabled'); // 末页按钮
+            }
+        }
+
+        // 点击抽屉外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('groupModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // 触摸拖拽关闭功能
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+    </script>
+</body>
+</html> 

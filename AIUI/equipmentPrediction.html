@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备故障概率预测 - AI智能运维系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 顶部导航 */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-btn {
+            color: #4299e1;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .ai-indicator {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.3rem;
+        }
+
+        .filter-select {
+            padding: 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+
+        .stat-card.high-risk {
+            border-left-color: #f56565;
+            background: linear-gradient(135deg, #fff5f5, #ffffff);
+        }
+
+        .stat-card.medium-risk {
+            border-left-color: #ed8936;
+            background: linear-gradient(135deg, #fffaf0, #ffffff);
+        }
+
+        .stat-card.low-risk {
+            border-left-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4, #ffffff);
+        }
+
+        .stat-card.normal {
+            border-left-color: #4299e1;
+            background: linear-gradient(135deg, #ebf8ff, #ffffff);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-top: 0.3rem;
+        }
+
+        .stat-change.positive {
+            color: #f56565;
+        }
+
+        .stat-change.negative {
+            color: #48bb78;
+        }
+
+        /* 主要内容区域 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        /* 设备列表 */
+        .equipment-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .panel-content {
+            padding: 0;
+        }
+
+        .equipment-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .equipment-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f7fafc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .equipment-item:hover {
+            background: #f7fafc;
+            transform: translateX(4px);
+        }
+
+        .equipment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .equipment-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .health-score {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .health-critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .health-warning {
+            background: #faf089;
+            color: #744210;
+        }
+
+        .health-good {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .health-excellent {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+
+        .equipment-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            color: #a0aec0;
+            font-size: 0.75rem;
+        }
+
+        .detail-value {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .failure-probability {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .probability-critical {
+            color: #c53030;
+        }
+
+        .probability-warning {
+            color: #d69e2e;
+        }
+
+        .probability-normal {
+            color: #38a169;
+        }
+
+        .generate-workorder {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .equipment-item:hover .generate-workorder {
+            opacity: 1;
+        }
+
+        /* 风险排序面板 */
+        .risk-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            height: fit-content;
+        }
+
+        .risk-item {
+            padding: 1rem;
+            border-bottom: 1px solid #f7fafc;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .risk-rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .rank-1 { background: #fed7d7; color: #c53030; }
+        .rank-2 { background: #faf089; color: #744210; }
+        .rank-3 { background: #fbb6ce; color: #97266d; }
+        .rank-other { background: #e2e8f0; color: #4a5568; }
+
+        .risk-info {
+            flex: 1;
+        }
+
+        .risk-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+
+        .risk-probability {
+            color: #718096;
+            font-size: 0.8rem;
+        }
+
+        /* 趋势图表 */
+        .trend-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f7fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trend-chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 40px;
+            height: 200px;
+        }
+
+        .chart-points {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-point {
+            width: 8px;
+            height: 8px;
+            background: #4299e1;
+            border-radius: 50%;
+            position: relative;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .chart-bar {
+            width: 20px;
+            background: linear-gradient(to top, #4299e1, #63b3ed);
+            border-radius: 2px 2px 0 0;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* 悬停提示框 */
+        .tooltip {
+            position: absolute;
+            background: #2d3748;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .tooltip h4 {
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+        }
+
+        .tooltip-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tooltip-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 设备详情模态框 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+
+        .close-btn:hover {
+            color: #4a5568;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .data-section {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .data-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-label {
+            color: #718096;
+        }
+
+        .data-value {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .recommendations {
+            grid-column: span 2;
+            background: #ebf8ff;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .recommendations h4 {
+            color: #2b6cb0;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendations ul {
+            margin-left: 1.5rem;
+        }
+
+        .recommendations li {
+            margin-bottom: 0.3rem;
+            color: #4a5568;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .equipment-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <a href="../index.html" class="back-btn">
+                ← 返回主页
+            </a>
+            <h1 class="page-title">设备故障概率预测</h1>
+        </div>
+        <div class="ai-indicator">
+            🤖 AI预测引擎
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 控制面板 -->
+        <div class="control-panel fade-in">
+            <div class="filters">
+                <div class="filter-group">
+                    <label class="filter-label">生产线</label>
+                    <select class="filter-select" id="productionLineFilter">
+                        <option value="all">全部生产线</option>
+                        <option value="line-a">生产线A</option>
+                        <option value="line-b">生产线B</option>
+                        <option value="line-c">生产线C</option>
+                        <option value="utilities">公用设施</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">设备类型</label>
+                    <select class="filter-select" id="equipmentTypeFilter">
+                        <option value="all">全部类型</option>
+                        <option value="pump">泵类</option>
+                        <option value="motor">电机</option>
+                        <option value="compressor">压缩机</option>
+                        <option value="fan">风机</option>
+                        <option value="conveyor">输送机</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">风险等级</label>
+                    <select class="filter-select" id="riskLevelFilter">
+                        <option value="all">全部风险</option>
+                        <option value="critical">严重风险</option>
+                        <option value="high">高风险</option>
+                        <option value="medium">中风险</option>
+                        <option value="low">低风险</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">预测时间</label>
+                    <select class="filter-select" id="timeRangeFilter">
+                        <option value="3days">3天内</option>
+                        <option value="7days" selected>7天内</option>
+                        <option value="14days">14天内</option>
+                        <option value="30days">30天内</option>
+                    </select>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="exportReport()">📊 导出报告</button>
+                <button class="btn btn-primary" onclick="refreshPrediction()">🔄 刷新预测</button>
+            </div>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="stats-grid fade-in">
+            <div class="stat-card high-risk">
+                <div class="stat-header">
+                    <div class="stat-title">严重风险设备</div>
+                    <div style="color: #f56565;">⚠️</div>
+                </div>
+                <div class="stat-value">8</div>
+                <div class="stat-change positive">
+                    ↑ +2 较昨日
+                </div>
+            </div>
+            <div class="stat-card medium-risk">
+                <div class="stat-header">
+                    <div class="stat-title">中高风险设备</div>
+                    <div style="color: #ed8936;">⚡</div>
+                </div>
+                <div class="stat-value">24</div>
+                <div class="stat-change negative">
+                    ↓ -3 较昨日
+                </div>
+            </div>
+            <div class="stat-card low-risk">
+                <div class="stat-header">
+                    <div class="stat-title">低风险设备</div>
+                    <div style="color: #48bb78;">✅</div>
+                </div>
+                <div class="stat-value">156</div>
+                <div class="stat-change negative">
+                    ↓ -1 较昨日
+                </div>
+            </div>
+            <div class="stat-card normal">
+                <div class="stat-header">
+                    <div class="stat-title">健康设备</div>
+                    <div style="color: #4299e1;">💚</div>
+                </div>
+                <div class="stat-value">312</div>
+                <div class="stat-change positive">
+                    ↑ +2 较昨日
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- 设备列表 -->
+            <div class="equipment-panel fade-in">
+                <div class="panel-header">
+                    <h3 class="panel-title">设备预测看板 (按风险排序)</h3>
+                </div>
+                <div class="panel-content">
+                    <div class="equipment-list" id="equipmentList">
+                        <!-- 设备项目将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 风险排序 -->
+            <div class="risk-panel fade-in">
+                <div class="panel-header">
+                    <h3 class="panel-title">今日风险TOP10</h3>
+                </div>
+                <div class="panel-content" id="riskRanking">
+                    <!-- 风险排序将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 趋势图表 -->
+        <div class="trend-panel fade-in">
+            <h3 class="panel-title">故障概率趋势分析 (近7天)</h3>
+            <div class="chart-container">
+                <div class="trend-chart">
+                    <div class="chart-line">
+                        <div class="chart-points" id="trendChart">
+                            <!-- 趋势图将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 悬停提示框 -->
+    <div class="tooltip" id="tooltip">
+        <h4 id="tooltipTitle"></h4>
+        <div id="tooltipContent"></div>
+    </div>
+
+    <!-- 设备详情模态框 -->
+    <div class="modal" id="equipmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">设备详情</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-grid" id="modalContent">
+                <!-- 详情内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟设备数据
+        const equipmentData = [
+            {
+                id: 'P001',
+                name: '离心泵 #P001',
+                type: 'pump',
+                line: 'line-a',
+                healthScore: 25,
+                failureProbability: 84,
+                riskLevel: 'critical',
+                runningHours: 2340,
+                lastMaintenance: '2024-01-05',
+                temperature: 78.5,
+                vibration: 2.8,
+                pressure: 4.2,
+                efficiency: 72,
+                trend: [68, 72, 75, 78, 81, 82, 84],
+                aiJudgment: {
+                    temperature: '温度升高 +8°C',
+                    vibration: '振动异常 +40%',
+                    runtime: '运行时长超标',
+                    efficiency: '效率下降 -15%'
+                }
+            },
+            {
+                id: 'C002',
+                name: '压缩机 #C002',
+                type: 'compressor',
+                line: 'line-b',
+                healthScore: 45,
+                failureProbability: 72,
+                riskLevel: 'high',
+                runningHours: 1876,
+                lastMaintenance: '2024-01-12',
+                temperature: 65.2,
+                vibration: 1.9,
+                pressure: 6.8,
+                efficiency: 84,
+                trend: [58, 62, 65, 68, 70, 71, 72],
+                aiJudgment: {
+                    temperature: '温度正常',
+                    vibration: '振动轻微增加',
+                    runtime: '运行时长较长',
+                    efficiency: '效率良好'
+                }
+            },
+            {
+                id: 'M003',
+                name: '电机 #M003',
+                type: 'motor',
+                line: 'line-a',
+                healthScore: 68,
+                failureProbability: 45,
+                riskLevel: 'medium',
+                runningHours: 890,
+                lastMaintenance: '2024-01-20',
+                temperature: 52.1,
+                vibration: 0.8,
+                pressure: 0,
+                efficiency: 92,
+                trend: [38, 40, 42, 43, 44, 45, 45],
+                aiJudgment: {
+                    temperature: '温度正常',
+                    vibration: '振动正常',
+                    runtime: '运行时长适中',
+                    efficiency: '效率优秀'
+                }
+            },
+            {
+                id: 'F004',
+                name: '风机 #F004',
+                type: 'fan',
+                line: 'line-c',
+                healthScore: 82,
+                failureProbability: 28,
+                riskLevel: 'low',
+                runningHours: 1200,
+                lastMaintenance: '2024-01-18',
+                temperature: 48.3,
+                vibration: 0.5,
+                pressure: 0,
+                efficiency: 88,
+                trend: [32, 30, 29, 28, 27, 28, 28],
+                aiJudgment: {
+                    temperature: '温度正常',
+                    vibration: '振动正常',
+                    runtime: '运行时长正常',
+                    efficiency: '效率良好'
+                }
+            },
+            {
+                id: 'B005',
+                name: '输送机 #B005',
+                type: 'conveyor',
+                line: 'line-b',
+                healthScore: 35,
+                failureProbability: 78,
+                riskLevel: 'high',
+                runningHours: 3120,
+                lastMaintenance: '2023-12-28',
+                temperature: 42.8,
+                vibration: 2.2,
+                pressure: 0,
+                efficiency: 75,
+                trend: [65, 68, 72, 74, 76, 77, 78],
+                aiJudgment: {
+                    temperature: '温度正常',
+                    vibration: '振动偏高 +25%',
+                    runtime: '运行时长过长',
+                    efficiency: '效率下降 -12%'
+                }
+            },
+            {
+                id: 'P006',
+                name: '离心泵 #P006',
+                type: 'pump',
+                line: 'line-c',
+                healthScore: 55,
+                failureProbability: 58,
+                riskLevel: 'medium',
+                runningHours: 1650,
+                lastMaintenance: '2024-01-08',
+                temperature: 61.4,
+                vibration: 1.5,
+                pressure: 4.8,
+                efficiency: 86,
+                trend: [48, 50, 52, 54, 56, 57, 58],
+                aiJudgment: {
+                    temperature: '温度略高 +3°C',
+                    vibration: '振动正常',
+                    runtime: '运行时长正常',
+                    efficiency: '效率良好'
+                }
+            }
+        ];
+
+        // 当前选中的设备
+        let currentEquipment = null;
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            renderEquipmentList();
+            renderRiskRanking();
+            renderTrendChart();
+            setupEventListeners();
+        });
+
+        // 渲染设备列表
+        function renderEquipmentList() {
+            const container = document.getElementById('equipmentList');
+            const sortedData = [...equipmentData].sort((a, b) => b.failureProbability - a.failureProbability);
+            
+            container.innerHTML = sortedData.map(equipment => `
+                <div class="equipment-item" data-id="${equipment.id}" onclick="showEquipmentDetail('${equipment.id}')">
+                    <div class="equipment-header">
+                        <div class="equipment-name">${equipment.name}</div>
+                        <div class="health-score ${getHealthClass(equipment.healthScore)}">${equipment.healthScore}分</div>
+                    </div>
+                    <div class="equipment-details">
+                        <div class="detail-item">
+                            <div class="detail-label">设备类型</div>
+                            <div class="detail-value">${getEquipmentTypeName(equipment.type)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">运行时长</div>
+                            <div class="detail-value">${equipment.runningHours}小时</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最后维护</div>
+                            <div class="detail-value">${equipment.lastMaintenance}</div>
+                        </div>
+                    </div>
+                    <div class="failure-probability ${getProbabilityClass(equipment.failureProbability)}">
+                        预计7日内故障概率: ${equipment.failureProbability}%
+                    </div>
+                    ${equipment.riskLevel === 'critical' || equipment.riskLevel === 'high' ? 
+                        `<button class="generate-workorder" onclick="generateWorkOrder('${equipment.id}', event)">生成工单</button>` : 
+                        ''
+                    }
+                </div>
+            `).join('');
+
+            // 为设备项添加悬停事件
+            setupHoverTooltips();
+        }
+
+        // 渲染风险排序
+        function renderRiskRanking() {
+            const container = document.getElementById('riskRanking');
+            const sortedData = [...equipmentData]
+                .sort((a, b) => b.failureProbability - a.failureProbability)
+                .slice(0, 10);
+            
+            container.innerHTML = sortedData.map((equipment, index) => `
+                <div class="risk-item">
+                    <div class="risk-rank ${getRankClass(index + 1)}">${index + 1}</div>
+                    <div class="risk-info">
+                        <div class="risk-name">${equipment.name}</div>
+                        <div class="risk-probability">故障概率: ${equipment.failureProbability}%</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染趋势图表
+        function renderTrendChart() {
+            const container = document.getElementById('trendChart');
+            const avgTrend = calculateAverageTrend();
+            
+            container.innerHTML = avgTrend.map((value, index) => `
+                <div class="chart-bar" style="height: ${value * 2}px;" 
+                     title="第${index + 1}天: ${value}%"></div>
+            `).join('');
+        }
+
+        // 设置悬停提示
+        function setupHoverTooltips() {
+            const equipmentItems = document.querySelectorAll('.equipment-item');
+            const tooltip = document.getElementById('tooltip');
+
+            equipmentItems.forEach(item => {
+                item.addEventListener('mouseenter', function(e) {
+                    const equipmentId = this.dataset.id;
+                    const equipment = equipmentData.find(eq => eq.id === equipmentId);
+                    showTooltip(e, equipment);
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    hideTooltip();
+                });
+
+                item.addEventListener('mousemove', function(e) {
+                    updateTooltipPosition(e);
+                });
+            });
+        }
+
+        // 显示提示框
+        function showTooltip(e, equipment) {
+            const tooltip = document.getElementById('tooltip');
+            const tooltipTitle = document.getElementById('tooltipTitle');
+            const tooltipContent = document.getElementById('tooltipContent');
+
+            tooltipTitle.textContent = `${equipment.name} - AI判断依据`;
+            tooltipContent.innerHTML = `
+                <div class="tooltip-grid">
+                    <div class="tooltip-item">
+                        <span>温度状态:</span>
+                        <span>${equipment.aiJudgment.temperature}</span>
+                    </div>
+                    <div class="tooltip-item">
+                        <span>振动状态:</span>
+                        <span>${equipment.aiJudgment.vibration}</span>
+                    </div>
+                    <div class="tooltip-item">
+                        <span>运行时长:</span>
+                        <span>${equipment.aiJudgment.runtime}</span>
+                    </div>
+                    <div class="tooltip-item">
+                        <span>效率状态:</span>
+                        <span>${equipment.aiJudgment.efficiency}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #4a5568;">
+                    <strong>当前参数:</strong> 温度 ${equipment.temperature}°C | 振动 ${equipment.vibration}mm/s
+                </div>
+            `;
+
+            tooltip.classList.add('show');
+            updateTooltipPosition(e);
+        }
+
+        // 隐藏提示框
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.classList.remove('show');
+        }
+
+        // 更新提示框位置
+        function updateTooltipPosition(e) {
+            const tooltip = document.getElementById('tooltip');
+            const rect = tooltip.getBoundingClientRect();
+            let left = e.pageX + 10;
+            let top = e.pageY + 10;
+
+            // 防止提示框超出屏幕边界
+            if (left + rect.width > window.innerWidth) {
+                left = e.pageX - rect.width - 10;
+            }
+            if (top + rect.height > window.innerHeight) {
+                top = e.pageY - rect.height - 10;
+            }
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+
+        // 显示设备详情
+        function showEquipmentDetail(equipmentId) {
+            const equipment = equipmentData.find(eq => eq.id === equipmentId);
+            const modal = document.getElementById('equipmentModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            modalTitle.textContent = `${equipment.name} - 详细运行数据`;
+            modalContent.innerHTML = `
+                <div class="data-section">
+                    <div class="data-title">运行参数</div>
+                    <div class="data-list">
+                        <div class="data-row">
+                            <div class="data-label">当前温度</div>
+                            <div class="data-value">${equipment.temperature}°C</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">振动值</div>
+                            <div class="data-value">${equipment.vibration} mm/s</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">压力值</div>
+                            <div class="data-value">${equipment.pressure || 'N/A'} MPa</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">运行效率</div>
+                            <div class="data-value">${equipment.efficiency}%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-section">
+                    <div class="data-title">设备信息</div>
+                    <div class="data-list">
+                        <div class="data-row">
+                            <div class="data-label">健康评分</div>
+                            <div class="data-value">${equipment.healthScore}/100</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">故障概率</div>
+                            <div class="data-value">${equipment.failureProbability}%</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">运行时长</div>
+                            <div class="data-value">${equipment.runningHours}小时</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">最后维护</div>
+                            <div class="data-value">${equipment.lastMaintenance}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="recommendations">
+                    <h4>🤖 AI推荐处理建议</h4>
+                    ${getRecommendations(equipment)}
+                </div>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('equipmentModal');
+            modal.classList.remove('show');
+        }
+
+        // 生成工单
+        function generateWorkOrder(equipmentId, event) {
+            event.stopPropagation();
+            const equipment = equipmentData.find(eq => eq.id === equipmentId);
+            
+            // 模拟生成工单
+            alert(`✅ 工单生成成功！\n\n工单编号: WO-${Date.now()}\n设备: ${equipment.name}\n问题: AI预测高风险故障\n优先级: 紧急\n\n工单已自动分配给维修团队。`);
+        }
+
+        // 刷新预测
+        function refreshPrediction() {
+            const btn = event.target;
+            btn.innerHTML = '🔄 预测中...';
+            btn.disabled = true;
+
+            // 模拟AI预测过程
+            setTimeout(() => {
+                // 随机更新一些数据
+                equipmentData.forEach(equipment => {
+                    const change = (Math.random() - 0.5) * 10;
+                    equipment.failureProbability = Math.max(0, Math.min(100, equipment.failureProbability + change));
+                    equipment.healthScore = Math.max(0, Math.min(100, 100 - equipment.failureProbability));
+                });
+
+                renderEquipmentList();
+                renderRiskRanking();
+                btn.innerHTML = '🔄 刷新预测';
+                btn.disabled = false;
+                
+                // 显示成功提示
+                showNotification('✅ AI预测已更新！');
+            }, 2000);
+        }
+
+        // 导出报告
+        function exportReport() {
+            // 模拟导出功能
+            showNotification('📊 预测报告导出中...');
+            setTimeout(() => {
+                showNotification('✅ 报告已生成并下载！');
+            }, 1500);
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #48bb78;
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 3000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 工具函数
+        function getHealthClass(score) {
+            if (score < 30) return 'health-critical';
+            if (score < 50) return 'health-warning';
+            if (score < 80) return 'health-good';
+            return 'health-excellent';
+        }
+
+        function getProbabilityClass(probability) {
+            if (probability > 70) return 'probability-critical';
+            if (probability > 40) return 'probability-warning';
+            return 'probability-normal';
+        }
+
+        function getRankClass(rank) {
+            if (rank === 1) return 'rank-1';
+            if (rank === 2) return 'rank-2';
+            if (rank === 3) return 'rank-3';
+            return 'rank-other';
+        }
+
+        function getEquipmentTypeName(type) {
+            const types = {
+                'pump': '泵类',
+                'motor': '电机',
+                'compressor': '压缩机',
+                'fan': '风机',
+                'conveyor': '输送机'
+            };
+            return types[type] || type;
+        }
+
+        function calculateAverageTrend() {
+            const days = 7;
+            const avgTrend = [];
+            
+            for (let i = 0; i < days; i++) {
+                const sum = equipmentData.reduce((acc, eq) => acc + eq.trend[i], 0);
+                avgTrend.push(Math.round(sum / equipmentData.length));
+            }
+            
+            return avgTrend;
+        }
+
+        function getRecommendations(equipment) {
+            const recommendations = [];
+            
+            if (equipment.failureProbability > 70) {
+                recommendations.push('立即安排预防性维护');
+                recommendations.push('增加监控频率到每小时检查一次');
+                recommendations.push('准备备用设备或备件');
+            } else if (equipment.failureProbability > 40) {
+                recommendations.push('建议在3天内安排维护检查');
+                recommendations.push('密切监控关键参数变化');
+            } else {
+                recommendations.push('按计划进行定期维护');
+                recommendations.push('继续正常运行监控');
+            }
+
+            if (equipment.temperature > 70) {
+                recommendations.push('检查冷却系统和散热装置');
+            }
+            
+            if (equipment.vibration > 2.0) {
+                recommendations.push('检查设备固定和轴承状态');
+            }
+
+            return `<ul>${recommendations.map(rec => `<li>${rec}</li>`).join('')}</ul>`;
+        }
+
+        function setupEventListeners() {
+            // 筛选器事件
+            document.querySelectorAll('.filter-select').forEach(select => {
+                select.addEventListener('change', applyFilters);
+            });
+
+            // 模态框外部点击关闭
+            document.getElementById('equipmentModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // ESC键关闭模态框
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+
+        function applyFilters() {
+            // 这里可以实现筛选逻辑
+            // 目前为简化演示，暂不实现完整筛选功能
+            showNotification('🔍 筛选器已应用');
+        }
+
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html> 

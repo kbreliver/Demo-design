@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工厂模型列表 - 数字孪生平台</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #303133;
+        }
+
+        /* 页面容器 */
+        .factory-model-list-container {
+            min-height: 100vh;
+            background-color: #f5f7fa;
+        }
+
+        /* 粘性头部 */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #fff;
+            border-bottom: 1px solid #e4e7ed;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .page-description {
+            font-size: 14px;
+            color: #606266;
+            margin-left: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 搜索和筛选区域 */
+        .search-filter-section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .search-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .search-toggle {
+            color: #409eff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-content {
+            padding: 24px;
+            border-bottom: 1px solid #e4e7ed;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .search-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 16px;
+            border-top: 1px solid #e4e7ed;
+        }
+
+        /* 列表内容区域 */
+        .list-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .list-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .list-toolbar {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e4e7ed;
+            background-color: #fafafa;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .view-mode-switch {
+            display: flex;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .view-mode-btn {
+            padding: 8px 12px;
+            background: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-mode-btn.active {
+            background: #409eff;
+            color: #fff;
+        }
+
+        .view-mode-btn:hover:not(.active) {
+            background: #f5f7fa;
+        }
+
+        /* 表格样式 */
+        .el-table {
+            border-radius: 0;
+        }
+
+        .el-table th {
+            background-color: #fafafa;
+            color: #606266;
+            font-weight: 500;
+        }
+
+        .el-table td {
+            padding: 12px 0;
+        }
+
+        /* 状态标签 */
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-enabled {
+            background-color: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .status-disabled {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-draft {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        /* 卡片视图样式 */
+        .card-view {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .model-card {
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .model-card.selected {
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+
+        .card-header {
+            padding: 16px;
+            border-bottom: 1px solid #e4e7ed;
+            background-color: #fafafa;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: #909399;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #909399;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #303133;
+            font-weight: 500;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #606266;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* 分页样式 */
+        .pagination-section {
+            padding: 20px 24px;
+            border-top: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #606266;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #909399;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+                 /* 导入对话框样式 */
+         .import-form {
+             padding: 20px 0;
+         }
+         
+         .upload-demo {
+             width: 100%;
+         }
+         
+         .dialog-footer {
+             text-align: right;
+         }
+         
+         /* 响应式设计 */
+         @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+
+            .card-view {
+                grid-template-columns: 1fr;
+            }
+
+            .list-toolbar {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .toolbar-left,
+            .toolbar-right {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="factory-model-list-container">
+        <!-- 粘性头部 -->
+        <div class="sticky-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="page-title">{{ pageTitle }}</h1>
+                    <span class="page-description">{{ pageDescription }}</span>
+                </div>
+                <div class="header-actions">
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="main-content">
+            <!-- 搜索和筛选区域 -->
+            <div class="search-filter-section">
+                <div class="search-header">
+                    <span class="search-title">搜索和筛选</span>
+                    <span class="search-toggle" @click="toggleSearch">
+                        {{ searchExpanded ? '收起' : '展开' }}
+                        <i :class="searchExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+                    </span>
+                </div>
+                <div class="search-content" v-show="searchExpanded">
+                    <div class="search-row">
+                        <el-input 
+                            v-model="searchForm.keyword" 
+                            placeholder="搜索模型名称、描述..." 
+                            prefix-icon="el-icon-search"
+                            clearable>
+                        </el-input>
+                        <el-select v-model="searchForm.status" placeholder="启用状态" clearable>
+                            <el-option label="已启用" value="enabled"></el-option>
+                            <el-option label="已禁用" value="disabled"></el-option>
+                            <el-option label="草稿" value="draft"></el-option>
+                        </el-select>
+                        <el-select v-model="searchForm.template" placeholder="来源模板" clearable>
+                            <el-option 
+                                v-for="template in templateOptions" 
+                                :key="template.value" 
+                                :label="template.label" 
+                                :value="template.value">
+                            </el-option>
+                        </el-select>
+                        <el-select v-model="searchForm.creator" placeholder="创建人" clearable>
+                            <el-option 
+                                v-for="creator in creatorOptions" 
+                                :key="creator.value" 
+                                :label="creator.label" 
+                                :value="creator.value">
+                            </el-option>
+                        </el-select>
+                    </div>
+                    <!-- <div class="search-row">
+                        <el-date-picker
+                            v-model="searchForm.createTimeRange"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="创建开始日期"
+                            end-placeholder="创建结束日期"
+                            format="yyyy-MM-dd"
+                            value-format="yyyy-MM-dd">
+                        </el-date-picker>
+                        <el-date-picker
+                            v-model="searchForm.updateTimeRange"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="更新开始日期"
+                            end-placeholder="更新结束日期"
+                            format="yyyy-MM-dd"
+                            value-format="yyyy-MM-dd">
+                        </el-date-picker>
+                    </div> -->
+                    <div class="search-actions">
+                        <el-button @click="resetSearch">重置</el-button>
+                        <el-button type="primary" @click="performSearch">搜索</el-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 列表内容区域 -->
+            <div class="list-content">
+                <div class="list-header">
+                    <h2 class="list-title">工厂模型列表</h2>
+                                         <div class="list-actions">
+                         <el-button @click="createModel" type="primary" icon="el-icon-plus">
+                             创建模型
+                         </el-button>
+                         <el-button @click="showImportDialog" icon="el-icon-upload2">
+                             导入模型
+                         </el-button>
+                         <el-button @click="refreshList" icon="el-icon-refresh">
+                             刷新
+                         </el-button>
+                         <el-button @click="batchDelete" icon="el-icon-delete" type="danger" :disabled="!hasSelected">
+                             批量删除
+                         </el-button>
+                     </div>
+                </div>
+
+                <div class="list-toolbar">
+                    <div class="toolbar-left">
+                        <el-button @click="selectAll" size="small">
+                            {{ isAllSelected ? '取消全选' : '全选' }}
+                        </el-button>
+                        <span v-if="hasSelected" style="color: #409eff; font-size: 14px;">
+                            已选择 {{ selectedCount }} 项
+                        </span>
+                    </div>
+                    <div class="toolbar-right">
+                        <div class="view-mode-switch">
+                            <button 
+                                class="view-mode-btn" 
+                                :class="{ active: viewMode === 'table' }"
+                                @click="viewMode = 'table'">
+                                <i class="el-icon-menu"></i>
+                            </button>
+                            <button 
+                                class="view-mode-btn" 
+                                :class="{ active: viewMode === 'card' }"
+                                @click="viewMode = 'card'">
+                                <i class="el-icon-s-grid"></i>
+                            </button>
+                        </div>
+                        <el-select v-model="pageSize" placeholder="每页显示" size="small" style="width: 100px;">
+                            <el-option label="10条/页" :value="10"></el-option>
+                            <el-option label="20条/页" :value="20"></el-option>
+                            <el-option label="50条/页" :value="50"></el-option>
+                        </el-select>
+                    </div>
+                </div>
+
+                <!-- 表格视图 -->
+                <div v-if="viewMode === 'table'">
+                    <el-table 
+                        :data="filteredModels" 
+                        @selection-change="handleSelectionChange"
+                        style="width: 100%">
+                        <el-table-column type="selection" width="55"></el-table-column>
+                        <el-table-column prop="name" label="模型名称" min-width="200">
+                            <template slot-scope="scope">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="el-icon-office-building" style="color: #409eff;"></i>
+                                    <span style="font-weight: 500;">{{ scope.row.name }}</span>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="description" label="描述" min-width="300">
+                            <template slot-scope="scope">
+                                <span style="color: #606266;">{{ scope.row.description }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="templateName" label="来源模板" width="150">
+                            <template slot-scope="scope">
+                                <el-tag size="small" type="info">{{ scope.row.templateName }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="status" label="状态" width="100">
+                            <template slot-scope="scope">
+                                <span class="status-tag" :class="getStatusClass(scope.row.status)">
+                                    {{ getStatusText(scope.row.status) }}
+                                </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="creator" label="创建人" width="100"></el-table-column>
+                        <el-table-column prop="createTime" label="创建时间" width="160"></el-table-column>
+                        <el-table-column prop="updateTime" label="更新时间" width="160"></el-table-column>
+                        <el-table-column label="操作" width="180" fixed="right">
+                            <template slot-scope="scope">
+                                <div style="display: flex; gap: 8px; align-items: center; white-space: nowrap;">
+                                    <el-button 
+                                        type="text" 
+                                        size="mini" 
+                                        @click="viewModel(scope.row)"
+                                        title="查看模型详情">
+                                        <i class="el-icon-view"></i>
+                                    </el-button>
+                                    <el-button 
+                                        type="text" 
+                                        size="mini" 
+                                        @click="editModel(scope.row)"
+                                        title="编辑模型信息">
+                                        <i class="el-icon-edit"></i>
+                                    </el-button>
+                                    <el-button 
+                                        type="text" 
+                                        size="mini" 
+                                        @click="copyModel(scope.row)"
+                                        title="复制模型">
+                                        <i class="el-icon-document-copy"></i>
+                                    </el-button>
+                                    <el-button 
+                                        type="text" 
+                                        size="mini" 
+                                        @click="toggleModelStatus(scope.row)"
+                                        :style="{ color: scope.row.status === 'enabled' ? '#f56c6c' : '#67c23a' }"
+                                        :title="scope.row.status === 'enabled' ? '禁用模型' : '启用模型'">
+                                        <i :class="scope.row.status === 'enabled' ? 'el-icon-close' : 'el-icon-check'"></i>
+                                    </el-button>
+                                    <el-button 
+                                        type="text" 
+                                        size="mini" 
+                                        @click="deleteModel(scope.row)"
+                                        :disabled="scope.row.status === 'enabled'"
+                                        :style="{ color: scope.row.status === 'enabled' ? '#c0c4cc' : '#f56c6c' }"
+                                        :title="scope.row.status === 'enabled' ? '已启用的模型不能删除' : '删除模型'">
+                                        <i class="el-icon-delete"></i>
+                                    </el-button>
+                                </div>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <!-- 卡片视图 -->
+                <div v-else class="card-view">
+                    <div 
+                        v-for="model in filteredModels" 
+                        :key="model.id"
+                        class="model-card"
+                        :class="{ selected: selectedModels.includes(model.id) }"
+                        @click="toggleModelSelection(model.id)">
+                        <div class="card-header">
+                            <div class="card-title">{{ model.name }}</div>
+                            <div class="card-subtitle">{{ model.templateName }}</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-description">{{ model.description }}</div>
+                            <div class="card-info">
+                                <div class="info-item">
+                                    <span class="info-label">状态</span>
+                                    <span class="status-tag" :class="getStatusClass(model.status)">
+                                        {{ getStatusText(model.status) }}
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">创建人</span>
+                                    <span class="info-value">{{ model.creator }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">创建时间</span>
+                                    <span class="info-value">{{ model.createTime }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">更新时间</span>
+                                    <span class="info-value">{{ model.updateTime }}</span>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <el-button 
+                                    type="text" 
+                                    size="mini" 
+                                    @click.stop="viewModel(model)"
+                                    title="查看模型详情">
+                                    <i class="el-icon-view"></i>
+                                </el-button>
+                                <el-button 
+                                    type="text" 
+                                    size="mini" 
+                                    @click.stop="editModel(model)"
+                                    title="编辑模型信息">
+                                    <i class="el-icon-edit"></i>
+                                </el-button>
+                                <el-button 
+                                    type="text" 
+                                    size="mini" 
+                                    @click.stop="copyModel(model)"
+                                    title="复制模型">
+                                    <i class="el-icon-document-copy"></i>
+                                </el-button>
+                                <el-button 
+                                    type="text" 
+                                    size="mini" 
+                                    @click.stop="toggleModelStatus(model)"
+                                    :style="{ color: model.status === 'enabled' ? '#f56c6c' : '#67c23a' }"
+                                    :title="model.status === 'enabled' ? '禁用模型' : '启用模型'">
+                                    <i :class="model.status === 'enabled' ? 'el-icon-close' : 'el-icon-check'"></i>
+                                </el-button>
+                                <el-button 
+                                    type="text" 
+                                    size="mini" 
+                                    @click.stop="deleteModel(model)"
+                                    :disabled="model.status === 'enabled'"
+                                    :style="{ color: model.status === 'enabled' ? '#c0c4cc' : '#f56c6c' }"
+                                    :title="model.status === 'enabled' ? '已启用的模型不能删除' : '删除模型'">
+                                    <i class="el-icon-delete"></i>
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 空状态 -->
+                <div v-if="filteredModels.length === 0" class="empty-state">
+                    <div class="empty-state-icon">🏭</div>
+                    <div class="empty-state-text">暂无工厂模型数据</div>
+                    <el-button type="primary" @click="createModel">
+                        创建第一个模型
+                    </el-button>
+                </div>
+
+                <!-- 分页 -->
+                <div v-if="filteredModels.length > 0" class="pagination-section">
+                    <div class="pagination-info">
+                        共 {{ totalCount }} 条记录，当前显示第 {{ currentPage }} 页
+                    </div>
+                    <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[10, 20, 50]"
+                        :page-size="pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalCount">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入模型对话框 -->
+    <el-dialog
+        title="导入工厂模型"
+        :visible.sync="importDialogVisible"
+        width="500px"
+        :before-close="closeImportDialog">
+        <div class="import-form">
+            <el-form :model="importForm" label-width="100px">
+                <el-form-item label="导入格式">
+                    <el-radio-group v-model="importForm.format">
+                        <el-radio label="json">JSON格式</el-radio>
+                        <el-radio label="excel">Excel格式</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="选择文件">
+                    <el-upload
+                        class="upload-demo"
+                        drag
+                        :action="uploadAction"
+                        :before-upload="beforeUpload"
+                        :on-success="onUploadSuccess"
+                        :on-error="onUploadError"
+                        :file-list="fileList"
+                        :limit="1"
+                        accept=".json,.xlsx,.xls">
+                        <i class="el-icon-upload"></i>
+                        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        <div class="el-upload__tip" slot="tip">
+                            支持 {{ importForm.format === 'json' ? '.json' : '.xlsx, .xls' }} 格式文件
+                        </div>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+        </div>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="closeImportDialog">取消</el-button>
+            <el-button type="primary" @click="confirmImport" :disabled="!importForm.file">确定导入</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- 引入Vue和Element UI -->
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+    
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                // 页面信息
+                pageTitle: '工厂模型管理',
+                pageDescription: '管理工厂数字孪生模型，支持创建、编辑、复制和删除操作',
+                
+                // 视图模式
+                viewMode: 'table', // 'table' 或 'card'
+                
+                // 搜索相关
+                searchExpanded: false,
+                searchForm: {
+                    keyword: '',
+                    status: '',
+                    template: '',
+                    creator: '',
+                    createTimeRange: [],
+                    updateTimeRange: []
+                },
+                
+                // 分页相关
+                currentPage: 1,
+                pageSize: 20,
+                totalCount: 0,
+                
+                // 选择相关
+                selectedModels: [],
+                
+                // 导入相关
+                importDialogVisible: false,
+                importForm: {
+                    format: 'json',
+                    file: null
+                },
+                fileList: [],
+                uploadAction: '#', // 实际项目中应该指向真实的上传接口
+                
+                // 模型数据
+                models: [
+                    {
+                        id: 'model-1',
+                        name: '华东水泥生产基地',
+                        description: '华东地区主要水泥生产基地，年产水泥500万吨，包含完整的熟料生产线、粉磨系统和包装系统。',
+                        templateName: '标准水泥工厂模板',
+                        status: 'enabled',
+                        creator: '张工程师',
+                        createTime: '2024-01-15 10:30:00',
+                        updateTime: '2024-01-20 14:20:00',
+                        nodeCount: 15,
+                        assetCount: 16
+                    },
+                    {
+                        id: 'model-2',
+                        name: '华南智能水泥厂',
+                        description: '华南地区智能化水泥工厂，采用先进的DCS控制系统和自动化设备，年产水泥300万吨。',
+                        templateName: '智能水泥工厂模板',
+                        status: 'enabled',
+                        creator: '李技术员',
+                        createTime: '2024-01-10 09:15:00',
+                        updateTime: '2024-01-18 16:45:00',
+                        nodeCount: 12,
+                        assetCount: 14
+                    },
+                    {
+                        id: 'model-3',
+                        name: '华北绿色水泥厂',
+                        description: '华北地区环保型水泥工厂，注重节能减排和可持续发展，采用余热发电和脱硝技术。',
+                        templateName: '绿色水泥工厂模板',
+                        status: 'draft',
+                        creator: '王环保师',
+                        createTime: '2024-01-12 11:00:00',
+                        updateTime: '2024-01-19 10:30:00',
+                        nodeCount: 8,
+                        assetCount: 10
+                    },
+                    {
+                        id: 'model-4',
+                        name: '西部水泥生产基地',
+                        description: '西部地区水泥生产基地，年产水泥200万吨，采用新型干法工艺，注重环保和节能。',
+                        templateName: '新型干法水泥模板',
+                        status: 'disabled',
+                        creator: '赵工程师',
+                        createTime: '2024-01-08 15:30:00',
+                        updateTime: '2024-01-16 13:20:00',
+                        nodeCount: 10,
+                        assetCount: 12
+                    },
+                    {
+                        id: 'model-5',
+                        name: '东北重工业水泥厂',
+                        description: '东北地区重工业水泥工厂，专注于高标号水泥生产，包含大型回转窑和粉磨设备。',
+                        templateName: '重工业水泥模板',
+                        status: 'enabled',
+                        creator: '孙技术员',
+                        createTime: '2024-01-05 08:45:00',
+                        updateTime: '2024-01-17 17:10:00',
+                        nodeCount: 20,
+                        assetCount: 18
+                    }
+                ],
+                
+                // 选项数据
+                templateOptions: [
+                    { label: '标准水泥工厂模板', value: '标准水泥工厂模板' },
+                    { label: '智能水泥工厂模板', value: '智能水泥工厂模板' },
+                    { label: '绿色水泥工厂模板', value: '绿色水泥工厂模板' },
+                    { label: '新型干法水泥模板', value: '新型干法水泥模板' },
+                    { label: '重工业水泥模板', value: '重工业水泥模板' }
+                ],
+                creatorOptions: [
+                    { label: '张工程师', value: '张工程师' },
+                    { label: '李技术员', value: '李技术员' },
+                    { label: '王环保师', value: '王环保师' },
+                    { label: '赵工程师', value: '赵工程师' },
+                    { label: '孙技术员', value: '孙技术员' }
+                ]
+            },
+            computed: {
+                // 过滤后的模型列表
+                filteredModels() {
+                    let result = this.models;
+                    
+                    // 关键词搜索
+                    if (this.searchForm.keyword) {
+                        const keyword = this.searchForm.keyword.toLowerCase();
+                        result = result.filter(model => 
+                            model.name.toLowerCase().includes(keyword) ||
+                            model.description.toLowerCase().includes(keyword) ||
+                            model.templateName.toLowerCase().includes(keyword)
+                        );
+                    }
+                    
+                    // 状态筛选
+                    if (this.searchForm.status) {
+                        result = result.filter(model => model.status === this.searchForm.status);
+                    }
+                    
+                    // 模板筛选
+                    if (this.searchForm.template) {
+                        result = result.filter(model => model.templateName === this.searchForm.template);
+                    }
+                    
+                    // 创建人筛选
+                    if (this.searchForm.creator) {
+                        result = result.filter(model => model.creator === this.searchForm.creator);
+                    }
+                    
+                    // 创建时间范围筛选
+                    if (this.searchForm.createTimeRange && this.searchForm.createTimeRange.length === 2) {
+                        const [startDate, endDate] = this.searchForm.createTimeRange;
+                        result = result.filter(model => {
+                            const createDate = model.createTime.split(' ')[0];
+                            return createDate >= startDate && createDate <= endDate;
+                        });
+                    }
+                    
+                    // 更新时间范围筛选
+                    if (this.searchForm.updateTimeRange && this.searchForm.updateTimeRange.length === 2) {
+                        const [startDate, endDate] = this.searchForm.updateTimeRange;
+                        result = result.filter(model => {
+                            const updateDate = model.updateTime.split(' ')[0];
+                            return updateDate >= startDate && updateDate <= endDate;
+                        });
+                    }
+                    
+                    this.totalCount = result.length;
+                    return result;
+                },
+                
+                // 是否有选中的模型
+                hasSelected() {
+                    return this.selectedModels.length > 0;
+                },
+                
+                // 选中的数量
+                selectedCount() {
+                    return this.selectedModels.length;
+                },
+                
+                // 是否全选
+                isAllSelected() {
+                    return this.filteredModels.length > 0 && this.selectedModels.length === this.filteredModels.length;
+                }
+            },
+            methods: {
+                // 切换搜索展开状态
+                toggleSearch() {
+                    this.searchExpanded = !this.searchExpanded;
+                },
+                
+                // 重置搜索条件
+                resetSearch() {
+                    this.searchForm = {
+                        keyword: '',
+                        status: '',
+                        template: '',
+                        creator: '',
+                        createTimeRange: [],
+                        updateTimeRange: []
+                    };
+                },
+                
+                // 执行搜索
+                performSearch() {
+                    this.currentPage = 1;
+                    this.$message.success('搜索完成');
+                },
+                
+                // 刷新列表
+                refreshList() {
+                    this.$message.success('列表已刷新');
+                },
+                
+                // 创建模型
+                createModel() {
+                    this.$message.info('跳转到创建模型页面...');
+                    // 这里可以跳转到创建页面或打开创建对话框
+                },
+                
+                // 显示导入对话框
+                showImportDialog() {
+                    this.importDialogVisible = true;
+                    this.importForm = {
+                        format: 'json',
+                        file: null
+                    };
+                    this.fileList = [];
+                },
+                
+                // 关闭导入对话框
+                closeImportDialog() {
+                    this.importDialogVisible = false;
+                    this.importForm = {
+                        format: 'json',
+                        file: null
+                    };
+                    this.fileList = [];
+                },
+                
+                // 上传前验证
+                beforeUpload(file) {
+                    const isValidFormat = this.importForm.format === 'json' 
+                        ? file.name.endsWith('.json')
+                        : file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+                    
+                    if (!isValidFormat) {
+                        this.$message.error(`请选择${this.importForm.format === 'json' ? 'JSON' : 'Excel'}格式的文件`);
+                        return false;
+                    }
+                    
+                    this.importForm.file = file;
+                    return false; // 阻止自动上传，手动处理
+                },
+                
+                // 上传成功回调
+                onUploadSuccess(response, file, fileList) {
+                    this.$message.success('文件上传成功');
+                },
+                
+                // 上传失败回调
+                onUploadError(err, file, fileList) {
+                    this.$message.error('文件上传失败');
+                },
+                
+                // 确认导入
+                confirmImport() {
+                    if (!this.importForm.file) {
+                        this.$message.warning('请先选择要导入的文件');
+                        return;
+                    }
+                    
+                    this.$message.success(`正在导入${this.importForm.format.toUpperCase()}格式的模型文件...`);
+                    this.closeImportDialog();
+                    // 这里应该调用实际的导入API
+                },
+                
+                // 查看模型
+                viewModel(model) {
+                    this.$message.info(`查看模型：${model.name}`);
+                    // 跳转到模型详情页面
+                    window.location.href = `factory-model-management.html?id=${model.id}`;
+                },
+                
+                // 编辑模型
+                editModel(model) {
+                    this.$message.info(`编辑模型：${model.name}`);
+                    // 跳转到模型编辑页面
+                    window.location.href = `factory-model-management.html?id=${model.id}&mode=edit`;
+                },
+                
+                // 复制模型
+                copyModel(model) {
+                    this.$confirm(`确定要复制模型"${model.name}"吗？`, '确认复制', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        // 复制模型的逻辑
+                        const newModel = {
+                            ...model,
+                            id: 'model-' + Date.now(),
+                            name: model.name + '_副本',
+                            status: 'draft',
+                            createTime: new Date().toLocaleString(),
+                            updateTime: new Date().toLocaleString()
+                        };
+                        this.models.unshift(newModel);
+                        this.$message.success('模型复制成功，正在跳转到编辑页面...');
+                        
+                        // 自动跳转到详情页面并进入编辑模式
+                        setTimeout(() => {
+                            window.location.href = `factory-model-management.html?id=${newModel.id}&mode=edit`;
+                        }, 1000);
+                    }).catch(() => {
+                        this.$message.info('已取消复制');
+                    });
+                },
+                
+                // 切换模型状态
+                toggleModelStatus(model) {
+                    const newStatus = model.status === 'enabled' ? 'disabled' : 'enabled';
+                    const statusText = newStatus === 'enabled' ? '启用' : '禁用';
+                    
+                    this.$confirm(`确定要${statusText}模型"${model.name}"吗？`, '确认操作', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        model.status = newStatus;
+                        model.updateTime = new Date().toLocaleString();
+                        this.$message.success(`模型已${statusText}`);
+                    }).catch(() => {
+                        this.$message.info('已取消操作');
+                    });
+                },
+                
+                // 删除模型
+                deleteModel(model) {
+                    // 检查模型状态，已启用的模型不能删除
+                    if (model.status === 'enabled') {
+                        this.$message.warning('已启用的工厂模型不能被删除，请先禁用该模型');
+                        return;
+                    }
+                    
+                    this.$confirm(`确定要删除模型"${model.name}"吗？删除后无法恢复。`, '确认删除', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const index = this.models.findIndex(m => m.id === model.id);
+                        if (index > -1) {
+                            this.models.splice(index, 1);
+                            // 从选中列表中移除
+                            const selectedIndex = this.selectedModels.indexOf(model.id);
+                            if (selectedIndex > -1) {
+                                this.selectedModels.splice(selectedIndex, 1);
+                            }
+                            this.$message.success('模型删除成功');
+                        }
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 批量删除
+                batchDelete() {
+                    if (this.selectedModels.length === 0) {
+                        this.$message.warning('请先选择要删除的模型');
+                        return;
+                    }
+                    
+                    // 检查选中的模型中是否有已启用的模型
+                    const selectedModelData = this.models.filter(model => this.selectedModels.includes(model.id));
+                    const enabledModels = selectedModelData.filter(model => model.status === 'enabled');
+                    
+                    if (enabledModels.length > 0) {
+                        const enabledModelNames = enabledModels.map(model => model.name).join('、');
+                        this.$message.warning(`以下已启用的模型不能被删除：${enabledModelNames}，请先禁用这些模型`);
+                        return;
+                    }
+                    
+                    this.$confirm(`确定要删除选中的 ${this.selectedModels.length} 个模型吗？删除后无法恢复。`, '确认批量删除', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.models = this.models.filter(model => !this.selectedModels.includes(model.id));
+                        this.selectedModels = [];
+                        this.$message.success('批量删除成功');
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 处理选择变化
+                handleSelectionChange(selection) {
+                    this.selectedModels = selection.map(item => item.id);
+                },
+                
+                // 全选/取消全选
+                selectAll() {
+                    if (this.isAllSelected) {
+                        this.selectedModels = [];
+                    } else {
+                        this.selectedModels = this.filteredModels.map(model => model.id);
+                    }
+                },
+                
+                // 切换模型选择（卡片视图）
+                toggleModelSelection(modelId) {
+                    const index = this.selectedModels.indexOf(modelId);
+                    if (index > -1) {
+                        this.selectedModels.splice(index, 1);
+                    } else {
+                        this.selectedModels.push(modelId);
+                    }
+                },
+                
+                // 获取状态样式类
+                getStatusClass(status) {
+                    switch (status) {
+                        case 'enabled': return 'status-enabled';
+                        case 'disabled': return 'status-disabled';
+                        case 'draft': return 'status-draft';
+                        default: return 'status-draft';
+                    }
+                },
+                
+                // 获取状态文本
+                getStatusText(status) {
+                    switch (status) {
+                        case 'enabled': return '已启用';
+                        case 'disabled': return '已禁用';
+                        case 'draft': return '草稿';
+                        default: return '草稿';
+                    }
+                },
+                
+                // 处理分页大小变化
+                handleSizeChange(size) {
+                    this.pageSize = size;
+                    this.currentPage = 1;
+                },
+                
+                // 处理当前页变化
+                handleCurrentChange(page) {
+                    this.currentPage = page;
+                }
+            },
+            mounted() {
+                this.totalCount = this.models.length;
+                console.log('工厂模型列表页面已加载');
+            }
+        });
+    </script>
+</body>
+</html> 

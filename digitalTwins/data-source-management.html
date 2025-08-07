@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据源管理 - 数字孪生平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .page-header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ebeef5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #ffffff;
+            color: #606266;
+        }
+
+        .btn-primary {
+            background: #409eff;
+            border-color: #409eff;
+            color: #ffffff;
+        }
+
+        .stats-section {
+            background: white;
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .form-input, .form-select {
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            margin: 15px;
+            border-radius: 4px;
+            border: 1px solid #ebeef5;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .table th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online { background-color: #67c23a; }
+        .status-offline { background-color: #f56c6c; }
+        .status-fluctuating { background-color: #e6a23c; }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+
+        /* 抽屉样式 */
+        .drawer {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .drawer.show {
+            display: block;
+        }
+
+        .drawer-content {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 600px;
+            height: 100%;
+            background: white;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .drawer.show .drawer-content {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+
+        .drawer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #909399;
+            padding: 5px;
+        }
+
+        .drawer-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #606266;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #303133;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #409eff;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .drawer-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #ebeef5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+
+        .config-section {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .config-section-title {
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .config-fields {
+            display: none;
+        }
+
+        .config-fields.active {
+            display: block;
+        }
+
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #409eff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* 规则配置样式 */
+        .rule-config {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rule-title {
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 4px;
+        }
+
+        .rule-type {
+            font-size: 12px;
+            color: #909399;
+        }
+
+        .btn-danger {
+            background: #f56c6c;
+            border-color: #f56c6c;
+            color: #ffffff;
+        }
+
+        .btn-warning {
+            background: #e6a23c;
+            border-color: #e6a23c;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: #67c23a;
+            border-color: #67c23a;
+            color: #ffffff;
+        }
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .connection-status.success {
+            background-color: #f0f9ff;
+            color: #67c23a;
+        }
+
+        .connection-status.error {
+            background-color: #fef2f2;
+            color: #f56c6c;
+        }
+
+        .connection-status.warning {
+            background-color: #fdf6ec;
+            color: #e6a23c;
+        }
+
+        .usage-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .usage-stat {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .usage-stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #409eff;
+        }
+
+        .usage-stat-label {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 4px;
+        }
+
+        /* 连接记录样式 */
+        .connection-summary {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-label {
+            font-weight: 500;
+            color: #606266;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .connection-logs h4 {
+            margin-bottom: 15px;
+            color: #303133;
+            font-size: 16px;
+        }
+
+        .log-table {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .log-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .log-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .log-table td {
+            font-size: 14px;
+            color: #303133;
+        }
+
+        .log-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .log-status.success {
+            background: #f0f9ff;
+            color: #67c23a;
+        }
+
+        .log-status.error {
+            background: #fef2f2;
+            color: #f56c6c;
+        }
+
+        .log-status.warning {
+            background: #fdf6ec;
+            color: #e6a23c;
+        }
+
+        /* 连接监测信息样式 */
+        .connection-monitoring-info {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .monitoring-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .monitoring-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .monitoring-label {
+            color: #909399;
+            font-weight: 500;
+        }
+
+        .monitoring-value {
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .monitoring-value.success {
+            color: #67c23a;
+        }
+
+        .monitoring-value.error {
+            color: #f56c6c;
+        }
+
+        .monitoring-value.warning {
+            color: #e6a23c;
+        }
+
+        /* 启停开关在表格中的样式 */
+        .table-container .switch {
+            margin: 0 auto;
+            display: block;
+        }
+
+        .table-container .switch input:checked + .slider {
+            background-color: #67c23a;
+        }
+
+        .table-container .switch input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .rule-config {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .rule-title {
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .rule-type {
+            font-size: 12px;
+            color: #909399;
+        }
+
+        /* 图标样式 */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            cursor: pointer;
+            margin: 0 4px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .icon:hover {
+            opacity: 1;
+        }
+
+        .icon-view {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23409eff"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>') no-repeat center;
+        }
+
+        .icon-edit {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2367c23a"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') no-repeat center;
+        }
+
+        .icon-test {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234a90e2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') no-repeat center;
+        }
+
+
+
+        .icon-delete {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f56c6c"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>') no-repeat center;
+        }
+
+        .icon-log {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234a90e2"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>') no-repeat center;
+        }
+
+        /* 标签选择器样式 */
+        .tag-selector {
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .tag-input-container {
+            display: flex;
+            padding: 8px;
+            border-bottom: 1px solid #ebeef5;
+            background: #f8f9fa;
+        }
+
+        .tag-input-container input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 6px 8px;
+            font-size: 14px;
+            background: transparent;
+        }
+
+        .tag-input-container .btn {
+            margin-left: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .tag-input-container .btn:hover {
+            background: #337ecc;
+        }
+
+        .tag-options {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .tag-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .tag-option:hover {
+            background-color: #f5f7fa;
+        }
+
+        .tag-option.selected {
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+
+        .tag-option.selected .tag-check {
+            display: inline;
+        }
+
+        .tag-check {
+            display: none;
+            color: #409eff;
+            font-weight: bold;
+        }
+
+        .selected-tags {
+            padding: 8px;
+            background: #f8f9fa;
+            border-top: 1px solid #ebeef5;
+            min-height: 40px;
+        }
+
+        .selected-tag {
+            display: inline-block;
+            background: #409eff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px 4px 2px 0;
+            position: relative;
+        }
+
+        .selected-tag .remove-tag {
+            margin-left: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .selected-tag .remove-tag:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">数据源管理</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showAddModal()">新增数据源</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <select class="form-select" id="categoryFilter">
+                <option value="">全部类别</option>
+                <option value="database">数据库类</option>
+                <option value="file">文件类</option>
+                <option value="api">API类</option>
+                <option value="message_queue">消息队列</option>
+                <option value="industrial">工业协议</option>
+                <option value="cloud">云服务</option>
+            </select>
+            <select class="form-select" id="typeFilter">
+                <option value="">全部类型</option>
+                <option value="OPC_UA">OPC UA</option>
+                <option value="Modbus">Modbus</option>
+                <option value="MySQL">MySQL</option>
+                <option value="PostgreSQL">PostgreSQL</option>
+                <option value="CSV">CSV</option>
+                <option value="Excel">Excel</option>
+                <option value="REST_API">REST API</option>
+                <option value="Kafka">Kafka</option>
+                <option value="AWS_S3">AWS S3</option>
+            </select>
+            <select class="form-select" id="statusFilter">
+                <option value="">全部状态</option>
+                <option value="online">在线</option>
+                <option value="offline">离线</option>
+                <!-- <option value="fluctuating">波动</option> -->
+            </select>
+            <input type="text" class="form-input" id="keywordFilter" placeholder="搜索数据源名称">
+            <button class="btn btn-primary" onclick="applyFilters()">筛选</button>
+            <button class="btn" onclick="clearFilters()">清空</button>
+        </div>
+
+        <div class="table-container">
+            <table class="table" id="dataSourceTable">
+                <thead>
+                    <tr>
+                        <th>数据源名称</th>
+                        <th>类别</th>
+                        <th>类型</th>
+                        <th>连接信息</th>
+                        <th>状态</th>
+                        <th>数据点位数量</th>
+                        <th>连接监测</th>
+                        <th>启停</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 数据行将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 新增/编辑数据源抽屉 -->
+    <div class="drawer" id="dataSourceDrawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title" id="drawerTitle">新增数据源</h3>
+                <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <form id="dataSourceForm">
+                    <div class="form-group">
+                        <label class="form-label">数据源名称 *</label>
+                        <input type="text" class="form-control" id="sourceName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" id="description" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">数据源类别 *</label>
+                            <select class="form-control" id="sourceCategory" onchange="updateTypeOptions()" required>
+                                <option value="">请选择类别</option>
+                                <option value="database">数据库类</option>
+                                <option value="file">文件类</option>
+                                <option value="api">API类</option>
+                                <option value="message_queue">消息队列</option>
+                                <option value="industrial">工业协议</option>
+                                <option value="cloud">云服务</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">数据源类型 *</label>
+                            <select class="form-control" id="sourceType" onchange="showConfigFields()" required>
+                                <option value="">请先选择类别</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 工业协议配置 -->
+                    <div class="config-section" id="industrialConfig">
+                        <div class="config-section-title">工业协议配置</div>
+                        <div class="config-fields" id="industrialFields">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">IP地址 *</label>
+                                    <input type="text" class="form-control" id="ipAddress">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">端口 *</label>
+                                    <input type="number" class="form-control" id="port">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">接入方式</label>
+                                <select class="form-control" id="connectionType">
+                                    <option value="direct">直连</option>
+                                    <option value="gateway">通过网关</option>
+                                    <option value="edge">通过边缘代理</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据库配置 -->
+                    <div class="config-section" id="databaseConfig">
+                        <div class="config-section-title">数据库配置</div>
+                        <div class="config-fields" id="databaseFields">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">主机地址 *</label>
+                                    <input type="text" class="form-control" id="dbHost">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">端口 *</label>
+                                    <input type="number" class="form-control" id="dbPort">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">数据库名 *</label>
+                                <input type="text" class="form-control" id="database">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文件配置 -->
+                    <div class="config-section" id="fileConfig">
+                        <div class="config-section-title">文件配置</div>
+                        <div class="config-fields" id="fileFields">
+                            <div class="form-group">
+                                <label class="form-label">文件路径 *</label>
+                                <input type="text" class="form-control" id="filePath">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">编码格式</label>
+                                    <select class="form-control" id="encoding">
+                                        <option value="UTF-8">UTF-8</option>
+                                        <option value="GBK">GBK</option>
+                                        <option value="ISO-8859-1">ISO-8859-1</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">分隔符</label>
+                                    <input type="text" class="form-control" id="delimiter" value=",">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API配置 -->
+                    <div class="config-section" id="apiConfig">
+                        <div class="config-section-title">API配置</div>
+                        <div class="config-fields" id="apiFields">
+                            <div class="form-group">
+                                <label class="form-label">API地址 *</label>
+                                <input type="text" class="form-control" id="apiUrl">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">请求方法</label>
+                                    <select class="form-control" id="apiMethod">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">超时时间(秒)</label>
+                                    <input type="number" class="form-control" id="timeout" value="30">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 消息队列配置 -->
+                    <div class="config-section" id="mqConfig">
+                        <div class="config-section-title">消息队列配置</div>
+                        <div class="config-fields" id="mqFields">
+                            <div class="form-group">
+                                <label class="form-label">服务器地址 *</label>
+                                <input type="text" class="form-control" id="mqServers">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">主题/队列名 *</label>
+                                <input type="text" class="form-control" id="mqTopic">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">消费者组ID</label>
+                                <input type="text" class="form-control" id="mqGroupId">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 云服务配置 -->
+                    <div class="config-section" id="cloudConfig">
+                        <div class="config-section-title">云服务配置</div>
+                        <div class="config-fields" id="cloudFields">
+                            <div class="form-group">
+                                <label class="form-label">区域 *</label>
+                                <input type="text" class="form-control" id="cloudRegion">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">存储桶/容器 *</label>
+                                <input type="text" class="form-control" id="cloudBucket">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">访问密钥</label>
+                                <input type="text" class="form-control" id="cloudAccessKey">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 认证配置 -->
+                    <div class="config-section">
+                        <div class="config-section-title">认证配置</div>
+                        <div class="form-group">
+                            <label class="form-label">认证方式</label>
+                            <select class="form-control" id="authType" onchange="toggleAuthFields()">
+                                <option value="none">无认证</option>
+                                <option value="password">用户密码</option>
+                                <option value="token">Token/API Key</option>
+                                <option value="aws_credentials">AWS凭证</option>
+                            </select>
+                        </div>
+                        <div class="form-row" id="authFields" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">用户名/Key</label>
+                                <input type="text" class="form-control" id="username">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">密码/Secret</label>
+                                <input type="password" class="form-control" id="password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 连接监测配置 -->
+                    <div class="config-section">
+                        <div class="config-section-title">连接监测配置</div>
+                        <div class="form-group">
+                            <label class="form-label">监测频率</label>
+                            <select class="form-control" id="monitoringFrequency">
+                                <option value="30">30秒</option>
+                                <option value="60" selected>1分钟</option>
+                                <option value="300">5分钟</option>
+                                <option value="600">10分钟</option>
+                                <option value="1800">30分钟</option>
+                                <option value="3600">1小时</option>
+                                <option value="0">禁用监测</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">连接超时时间（秒）</label>
+                            <input type="number" class="form-control" id="connectionTimeout" value="30" min="5" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">重试次数</label>
+                            <input type="number" class="form-control" id="retryCount" value="3" min="0" max="10">
+                        </div>
+                    </div>
+
+                    <!-- 标签配置 -->
+                    <div class="config-section">
+                        <div class="config-section-title">标签配置</div>
+                        <div class="form-group">
+                            <label class="form-label">数据源标签</label>
+                            <div class="tag-selector">
+                                <div class="tag-input-container">
+                                    <input type="text" class="form-control" id="tagInput" placeholder="输入标签名称，按回车添加" onkeydown="handleTagInput(event)">
+                                    <button type="button" class="btn btn-sm" onclick="addCustomTag()">添加</button>
+                                </div>
+                                <div class="tag-options">
+                                    <div class="tag-option" data-value="production" onclick="toggleTag('production')">
+                                        <span class="tag-text">生产设备</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="environment" onclick="toggleTag('environment')">
+                                        <span class="tag-text">环境监控</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="energy" onclick="toggleTag('energy')">
+                                        <span class="tag-text">能耗管理</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="security" onclick="toggleTag('security')">
+                                        <span class="tag-text">安全监控</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="import" onclick="toggleTag('import')">
+                                        <span class="tag-text">数据导入</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="weather" onclick="toggleTag('weather')">
+                                        <span class="tag-text">天气数据</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="streaming" onclick="toggleTag('streaming')">
+                                        <span class="tag-text">流数据</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                    <div class="tag-option" data-value="cloud" onclick="toggleTag('cloud')">
+                                        <span class="tag-text">云存储</span>
+                                        <span class="tag-check">✓</span>
+                                    </div>
+                                </div>
+                                <div class="selected-tags" id="selectedTags">
+                                    <!-- 已选标签将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn" onclick="closeDrawer()">关闭</button>
+                <button class="btn btn-primary" id="saveButton" onclick="saveDataSource()" style="display: none;">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 连接测试结果抽屉 -->
+    <div class="drawer" id="testResultDrawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title">连接测试结果</h3>
+                <button class="drawer-close" onclick="closeTestDrawer()">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <div id="testResultContent">
+                    <!-- 测试结果内容 -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn" onclick="closeTestDrawer()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- 异常规则配置抽屉 -->
+    <div class="drawer" id="ruleConfigDrawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title">异常规则配置</h3>
+                <button class="drawer-close" onclick="closeRuleConfigDrawer()">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <div id="ruleConfigContent">
+                    <!-- 规则配置内容 -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn" onclick="closeRuleConfigDrawer()">取消</button>
+                <button class="btn btn-primary" onclick="saveRuleConfig()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 连接记录查看抽屉 -->
+    <div class="drawer" id="connectionLogDrawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title">连接记录</h3>
+                <button class="drawer-close" onclick="closeConnectionLogDrawer()">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <div class="connection-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">最近连接成功时间：</span>
+                        <span class="summary-value" id="lastSuccessTime">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">连续成功次数：</span>
+                        <span class="summary-value" id="consecutiveSuccessCount">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">最近连接失败时间：</span>
+                        <span class="summary-value" id="lastFailureTime">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">连续失败次数：</span>
+                        <span class="summary-value" id="consecutiveFailureCount">-</span>
+                    </div>
+                </div>
+                <div class="connection-logs">
+                    <h4>最近连接记录</h4>
+                    <div class="log-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                    <th>响应时间</th>
+                                    <th>错误信息</th>
+                                </tr>
+                            </thead>
+                            <tbody id="connectionLogTableBody">
+                                <!-- 连接记录将在这里显示 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn" onclick="closeConnectionLogDrawer()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据源管理页面的JavaScript代码
+        let dataSources = [];
+        let editingId = null;
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataSources();
+            initTagSelector();
+        });
+
+        // 加载数据源数据
+        function loadDataSources() {
+            dataSources = [
+                {
+                    id: 1,
+                    name: 'OPC_UA_Server_01',
+                    description: '主生产线OPC UA服务器',
+                    category: 'industrial',
+                    type: 'OPC_UA',
+                    protocol: 'OPC UA',
+                    ip: '192.168.1.100',
+                    port: 4840,
+                    status: 'online',
+                    lastUpdate: new Date(),
+                    errorRate: 0.5,
+                    connectionType: 'direct',
+                    authType: 'none',
+                    tags: ['production'],
+                    enabled: true,
+                    usageStats: {
+                        modelCount: 3,
+                        pointCount: 156,
+                        dailyDataVolume: '2.3GB',
+                        dashboardCount: 5
+                    },
+                    monitoring: {
+                        frequency: 60,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 30000),
+                        consecutiveSuccessCount: 45,
+                        lastFailureTime: new Date(Date.now() - 86400000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 30000), status: 'success', responseTime: 120, errorMessage: '' },
+                            { time: new Date(Date.now() - 90000), status: 'success', responseTime: 95, errorMessage: '' },
+                            { time: new Date(Date.now() - 150000), status: 'success', responseTime: 110, errorMessage: '' },
+                            { time: new Date(Date.now() - 210000), status: 'success', responseTime: 88, errorMessage: '' },
+                            { time: new Date(Date.now() - 270000), status: 'success', responseTime: 135, errorMessage: '' }
+                        ]
+                    }
+                },
+                {
+                    id: 2,
+                    name: 'MySQL_Production_DB',
+                    description: '生产数据库',
+                    category: 'database',
+                    type: 'MySQL',
+                    protocol: 'MySQL',
+                    host: '192.168.1.101',
+                    port: 3306,
+                    database: 'production_db',
+                    status: 'online',
+                    lastUpdate: new Date(Date.now() - 30000),
+                    errorRate: 2.1,
+                    connectionType: 'direct',
+                    authType: 'password',
+                    username: 'db_user',
+                    tags: ['production'],
+                    enabled: true,
+                    usageStats: {
+                        modelCount: 2,
+                        pointCount: 89,
+                        dailyDataVolume: '1.1GB',
+                        dashboardCount: 2
+                    },
+                    monitoring: {
+                        frequency: 300,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 120000),
+                        consecutiveSuccessCount: 12,
+                        lastFailureTime: new Date(Date.now() - 3600000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 120000), status: 'success', responseTime: 45, errorMessage: '' },
+                            { time: new Date(Date.now() - 420000), status: 'success', responseTime: 52, errorMessage: '' },
+                            { time: new Date(Date.now() - 720000), status: 'success', responseTime: 38, errorMessage: '' },
+                            { time: new Date(Date.now() - 1020000), status: 'success', responseTime: 67, errorMessage: '' },
+                            { time: new Date(Date.now() - 1320000), status: 'success', responseTime: 41, errorMessage: '' }
+                        ]
+                    }
+                },
+                {
+                    id: 3,
+                    name: 'CSV_Data_Import',
+                    description: 'CSV文件数据源',
+                    category: 'file',
+                    type: 'CSV',
+                    protocol: 'File',
+                    filePath: '/data/import/sensor_data.csv',
+                    encoding: 'UTF-8',
+                    delimiter: ',',
+                    status: 'online',
+                    lastUpdate: new Date(Date.now() - 60000),
+                    errorRate: 1.2,
+                    connectionType: 'direct',
+                    authType: 'none',
+                    tags: ['import'],
+                    enabled: false,
+                    usageStats: {
+                        modelCount: 1,
+                        pointCount: 45,
+                        dailyDataVolume: '500MB',
+                        dashboardCount: 1
+                    },
+                    monitoring: {
+                        frequency: 0,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 60000),
+                        consecutiveSuccessCount: 8,
+                        lastFailureTime: new Date(Date.now() - 7200000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 60000), status: 'success', responseTime: 25, errorMessage: '' },
+                            { time: new Date(Date.now() - 3600000), status: 'success', responseTime: 28, errorMessage: '' },
+                            { time: new Date(Date.now() - 7200000), status: 'error', responseTime: 0, errorMessage: '文件不存在' },
+                            { time: new Date(Date.now() - 10800000), status: 'success', responseTime: 22, errorMessage: '' },
+                            { time: new Date(Date.now() - 14400000), status: 'success', responseTime: 31, errorMessage: '' }
+                        ]
+                    }
+                },
+                {
+                    id: 4,
+                    name: 'REST_API_Weather',
+                    description: '天气数据API',
+                    category: 'api',
+                    type: 'REST_API',
+                    protocol: 'HTTP',
+                    url: 'https://api.weather.com/v1/current',
+                    method: 'GET',
+                    status: 'online',
+                    lastUpdate: new Date(Date.now() - 120000),
+                    errorRate: 3.5,
+                    connectionType: 'direct',
+                    authType: 'token',
+                    apiKey: 'weather_api_key_123',
+                    tags: ['weather'],
+                    enabled: true,
+                    usageStats: {
+                        modelCount: 1,
+                        pointCount: 12,
+                        dailyDataVolume: '200MB',
+                        dashboardCount: 1
+                    },
+                    monitoring: {
+                        frequency: 600,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 180000),
+                        consecutiveSuccessCount: 6,
+                        lastFailureTime: new Date(Date.now() - 1800000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 180000), status: 'success', responseTime: 850, errorMessage: '' },
+                            { time: new Date(Date.now() - 780000), status: 'success', responseTime: 920, errorMessage: '' },
+                            { time: new Date(Date.now() - 1380000), status: 'success', responseTime: 780, errorMessage: '' },
+                            { time: new Date(Date.now() - 1800000), status: 'error', responseTime: 0, errorMessage: '网络超时' },
+                            { time: new Date(Date.now() - 2400000), status: 'success', responseTime: 890, errorMessage: '' }
+                        ]
+                    }
+                },
+                {
+                    id: 5,
+                    name: 'Kafka_Event_Stream',
+                    description: '事件流数据源',
+                    category: 'message_queue',
+                    type: 'Kafka',
+                    protocol: 'Kafka',
+                    bootstrapServers: '192.168.1.105:9092',
+                    topic: 'sensor_events',
+                    groupId: 'data_processor',
+                    status: 'online',
+                    lastUpdate: new Date(Date.now() - 30000),
+                    errorRate: 0.8,
+                    connectionType: 'direct',
+                    authType: 'none',
+                    tags: ['streaming'],
+                    enabled: true,
+                    usageStats: {
+                        modelCount: 2,
+                        pointCount: 78,
+                        dailyDataVolume: '3.2GB',
+                        dashboardCount: 3
+                    },
+                    monitoring: {
+                        frequency: 60,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 45000),
+                        consecutiveSuccessCount: 28,
+                        lastFailureTime: new Date(Date.now() - 5400000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 45000), status: 'success', responseTime: 35, errorMessage: '' },
+                            { time: new Date(Date.now() - 105000), status: 'success', responseTime: 42, errorMessage: '' },
+                            { time: new Date(Date.now() - 165000), status: 'success', responseTime: 38, errorMessage: '' },
+                            { time: new Date(Date.now() - 225000), status: 'success', responseTime: 45, errorMessage: '' },
+                            { time: new Date(Date.now() - 285000), status: 'success', responseTime: 33, errorMessage: '' }
+                        ]
+                    }
+                },
+                {
+                    id: 6,
+                    name: 'AWS_S3_Storage',
+                    description: 'AWS S3对象存储',
+                    category: 'cloud',
+                    type: 'AWS_S3',
+                    protocol: 'S3',
+                    bucket: 'production-data-bucket',
+                    region: 'us-east-1',
+                    accessKey: 'AKIAIOSFODNN7EXAMPLE',
+                    status: 'online',
+                    lastUpdate: new Date(Date.now() - 180000),
+                    errorRate: 1.5,
+                    connectionType: 'direct',
+                    authType: 'aws_credentials',
+                    tags: ['cloud', 'storage'],
+                    enabled: false,
+                    usageStats: {
+                        modelCount: 1,
+                        pointCount: 23,
+                        dailyDataVolume: '1.8GB',
+                        dashboardCount: 2
+                    },
+                    monitoring: {
+                        frequency: 1800,
+                        timeout: 30,
+                        retryCount: 3,
+                        lastSuccessTime: new Date(Date.now() - 900000),
+                        consecutiveSuccessCount: 3,
+                        lastFailureTime: new Date(Date.now() - 7200000),
+                        consecutiveFailureCount: 0,
+                        connectionLogs: [
+                            { time: new Date(Date.now() - 900000), status: 'success', responseTime: 1200, errorMessage: '' },
+                            { time: new Date(Date.now() - 2700000), status: 'success', responseTime: 1350, errorMessage: '' },
+                            { time: new Date(Date.now() - 4500000), status: 'success', responseTime: 980, errorMessage: '' },
+                            { time: new Date(Date.now() - 6300000), status: 'success', responseTime: 1100, errorMessage: '' },
+                            { time: new Date(Date.now() - 8100000), status: 'success', responseTime: 1250, errorMessage: '' }
+                        ]
+                    }
+                }
+            ];
+            renderTable();
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const filteredData = getFilteredData();
+
+            tbody.innerHTML = filteredData.map(source => `
+                <tr>
+                    <td>
+                        <div>${source.name}</div>
+                        <div style="font-size: 12px; color: #999;">${source.description}</div>
+                    </td>
+                    <td><span class="tag">${getCategoryText(source.category)}</span></td>
+                    <td><span class="tag">${source.type}</span></td>
+                    <td>${getConnectionInfo(source)}</td>
+                    <td>
+                        <span class="status-indicator status-${source.status}"></span>
+                        ${getStatusText(source.status)}
+                    </td>
+                    <td>
+                        <div style="font-size: 16px; font-weight: 600; color: #409eff;">${source.usageStats.pointCount}</div>
+                    </td>
+                    <td>
+                        <div class="connection-monitoring-info">
+                            <div class="monitoring-item">
+                                <span class="monitoring-label">监测频率:</span>
+                                <span class="monitoring-value">${getMonitoringFrequencyText(source.monitoring.frequency)}</span>
+                            </div>
+                            <div class="monitoring-item">
+                                <span class="monitoring-label">最近成功:</span>
+                                <span class="monitoring-value success">${formatTime(source.monitoring.lastSuccessTime)}</span>
+                            </div>
+                            <div class="monitoring-item">
+                                <span class="monitoring-label">连续成功:</span>
+                                <span class="monitoring-value success">${source.monitoring.consecutiveSuccessCount}次</span>
+                            </div>
+                            ${source.monitoring.consecutiveFailureCount > 0 ? `
+                            <div class="monitoring-item">
+                                <span class="monitoring-label">最近失败:</span>
+                                <span class="monitoring-value error">${formatTime(source.monitoring.lastFailureTime)}</span>
+                            </div>
+                            <div class="monitoring-item">
+                                <span class="monitoring-label">连续失败:</span>
+                                <span class="monitoring-value error">${source.monitoring.consecutiveFailureCount}次</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" ${source.enabled ? 'checked' : ''} onchange="toggleDataSource(${source.id})">
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <div class="icon icon-view" title="查看" onclick="viewDataSource(${source.id})"></div>
+                        <div class="icon icon-edit" title="配置" onclick="editDataSource(${source.id})"></div>
+                        <div class="icon icon-test" title="测试连接" onclick="testConnection(${source.id})"></div>
+                        <div class="icon icon-log" title="查看连接记录" onclick="viewConnectionLogs(${source.id})"></div>
+                        <div class="icon icon-delete" title="删除" onclick="deleteDataSource(${source.id})"></div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 获取筛选后的数据
+        function getFilteredData() {
+            let filtered = dataSources;
+
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const keywordFilter = document.getElementById('keywordFilter').value;
+
+            if (categoryFilter) {
+                filtered = filtered.filter(source => source.category === categoryFilter);
+            }
+
+            if (typeFilter) {
+                filtered = filtered.filter(source => source.type === typeFilter);
+            }
+
+            if (statusFilter) {
+                filtered = filtered.filter(source => source.status === statusFilter);
+            }
+
+            if (keywordFilter) {
+                filtered = filtered.filter(source => 
+                    source.name.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+                    source.description.toLowerCase().includes(keywordFilter.toLowerCase())
+                );
+            }
+
+            return filtered;
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            renderTable();
+        }
+
+        // 清空筛选
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('keywordFilter').value = '';
+            renderTable();
+        }
+
+        // 显示新增抽屉
+        function showAddModal() {
+            editingId = null;
+            document.getElementById('drawerTitle').textContent = '新增数据源';
+            document.getElementById('dataSourceForm').reset();
+            hideAllConfigFields();
+            setFormReadOnly(false); // 确保表单可编辑
+            initTagSelector(); // 初始化标签选择器
+            document.getElementById('dataSourceDrawer').classList.add('show');
+        }
+
+        // 关闭抽屉
+        function closeDrawer() {
+            document.getElementById('dataSourceDrawer').classList.remove('show');
+        }
+
+        // 更新类型选项
+        function updateTypeOptions() {
+            const category = document.getElementById('sourceCategory').value;
+            const typeSelect = document.getElementById('sourceType');
+            typeSelect.innerHTML = '<option value="">请选择类型</option>';
+
+            const typeOptions = {
+                'database': ['MySQL', 'Oracle', 'SQL Server', 'PostgreSQL', 'Hive', 'ClickHouse', 'TiDB'],
+                'file': ['CSV', 'Excel', 'JSON', 'Parquet', 'HDFS'],
+                'api': ['REST API', 'GraphQL', 'WebService'],
+                'message_queue': ['Kafka', 'RabbitMQ', 'MQTT'],
+                'industrial': ['OPC UA', 'OPC DA', 'Modbus', 'BACnet'],
+                'cloud': ['AWS S3', '阿里云OSS', '华为云OBS', 'Azure Blob']
+            };
+
+            if (category && typeOptions[category]) {
+                typeOptions[category].forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    typeSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 显示配置字段
+        function showConfigFields() {
+            hideAllConfigFields();
+            const category = document.getElementById('sourceCategory').value;
+            const type = document.getElementById('sourceType').value;
+
+            if (category && type) {
+                const configId = category + 'Config';
+                const fieldsId = category + 'Fields';
+                const configSection = document.getElementById(configId);
+                const fieldsSection = document.getElementById(fieldsId);
+
+                if (configSection && fieldsSection) {
+                    configSection.style.display = 'block';
+                    fieldsSection.classList.add('active');
+                }
+            }
+        }
+
+        // 隐藏所有配置字段
+        function hideAllConfigFields() {
+            const configSections = ['industrialConfig', 'databaseConfig', 'fileConfig', 'apiConfig', 'mqConfig', 'cloudConfig'];
+            const fieldsSections = ['industrialFields', 'databaseFields', 'fileFields', 'apiFields', 'mqFields', 'cloudFields'];
+
+            configSections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) section.style.display = 'none';
+            });
+
+            fieldsSections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) section.classList.remove('active');
+            });
+        }
+
+        // 保存数据源
+        function saveDataSource() {
+            const form = document.getElementById('dataSourceForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const category = document.getElementById('sourceCategory').value;
+            const type = document.getElementById('sourceType').value;
+            
+            // 根据类别和类型构建配置数据
+            const formData = {
+                name: document.getElementById('sourceName').value,
+                description: document.getElementById('description').value,
+                category: category,
+                type: type,
+                authType: document.getElementById('authType').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                tags: getTagSelectorValue(),
+                monitoring: {
+                    frequency: parseInt(document.getElementById('monitoringFrequency').value),
+                    timeout: parseInt(document.getElementById('connectionTimeout').value),
+                    retryCount: parseInt(document.getElementById('retryCount').value),
+                    lastSuccessTime: new Date(),
+                    consecutiveSuccessCount: 0,
+                    lastFailureTime: null,
+                    consecutiveFailureCount: 0,
+                    connectionLogs: []
+                }
+            };
+
+            // 根据类别添加特定配置
+            switch(category) {
+                case 'industrial':
+                    formData.protocol = type;
+                    formData.ip = document.getElementById('ipAddress').value;
+                    formData.port = parseInt(document.getElementById('port').value);
+                    formData.connectionType = document.getElementById('connectionType').value;
+                    break;
+                case 'database':
+                    formData.protocol = type;
+                    formData.host = document.getElementById('dbHost').value;
+                    formData.port = parseInt(document.getElementById('dbPort').value);
+                    formData.database = document.getElementById('database').value;
+                    break;
+                case 'file':
+                    formData.protocol = 'File';
+                    formData.filePath = document.getElementById('filePath').value;
+                    formData.encoding = document.getElementById('encoding').value;
+                    formData.delimiter = document.getElementById('delimiter').value;
+                    break;
+                case 'api':
+                    formData.protocol = 'HTTP';
+                    formData.url = document.getElementById('apiUrl').value;
+                    formData.method = document.getElementById('apiMethod').value;
+                    formData.timeout = parseInt(document.getElementById('timeout').value);
+                    break;
+                case 'message_queue':
+                    formData.protocol = type;
+                    formData.bootstrapServers = document.getElementById('mqServers').value;
+                    formData.topic = document.getElementById('mqTopic').value;
+                    formData.groupId = document.getElementById('mqGroupId').value;
+                    break;
+                case 'cloud':
+                    formData.protocol = type;
+                    formData.region = document.getElementById('cloudRegion').value;
+                    formData.bucket = document.getElementById('cloudBucket').value;
+                    formData.accessKey = document.getElementById('cloudAccessKey').value;
+                    break;
+            }
+
+            if (editingId) {
+                // 编辑模式
+                const index = dataSources.findIndex(source => source.id === editingId);
+                if (index !== -1) {
+                    // 保留原有的监测数据，只更新配置
+                    const existingMonitoring = dataSources[index].monitoring || {};
+                    formData.monitoring = {
+                        ...existingMonitoring,
+                        frequency: parseInt(document.getElementById('monitoringFrequency').value),
+                        timeout: parseInt(document.getElementById('connectionTimeout').value),
+                        retryCount: parseInt(document.getElementById('retryCount').value)
+                    };
+                    dataSources[index] = { ...dataSources[index], ...formData };
+                }
+            } else {
+                // 新增模式
+                const newId = Math.max(...dataSources.map(s => s.id)) + 1;
+                const newSource = {
+                    id: newId,
+                    ...formData,
+                    status: 'offline',
+                    lastUpdate: new Date(),
+                    errorRate: 0,
+                    usageStats: {
+                        modelCount: 0,
+                        pointCount: 0,
+                        dailyDataVolume: '0GB',
+                        dashboardCount: 0
+                    }
+                };
+                dataSources.push(newSource);
+            }
+
+            closeDrawer();
+            renderTable();
+            showMessage(editingId ? '数据源更新成功' : '数据源添加成功');
+        }
+
+        // 查看数据源
+        function viewDataSource(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (!source) return;
+
+            editingId = id;
+            document.getElementById('drawerTitle').textContent = '查看数据源';
+            
+            // 填充基础表单（只读）
+            document.getElementById('sourceName').value = source.name;
+            document.getElementById('description').value = source.description || '';
+            document.getElementById('sourceCategory').value = source.category;
+            
+            // 更新类型选项并设置类型
+            updateTypeOptions();
+            setTimeout(() => {
+                document.getElementById('sourceType').value = source.type;
+                showConfigFields();
+                
+                // 根据类别填充特定配置
+                fillConfigFields(source);
+                
+                // 设置所有字段为只读
+                setFormReadOnly(true);
+            }, 100);
+
+            // 设置认证信息
+            document.getElementById('authType').value = source.authType;
+            document.getElementById('username').value = source.username || '';
+            document.getElementById('password').value = source.password || '';
+
+            // 设置标签
+            setTagSelectorValue(source.tags);
+
+            document.getElementById('dataSourceDrawer').classList.add('show');
+        }
+
+        // 设置表单只读状态
+        function setFormReadOnly(readonly) {
+            const form = document.getElementById('dataSourceForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            const saveButton = document.getElementById('saveButton');
+            const tagInput = document.getElementById('tagInput');
+            const tagOptions = document.querySelectorAll('.tag-option');
+            
+            inputs.forEach(input => {
+                input.disabled = readonly;
+            });
+            
+            // 控制标签选择器
+            if (tagInput) {
+                tagInput.disabled = readonly;
+            }
+            
+            tagOptions.forEach(option => {
+                option.style.pointerEvents = readonly ? 'none' : 'auto';
+                if (readonly) {
+                    option.style.opacity = '0.6';
+                } else {
+                    option.style.opacity = '1';
+                }
+            });
+            
+            // 控制保存按钮显示
+            if (readonly) {
+                saveButton.style.display = 'none';
+            } else {
+                saveButton.style.display = 'inline-block';
+            }
+        }
+
+        // 编辑数据源
+        function editDataSource(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (!source) return;
+
+            editingId = id;
+            document.getElementById('drawerTitle').textContent = '配置数据源';
+            
+            // 填充基础表单
+            document.getElementById('sourceName').value = source.name;
+            document.getElementById('description').value = source.description || '';
+            document.getElementById('sourceCategory').value = source.category;
+            
+            // 更新类型选项并设置类型
+            updateTypeOptions();
+            setTimeout(() => {
+                document.getElementById('sourceType').value = source.type;
+                showConfigFields();
+                
+                // 根据类别填充特定配置
+                fillConfigFields(source);
+            }, 100);
+
+            // 设置认证信息
+            document.getElementById('authType').value = source.authType;
+            document.getElementById('username').value = source.username || '';
+            document.getElementById('password').value = source.password || '';
+
+            // 设置标签
+            setTagSelectorValue(source.tags);
+
+            toggleAuthFields();
+            setFormReadOnly(false); // 确保表单可编辑
+            document.getElementById('dataSourceDrawer').classList.add('show');
+        }
+
+        // 填充配置字段
+        function fillConfigFields(source) {
+            switch(source.category) {
+                case 'industrial':
+                    document.getElementById('ipAddress').value = source.ip || '';
+                    document.getElementById('port').value = source.port || '';
+                    document.getElementById('connectionType').value = source.connectionType || 'direct';
+                    break;
+                case 'database':
+                    document.getElementById('dbHost').value = source.host || '';
+                    document.getElementById('dbPort').value = source.port || '';
+                    document.getElementById('database').value = source.database || '';
+                    break;
+                case 'file':
+                    document.getElementById('filePath').value = source.filePath || '';
+                    document.getElementById('encoding').value = source.encoding || 'UTF-8';
+                    document.getElementById('delimiter').value = source.delimiter || ',';
+                    break;
+                case 'api':
+                    document.getElementById('apiUrl').value = source.url || '';
+                    document.getElementById('apiMethod').value = source.method || 'GET';
+                    document.getElementById('timeout').value = source.timeout || 30;
+                    break;
+                case 'message_queue':
+                    document.getElementById('mqServers').value = source.bootstrapServers || '';
+                    document.getElementById('mqTopic').value = source.topic || '';
+                    document.getElementById('mqGroupId').value = source.groupId || '';
+                    break;
+                case 'cloud':
+                    document.getElementById('cloudRegion').value = source.region || '';
+                    document.getElementById('cloudBucket').value = source.bucket || '';
+                    document.getElementById('cloudAccessKey').value = source.accessKey || '';
+                    break;
+            }
+
+            // 填充监测配置字段
+            if (source.monitoring) {
+                document.getElementById('monitoringFrequency').value = source.monitoring.frequency || 60;
+                document.getElementById('connectionTimeout').value = source.monitoring.timeout || 30;
+                document.getElementById('retryCount').value = source.monitoring.retryCount || 3;
+            }
+        }
+
+        // 获取类别文本
+        function getCategoryText(category) {
+            const categoryMap = {
+                'database': '数据库类',
+                'file': '文件类',
+                'api': 'API类',
+                'message_queue': '消息队列',
+                'industrial': '工业协议',
+                'cloud': '云服务'
+            };
+            return categoryMap[category] || category;
+        }
+
+        // 获取连接信息
+        function getConnectionInfo(source) {
+            switch(source.category) {
+                case 'industrial':
+                    return `${source.ip}:${source.port}`;
+                case 'database':
+                    return `${source.host}:${source.port}/${source.database}`;
+                case 'file':
+                    return source.filePath;
+                case 'api':
+                    return source.url;
+                case 'message_queue':
+                    return `${source.bootstrapServers}/${source.topic}`;
+                case 'cloud':
+                    return `${source.region}/${source.bucket}`;
+                default:
+                    return '未知';
+            }
+        }
+
+        // 获取监测频率文本
+        function getMonitoringFrequencyText(frequency) {
+            if (frequency === 0) return '禁用';
+            if (frequency < 60) return `${frequency}秒`;
+            if (frequency < 3600) return `${frequency / 60}分钟`;
+            return `${frequency / 3600}小时`;
+        }
+
+        // 格式化时间
+        function formatTime(date) {
+            if (!date) return '-';
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+            return `${Math.floor(diff / 86400000)}天前`;
+        }
+
+        // 测试连接
+        function testConnection(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (!source) return;
+
+            const testResultContent = document.getElementById('testResultContent');
+            testResultContent.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div>正在测试连接 ${source.name}...</div>
+                    <div style="margin-top: 10px; color: #666;">请稍候...</div>
+                </div>
+            `;
+            document.getElementById('testResultDrawer').classList.add('show');
+
+            // 模拟连接测试
+            setTimeout(() => {
+                const success = Math.random() > 0.3;
+                const responseTime = Math.floor(Math.random() * 1000) + 100;
+                
+                testResultContent.innerHTML = `
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 15px;">
+                            <strong>测试结果:</strong>
+                        </div>
+                        <div style="padding: 15px; border-radius: 4px; background: ${success ? '#f0f9ff' : '#fef2f2'}; color: ${success ? '#065f46' : '#991b1b'};">
+                            ${success ? 
+                                `✅ 连接成功！响应时间: ${responseTime}ms` : 
+                                '❌ 连接失败：网络超时或认证失败'
+                            }
+                        </div>
+                        <div style="margin-top: 15px; font-size: 14px; color: #666;">
+                            <div>连接信息: ${getConnectionInfo(source)}</div>
+                            <div>协议: ${source.protocol}</div>
+                            <div>测试时间: ${new Date().toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // 关闭测试结果抽屉
+        function closeTestDrawer() {
+            document.getElementById('testResultDrawer').classList.remove('show');
+        }
+
+        // 查看连接记录
+        function viewConnectionLogs(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (!source) return;
+
+            // 更新连接记录摘要
+            document.getElementById('lastSuccessTime').textContent = formatTime(source.monitoring.lastSuccessTime);
+            document.getElementById('consecutiveSuccessCount').textContent = source.monitoring.consecutiveSuccessCount + '次';
+            document.getElementById('lastFailureTime').textContent = formatTime(source.monitoring.lastFailureTime);
+            document.getElementById('consecutiveFailureCount').textContent = source.monitoring.consecutiveFailureCount + '次';
+
+            // 渲染连接记录表格
+            const logTableBody = document.getElementById('connectionLogTableBody');
+            logTableBody.innerHTML = source.monitoring.connectionLogs.map(log => `
+                <tr>
+                    <td>${log.time.toLocaleString()}</td>
+                    <td>
+                        <span class="log-status ${log.status}">
+                            ${log.status === 'success' ? '成功' : log.status === 'error' ? '失败' : '警告'}
+                        </span>
+                    </td>
+                    <td>${log.responseTime}ms</td>
+                    <td>${log.errorMessage || '-'}</td>
+                </tr>
+            `).join('');
+
+            // 显示连接记录抽屉
+            document.getElementById('connectionLogDrawer').classList.add('show');
+        }
+
+        // 关闭连接记录抽屉
+        function closeConnectionLogDrawer() {
+            document.getElementById('connectionLogDrawer').classList.remove('show');
+        }
+
+
+
+        // 配置异常规则
+        function configureRules(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (!source) return;
+
+            const ruleConfigContent = document.getElementById('ruleConfigContent');
+            ruleConfigContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <h4 style="margin-bottom: 20px;">${source.name} 异常规则配置</h4>
+                    
+                    <div class="rule-config">
+                        <div class="rule-header">
+                            <div>
+                                <div class="rule-title">静态阈值判断</div>
+                                <div class="rule-type">数值超出设定范围时告警</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">最小值</label>
+                                <input type="number" class="form-control" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">最大值</label>
+                                <input type="number" class="form-control" value="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rule-config">
+                        <div class="rule-header">
+                            <div>
+                                <div class="rule-title">波动率判断</div>
+                                <div class="rule-type">单位时间内波动超过设定百分比</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">波动阈值 (%)</label>
+                            <input type="number" class="form-control" value="10" min="0" max="100">
+                        </div>
+                    </div>
+
+                    <div class="rule-config">
+                        <div class="rule-header">
+                            <div>
+                                <div class="rule-title">趋势判断</div>
+                                <div class="rule-type">连续上升或下降N次</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">连续次数</label>
+                            <input type="number" class="form-control" value="5" min="1">
+                        </div>
+                    </div>
+
+                    <div class="rule-config">
+                        <div class="rule-header">
+                            <div>
+                                <div class="rule-title">间歇性丢数判断</div>
+                                <div class="rule-type">连续未更新超过设定时间</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">超时时间 (秒)</label>
+                            <input type="number" class="form-control" value="60" min="1">
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('ruleConfigDrawer').classList.add('show');
+        }
+
+        // 关闭规则配置抽屉
+        function closeRuleConfigDrawer() {
+            document.getElementById('ruleConfigDrawer').classList.remove('show');
+        }
+
+        // 保存规则配置
+        function saveRuleConfig() {
+            showMessage('异常规则配置已保存');
+            closeRuleConfigDrawer();
+        }
+
+        // 启用/停用数据源
+        function toggleDataSource(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (source) {
+                // 获取当前开关状态
+                const checkbox = event.target;
+                source.enabled = checkbox.checked;
+                showMessage(`数据源 "${source.name}" 已${source.enabled ? '启用' : '停用'}`);
+            }
+        }
+
+        // 删除数据源
+        function deleteDataSource(id) {
+            const source = dataSources.find(s => s.id === id);
+            if (source && confirm(`确定要删除数据源 "${source.name}" 吗？`)) {
+                dataSources = dataSources.filter(s => s.id !== id);
+                renderTable();
+                showMessage('数据源删除成功');
+            }
+        }
+
+
+
+        // 标签选择器相关变量
+        let selectedTags = [];
+        let allTags = {
+            'production': '生产设备',
+            'environment': '环境监控',
+            'energy': '能耗管理',
+            'security': '安全监控',
+            'import': '数据导入',
+            'weather': '天气数据',
+            'streaming': '流数据',
+            'cloud': '云存储'
+        };
+
+        // 初始化标签选择器
+        function initTagSelector() {
+            selectedTags = [];
+            updateSelectedTagsDisplay();
+        }
+
+        // 处理标签输入
+        function handleTagInput(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addCustomTag();
+            }
+        }
+
+        // 添加自定义标签
+        function addCustomTag() {
+            const tagInput = document.getElementById('tagInput');
+            const tagValue = tagInput.value.trim();
+            
+            if (tagValue && !allTags[tagValue] && !selectedTags.includes(tagValue)) {
+                allTags[tagValue] = tagValue;
+                selectedTags.push(tagValue);
+                updateSelectedTagsDisplay();
+                updateTagOptions();
+                tagInput.value = '';
+            }
+        }
+
+        // 切换标签选择状态
+        function toggleTag(tagValue) {
+            const tagOption = document.querySelector(`[data-value="${tagValue}"]`);
+            
+            if (selectedTags.includes(tagValue)) {
+                // 移除标签
+                selectedTags = selectedTags.filter(tag => tag !== tagValue);
+                tagOption.classList.remove('selected');
+            } else {
+                // 添加标签
+                selectedTags.push(tagValue);
+                tagOption.classList.add('selected');
+            }
+            
+            updateSelectedTagsDisplay();
+        }
+
+        // 移除已选标签
+        function removeTag(tagValue) {
+            selectedTags = selectedTags.filter(tag => tag !== tagValue);
+            updateSelectedTagsDisplay();
+            
+            // 更新选项状态
+            const tagOption = document.querySelector(`[data-value="${tagValue}"]`);
+            if (tagOption) {
+                tagOption.classList.remove('selected');
+            }
+        }
+
+        // 更新已选标签显示
+        function updateSelectedTagsDisplay() {
+            const selectedTagsContainer = document.getElementById('selectedTags');
+            selectedTagsContainer.innerHTML = '';
+            
+            selectedTags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'selected-tag';
+                tagElement.innerHTML = `
+                    ${allTags[tag]}
+                    <span class="remove-tag" onclick="removeTag('${tag}')">&times;</span>
+                `;
+                selectedTagsContainer.appendChild(tagElement);
+            });
+        }
+
+        // 更新标签选项
+        function updateTagOptions() {
+            const tagOptionsContainer = document.querySelector('.tag-options');
+            tagOptionsContainer.innerHTML = '';
+            
+            Object.keys(allTags).forEach(tagValue => {
+                const tagOption = document.createElement('div');
+                tagOption.className = `tag-option ${selectedTags.includes(tagValue) ? 'selected' : ''}`;
+                tagOption.setAttribute('data-value', tagValue);
+                tagOption.onclick = () => toggleTag(tagValue);
+                tagOption.innerHTML = `
+                    <span class="tag-text">${allTags[tagValue]}</span>
+                    <span class="tag-check">✓</span>
+                `;
+                tagOptionsContainer.appendChild(tagOption);
+            });
+        }
+
+        // 设置标签选择器的值
+        function setTagSelectorValue(tags) {
+            selectedTags = tags || [];
+            updateSelectedTagsDisplay();
+            updateTagOptions();
+        }
+
+        // 获取标签选择器的值
+        function getTagSelectorValue() {
+            return selectedTags;
+        }
+
+        // 切换认证字段显示
+        function toggleAuthFields() {
+            const authType = document.getElementById('authType').value;
+            const authFields = document.getElementById('authFields');
+            const usernameLabel = authFields.querySelector('label[for="username"]');
+            const passwordLabel = authFields.querySelector('label[for="password"]');
+            
+            if (authType === 'password') {
+                usernameLabel.textContent = '用户名';
+                passwordLabel.textContent = '密码';
+                authFields.style.display = 'grid';
+            } else if (authType === 'token') {
+                usernameLabel.textContent = 'API Key';
+                passwordLabel.textContent = 'API Secret';
+                authFields.style.display = 'grid';
+            } else if (authType === 'aws_credentials') {
+                usernameLabel.textContent = 'Access Key ID';
+                passwordLabel.textContent = 'Secret Access Key';
+                authFields.style.display = 'grid';
+            } else {
+                authFields.style.display = 'none';
+            }
+        }
+
+        // 工具函数
+        function getStatusText(status) {
+            const statusMap = {
+                'online': '在线',
+                'offline': '离线',
+                'fluctuating': '波动'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatTime(time) {
+            if (!time) return '';
+            const date = new Date(time);
+            return date.toLocaleString('zh-CN');
+        }
+
+        function showMessage(message) {
+            // 简单的消息提示
+            alert(message);
+        }
+    </script>
+</body>
+</html> 

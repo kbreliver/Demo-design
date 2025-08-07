@@ -1,0 +1,29 @@
+{
+  "cursor.chat.defaultModel": "claude-3.5-sonnet",
+  "cursor.chat.experimentalAgent": true,
+  "cursor.chat.autoApply": true,
+  "cursor.chat.autoApplyThreshold": 0.8,
+  "cursor.chat.contextLines": 100,
+  "cursor.chat.maxTokens": 8000,
+  "cursor.chat.temperature": 0.1,
+  "cursor.chat.systemPrompt": "你是Demo Design项目的专用开发助手，专门负责数字孪生系统、AI智能运维界面和前端开发。你熟悉Three.js、Vue.js、Element UI、ECharts等技术栈。请用中文回答，提供详细的代码示例和最佳实践建议。",
+  "cursor.chat.includeWorkspaceFiles": true,
+  "cursor.chat.includeGitHistory": true,
+  "cursor.chat.includeOpenFiles": true,
+  "cursor.chat.includeTerminalOutput": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "files.associations": {
+    "*.html": "html",
+    "*.js": "javascript",
+    "*.css": "css",
+    "*.md": "markdown"
+  },
+  "emmet.includeLanguages": {
+    "html": "html"
+  },
+  "liveServer.settings.root": "/",
+  "liveServer.settings.port": 5500
+} 

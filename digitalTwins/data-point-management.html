@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据点位管理 - 数字孪生平台</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .page-header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ebeef5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 异常状态样式 */
+        .anomaly-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .anomaly-time {
+            color: #f56c6c;
+            font-weight: 500;
+        }
+
+        .anomaly-type {
+            color: #e6a23c;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #ffffff;
+            color: #606266;
+        }
+
+        .btn-primary {
+            background: #409eff;
+            border-color: #409eff;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: #67c23a;
+            border-color: #67c23a;
+            color: #ffffff;
+        }
+
+        .btn-warning {
+            background: #e6a23c;
+            border-color: #e6a23c;
+            color: #ffffff;
+        }
+
+
+
+        .filter-section {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-section .btn {
+            min-width: 80px;
+            padding: 8px 16px;
+            white-space: nowrap;
+        }
+
+        /* 树形结构样式 */
+        .group-row {
+            background-color: #f8f9fa;
+        }
+
+        .group-row:hover {
+            background-color: #e9ecef !important;
+        }
+
+        .leaf-row {
+            background-color: #ffffff;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .expand-icon:hover {
+            color: #66b1ff !important;
+        }
+
+        .form-input, .form-select {
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            margin: 15px;
+            border-radius: 4px;
+            border: 1px solid #ebeef5;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .table th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+
+        .tag-success {
+            background-color: #f0f9ff;
+            color: #67c23a;
+        }
+
+        .tag-warning {
+            background-color: #fdf6ec;
+            color: #e6a23c;
+        }
+
+        .tag-info {
+            background-color: #f4f4f5;
+            color: #909399;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #409eff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .value-display {
+            font-weight: 600;
+            color: #409eff;
+        }
+
+        .value-display.error {
+            color: #f56c6c;
+        }
+
+        .value-display.warning {
+            color: #e6a23c;
+        }
+
+        /* 抽屉组件样式 */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #909399;
+        }
+
+        .drawer-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .drawer-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #ebeef5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #303133;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* 异常规则配置样式 */
+        .rule-config {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .rule-header {
+            padding: 12px 15px;
+            background: #f5f7fa;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rule-title {
+            font-weight: 500;
+            color: #303133;
+        }
+
+        .rule-toggle {
+            background: none;
+            border: none;
+            color: #409eff;
+            cursor: pointer;
+        }
+
+        .rule-content {
+            padding: 15px;
+            display: none;
+        }
+
+        .rule-content.active {
+            display: block;
+        }
+
+        .rule-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* 操作图标样式 */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .icon:hover {
+            background-color: #f5f7fa;
+        }
+
+        .icon-view {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23409eff"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>');
+        }
+
+        .icon-edit {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2367c23a"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>');
+        }
+
+        .icon-rule {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e6a23c"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>');
+        }
+
+        .icon-delete {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f56c6c"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>');
+        }
+
+
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">数据点位管理</h1>
+            <div class="header-actions">
+                <button class="btn btn-warning" onclick="scanPoints()">扫描点位</button>
+            </div>
+        </div>
+
+
+
+        <div class="filter-section">
+
+            <select class="form-select" id="statusFilter">
+                <option value="">全部状态</option>
+                <option value="enabled">启用</option>
+                <option value="disabled">禁用</option>
+            </select>
+            <select class="form-select" id="modelingFilter">
+                <option value="">全部建模状态</option>
+                <option value="true">参与建模</option>
+                <option value="false">不参与建模</option>
+            </select>
+            <input type="text" class="form-input" id="keywordFilter" placeholder="搜索点位名称">
+            <select class="form-select" id="categoryFilter" multiple>
+                <option value="温度">温度</option>
+                <option value="压力">压力</option>
+                <option value="流量">流量</option>
+                <option value="开关">开关</option>
+                <option value="设备">设备</option>
+                <option value="传感器">传感器</option>
+                <option value="仪表">仪表</option>
+                <option value="状态">状态</option>
+                <option value="标识">标识</option>
+            </select>
+            <button class="btn btn-primary" onclick="applyFilters()">筛选</button>
+            <button class="btn" onclick="clearFilters()">清空</button>
+        </div>
+
+        <div class="table-container">
+            <table class="table" id="dataPointTable">
+                <thead>
+                    <tr>
+                        <th>点位名称</th>
+                        <th>数据源</th>
+                        <th>编码</th>
+                        <th>分类</th>
+                        <th>数据类型</th>
+                        <th>单位</th>
+                        <th>更新周期</th>
+                        <th>启用状态</th>
+                        <th>参与建模</th>
+                        <th>最新值</th>
+                        <th>最后更新</th>
+                        <th>异常</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 数据行将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- 数据点位抽屉 -->
+    <div class="drawer" id="dataPointDrawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title" id="drawerTitle">新增数据点位</h3>
+            <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <form id="dataPointForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">点位名称 *</label>
+                        <input type="text" class="form-input" id="pointName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">原始点位名 *</label>
+                        <input type="text" class="form-input" id="originalName" required readonly>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">数据类型 *</label>
+                        <select class="form-select" id="dataType" required disabled>
+                            <option value="">请选择数据类型</option>
+                            <option value="Float">浮点型</option>
+                            <option value="Integer">整型</option>
+                            <option value="Boolean">布尔型</option>
+                            <option value="String">字符串</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">单位</label>
+                        <input type="text" class="form-input" id="unit" placeholder="如：℃、MPa、m³/h">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">更新周期(秒) *</label>
+                        <input type="number" class="form-input" id="updateCycle" min="1" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">数据源</label>
+                        <select class="form-select" id="dataSource">
+                            <option value="">请选择数据源</option>
+                            <option value="1">OPC_UA_Server_01</option>
+                            <option value="2">Modbus_TCP_01</option>
+                            <option value="3">SQL_Database_01</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">点位描述</label>
+                    <textarea class="form-textarea" id="description" placeholder="请输入点位描述信息"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">点位分类</label>
+                    <div id="categorySelectContainer">
+                        <el-select 
+                            v-model="selectedCategories" 
+                            multiple 
+                            filterable 
+                            allow-create 
+                            default-first-option
+                            placeholder="请选择或输入分类"
+                            style="width: 100%;">
+                            <el-option
+                                v-for="item in categoryOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                            </el-option>
+                        </el-select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">启用状态</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enabled" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">参与建模</label>
+                        <label class="switch">
+                            <input type="checkbox" id="modeling" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn" onclick="closeDrawer()">取消</button>
+            <button class="btn btn-primary" onclick="saveDataPoint()">保存</button>
+        </div>
+    </div>
+
+    <!-- 异常规则配置抽屉 -->
+    <div class="drawer" id="ruleConfigDrawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title">异常规则配置</h3>
+            <button class="drawer-close" onclick="closeRuleConfigDrawer()">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <div class="form-group">
+                <label class="form-label">点位名称</label>
+                <div id="rulePointName" style="padding: 10px; background: #f5f7fa; border-radius: 4px;"></div>
+            </div>
+
+            <!-- 静态阈值判断 -->
+            <div class="rule-config">
+                <div class="rule-header">
+                    <span class="rule-title">静态阈值判断</span>
+                    <button class="rule-toggle" onclick="toggleRule('threshold')">配置</button>
+                </div>
+                <div class="rule-content" id="thresholdRule">
+                    <div class="rule-fields">
+                        <div class="form-group">
+                            <label class="form-label">最小值</label>
+                            <input type="number" class="form-input" id="thresholdMin" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">最大值</label>
+                            <input type="number" class="form-input" id="thresholdMax" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">告警级别</label>
+                        <select class="form-select" id="thresholdLevel">
+                            <option value="warning">警告</option>
+                            <option value="error">错误</option>
+                            <option value="critical">严重</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 波动率判断 -->
+            <div class="rule-config">
+                <div class="rule-header">
+                    <span class="rule-title">波动率判断</span>
+                    <button class="rule-toggle" onclick="toggleRule('fluctuation')">配置</button>
+                </div>
+                <div class="rule-content" id="fluctuationRule">
+                    <div class="rule-fields">
+                        <div class="form-group">
+                            <label class="form-label">波动阈值(%)</label>
+                            <input type="number" class="form-input" id="fluctuationThreshold" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">时间窗口(秒)</label>
+                            <input type="number" class="form-input" id="fluctuationWindow" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">告警级别</label>
+                        <select class="form-select" id="fluctuationLevel">
+                            <option value="warning">警告</option>
+                            <option value="error">错误</option>
+                            <option value="critical">严重</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 趋势判断 -->
+            <div class="rule-config">
+                <div class="rule-header">
+                    <span class="rule-title">趋势判断</span>
+                    <button class="rule-toggle" onclick="toggleRule('trend')">配置</button>
+                </div>
+                <div class="rule-content" id="trendRule">
+                    <div class="rule-fields">
+                        <div class="form-group">
+                            <label class="form-label">连续次数</label>
+                            <input type="number" class="form-input" id="trendCount" min="2">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">趋势类型</label>
+                            <select class="form-select" id="trendType">
+                                <option value="up">连续上升</option>
+                                <option value="down">连续下降</option>
+                                <option value="both">双向</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">告警级别</label>
+                        <select class="form-select" id="trendLevel">
+                            <option value="warning">警告</option>
+                            <option value="error">错误</option>
+                            <option value="critical">严重</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 间歇性丢数判断 -->
+            <div class="rule-config">
+                <div class="rule-header">
+                    <span class="rule-title">间歇性丢数判断</span>
+                    <button class="rule-toggle" onclick="toggleRule('missing')">配置</button>
+                </div>
+                <div class="rule-content" id="missingRule">
+                    <div class="rule-fields">
+                        <div class="form-group">
+                            <label class="form-label">超时时间(秒)</label>
+                            <input type="number" class="form-input" id="missingTimeout" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">检查间隔(秒)</label>
+                            <input type="number" class="form-input" id="missingInterval" min="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">告警级别</label>
+                        <select class="form-select" id="missingLevel">
+                            <option value="warning">警告</option>
+                            <option value="error">错误</option>
+                            <option value="critical">严重</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn" onclick="closeRuleConfigDrawer()">取消</button>
+            <button class="btn btn-primary" onclick="saveRuleConfig()">保存配置</button>
+        </div>
+    </div>
+
+    <!-- 扫描数据点位抽屉 -->
+    <div class="drawer" id="scanDrawer">
+        <div class="drawer-header">
+            <h3 class="drawer-title" id="scanDrawerTitle">扫描数据点位</h3>
+            <button class="drawer-close" onclick="closeDrawer('scanDrawer')">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <div class="form-group">
+                <label class="form-label">选择数据源</label>
+                <select class="form-select" id="scanDataSource">
+                    <option value="">请选择数据源</option>
+                    <option value="1">OPC_UA_Server_01</option>
+                    <option value="2">Modbus_TCP_01</option>
+                    <option value="3">SQL_Database_01</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button class="btn btn-primary" id="startScanBtn" onclick="startScan()">开始扫描</button>
+            </div>
+            
+            <div id="scanResults" style="display: none;">
+                <h4 style="margin-bottom: 15px; color: #303133;">扫描结果</h4>
+                <div id="scanResultsList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ebeef5; border-radius: 4px; padding: 10px;"></div>
+            </div>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn" onclick="closeDrawer('scanDrawer')">取消</button>
+            <button class="btn btn-success" onclick="confirmImport()" id="confirmImportBtn" style="display: none;">确认导入</button>
+        </div>
+    </div>
+
+    <script src="assets/element-ui.js"></script>
+    <script>
+        // 数据点位管理页面的JavaScript代码
+        let dataPoints = [];
+        let currentEditId = null;
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataPoints();
+            initCategoryVue();
+        });
+
+        // 加载数据点位数据（支持树形结构）
+        function loadDataPoints() {
+            dataPoints = [
+                {
+                    id: 1,
+                    name: '设备组1',
+                    originalName: 'Device_Group_1',
+                    dataType: null, // 非叶子节点
+                    unit: '',
+                    updateCycle: 0,
+                    enabled: true,
+                    modeling: false,
+                    lastValue: null,
+                    lastUpdate: null,
+                    sourceId: null,
+                    sourceName: '',
+                    categories: ['设备组'],
+                    description: '设备组1',
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    level: 0,
+                    isLeaf: false,
+                    expanded: true,
+                    children: [2, 3] // 子节点ID
+                },
+                {
+                    id: 2,
+                    name: '设备组2',
+                    originalName: 'Device_Group_2',
+                    dataType: null,
+                    unit: '',
+                    updateCycle: 0,
+                    enabled: true,
+                    modeling: false,
+                    lastValue: null,
+                    lastUpdate: null,
+                    sourceId: null,
+                    sourceName: '',
+                    categories: ['设备组'],
+                    description: '设备组2',
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    level: 0,
+                    isLeaf: false,
+                    expanded: true,
+                    children: [4, 5]
+                },
+                {
+                    id: 3,
+                    name: '设备组3',
+                    originalName: 'Device_Group_3',
+                    dataType: null,
+                    unit: '',
+                    updateCycle: 0,
+                    enabled: true,
+                    modeling: false,
+                    lastValue: null,
+                    lastUpdate: null,
+                    sourceId: null,
+                    sourceName: '',
+                    categories: ['设备组'],
+                    description: '设备组3',
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    level: 0,
+                    isLeaf: false,
+                    expanded: true,
+                    children: [6]
+                },
+                {
+                    id: 4,
+                    name: '温度传感器_01',
+                    originalName: 'Temp_Sensor_01',
+                    dataType: 'Float',
+                    unit: '℃',
+                    updateCycle: 5,
+                    enabled: true,
+                    modeling: true,
+                    lastValue: '25.6',
+                    lastUpdate: new Date(),
+                    sourceId: 1,
+                    sourceName: 'OPC_UA_Server_01',
+                    categories: ['温度', '传感器'],
+                    description: '一号生产线温度传感器',
+                    lastAnomalyTime: new Date(Date.now() - 3600000),
+                    anomalyType: '静态阈值超限',
+                    level: 1,
+                    isLeaf: true,
+                    parentId: 1
+                },
+                {
+                    id: 5,
+                    name: '压力传感器_01',
+                    originalName: 'Pressure_Sensor_01',
+                    dataType: 'Float',
+                    unit: 'MPa',
+                    updateCycle: 10,
+                    enabled: true,
+                    modeling: true,
+                    lastValue: '0.85',
+                    lastUpdate: new Date(Date.now() - 5000),
+                    sourceId: 1,
+                    sourceName: 'OPC_UA_Server_01',
+                    categories: ['压力', '传感器'],
+                    description: '一号生产线压力传感器',
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    level: 1,
+                    isLeaf: true,
+                    parentId: 1
+                },
+                {
+                    id: 6,
+                    name: '流量计_01',
+                    originalName: 'Flow_Meter_01',
+                    dataType: 'Float',
+                    unit: 'm³/h',
+                    updateCycle: 15,
+                    enabled: true,
+                    modeling: false,
+                    lastValue: '120.5',
+                    lastUpdate: new Date(Date.now() - 10000),
+                    sourceId: 2,
+                    sourceName: 'Modbus_TCP_01',
+                    categories: ['流量', '仪表'],
+                    description: '一号生产线流量计',
+                    lastAnomalyTime: new Date(Date.now() - 1800000),
+                    anomalyType: '波动率异常',
+                    level: 1,
+                    isLeaf: true,
+                    parentId: 2
+                },
+                {
+                    id: 7,
+                    name: '开关状态_01',
+                    originalName: 'Switch_Status_01',
+                    dataType: 'Boolean',
+                    unit: '',
+                    updateCycle: 2,
+                    enabled: false,
+                    modeling: false,
+                    lastValue: 'true',
+                    lastUpdate: new Date(Date.now() - 30000),
+                    sourceId: 2,
+                    sourceName: 'Modbus_TCP_01',
+                    categories: ['开关', '状态'],
+                    description: '一号生产线开关状态',
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    level: 1,
+                    isLeaf: true,
+                    parentId: 2
+                },
+                {
+                    id: 8,
+                    name: '设备ID_01',
+                    originalName: 'Device_ID_01',
+                    dataType: 'String',
+                    unit: '',
+                    updateCycle: 60,
+                    enabled: true,
+                    modeling: true,
+                    lastValue: 'DEV_001',
+                    lastUpdate: new Date(Date.now() - 60000),
+                    sourceId: 3,
+                    sourceName: 'SQL_Database_01',
+                    categories: ['设备', '标识'],
+                    description: '一号生产线设备标识',
+                    lastAnomalyTime: new Date(Date.now() - 7200000),
+                    anomalyType: '数据丢失',
+                    level: 1,
+                    isLeaf: true,
+                    parentId: 3
+                }
+            ];
+            renderTable();
+        }
+
+        // 渲染表格（支持树形结构）
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const filteredData = getFilteredData();
+            const treeData = buildTreeData(filteredData);
+
+            tbody.innerHTML = treeData.map(point => renderTableRow(point)).join('');
+        }
+
+        // 构建树形数据
+        function buildTreeData(data) {
+            const treeData = [];
+            const processedIds = new Set();
+
+            // 先添加根节点
+            data.filter(point => !point.parentId && !point.isLeaf).forEach(point => {
+                treeData.push(point);
+                processedIds.add(point.id);
+                
+                // 如果节点展开，添加子节点
+                if (point.expanded) {
+                    addChildrenToTree(point, data, treeData, processedIds);
+                }
+            });
+
+            // 添加没有父节点的叶子节点
+            data.filter(point => point.isLeaf && !point.parentId).forEach(point => {
+                if (!processedIds.has(point.id)) {
+                    treeData.push(point);
+                    processedIds.add(point.id);
+                }
+            });
+
+            return treeData;
+        }
+
+        // 递归添加子节点到树形数据
+        function addChildrenToTree(parent, allData, treeData, processedIds) {
+            if (!parent.children) return;
+            
+            parent.children.forEach(childId => {
+                const child = allData.find(p => p.id === childId);
+                if (child && !processedIds.has(child.id)) {
+                    treeData.push(child);
+                    processedIds.add(child.id);
+                    
+                    // 如果子节点不是叶子节点且展开，继续添加其子节点
+                    if (!child.isLeaf && child.expanded && child.children) {
+                        addChildrenToTree(child, allData, treeData, processedIds);
+                    }
+                }
+            });
+        }
+
+        // 渲染表格行
+        function renderTableRow(point) {
+            const indent = point.level * 20;
+            const isGroup = !point.isLeaf;
+            
+            return `
+                <tr class="${isGroup ? 'group-row' : 'leaf-row'}" data-id="${point.id}" data-level="${point.level}">
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: ${indent}px; display: inline-block;"></div>
+                            ${isGroup ? `
+                                <div class="expand-icon" onclick="toggleExpand(${point.id})" style="cursor: pointer; margin-right: 8px; font-size: 12px; color: #409eff;">
+                                    ${point.expanded ? '▼' : '▶'}
+                                </div>
+                            ` : '<div style="width: 20px; display: inline-block;"></div>'}
+                            <div>
+                                <div style="font-weight: ${isGroup ? '600' : '400'}; color: ${isGroup ? '#303133' : '#606266'};">
+                                    ${point.name}
+                                </div>
+                                <div style="font-size: 12px; color: #999;">${point.originalName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${point.sourceName || '-'}</td>
+                    <td>${point.originalName}</td>
+                    <td>
+                        ${point.categories && point.categories.length > 0 ? 
+                            point.categories.map(cat => `<span class="tag tag-info" style="margin-right: 4px; font-size: 10px;">${cat}</span>`).join('') : '-'
+                        }
+                    </td>
+                    <td>${point.dataType ? `<span class="tag tag-${getDataTypeTagClass(point.dataType)}">${point.dataType}</span>` : '-'}</td>
+                    <td>${point.unit || '-'}</td>
+                    <td>${point.updateCycle > 0 ? point.updateCycle + '秒' : '-'}</td>
+                    <td>
+                        ${point.isLeaf ? `
+                            <label class="switch">
+                                <input type="checkbox" ${point.enabled ? 'checked' : ''} onchange="togglePointStatus(${point.id}, this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        ` : '-'}
+                    </td>
+                    <td>
+                        ${point.isLeaf ? `
+                            <label class="switch">
+                                <input type="checkbox" ${point.modeling ? 'checked' : ''} onchange="toggleModelingStatus(${point.id}, this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        ` : '-'}
+                    </td>
+                    <td>
+                        ${point.isLeaf ? `
+                            <div class="value-display ${getValueStatusClass(point.lastValue, point.dataType)}">
+                                ${formatValue(point.lastValue, point.dataType)}
+                            </div>
+                        ` : '-'}
+                    </td>
+                    <td>
+                        ${point.isLeaf ? `
+                            <div>${formatTime(point.lastUpdate)}</div>
+                            <div style="font-size: 12px; color: #999;">${getTimeAgo(point.lastUpdate)}</div>
+                        ` : '-'}
+                    </td>
+                    <td>
+                        ${point.isLeaf ? `
+                            ${point.lastAnomalyTime ? 
+                                `<div class="anomaly-info">
+                                    <div class="anomaly-time">${formatTime(point.lastAnomalyTime)}</div>
+                                    <div class="anomaly-type">${point.anomalyType}</div>
+                                </div>` : 
+                                '<div class="anomaly-info">-</div>'
+                            }
+                        ` : '-'}
+                    </td>
+                    <td>
+                        ${point.isLeaf ? `
+                            <div class="action-buttons">
+                                <div class="icon icon-view" onclick="viewPoint(${point.id})" title="查看"></div>
+                                <div class="icon icon-edit" onclick="editPoint(${point.id})" title="编辑"></div>
+                                <div class="icon icon-rule" onclick="configureRules(${point.id})" title="配置"></div>
+                                <div class="icon icon-delete" onclick="deletePoint(${point.id})" title="删除"></div>
+                            </div>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `;
+        }
+
+        // 切换展开/折叠状态
+        function toggleExpand(id) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point && !point.isLeaf) {
+                point.expanded = !point.expanded;
+                renderTable();
+            }
+        }
+
+        // 获取筛选后的数据
+        function getFilteredData() {
+            let filtered = dataPoints;
+
+            const statusFilter = document.getElementById('statusFilter').value;
+            const modelingFilter = document.getElementById('modelingFilter').value;
+            const keywordFilter = document.getElementById('keywordFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter');
+
+            if (statusFilter) {
+                const enabled = statusFilter === 'enabled';
+                filtered = filtered.filter(point => point.enabled === enabled);
+            }
+
+            if (modelingFilter) {
+                const modeling = modelingFilter === 'true';
+                filtered = filtered.filter(point => point.modeling === modeling);
+            }
+
+            if (keywordFilter) {
+                filtered = filtered.filter(point => 
+                    point.name.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+                    point.originalName.toLowerCase().includes(keywordFilter.toLowerCase()) ||
+                    (point.description && point.description.toLowerCase().includes(keywordFilter.toLowerCase()))
+                );
+            }
+
+            // 多选分类筛选
+            const selectedCategories = Array.from(categoryFilter.selectedOptions).map(option => option.value);
+            if (selectedCategories.length > 0) {
+                filtered = filtered.filter(point => 
+                    point.categories && selectedCategories.some(cat => point.categories.includes(cat))
+                );
+            }
+
+            return filtered;
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            renderTable();
+        }
+
+        // 清空筛选
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('modelingFilter').value = '';
+            document.getElementById('keywordFilter').value = '';
+            document.getElementById('categoryFilter').selectedIndex = -1;
+            renderTable();
+        }
+
+
+
+        // 关闭抽屉
+        function closeDrawer() {
+            document.getElementById('dataPointDrawer').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+            currentEditId = null;
+        }
+
+        // 显示抽屉
+        function showDrawer(drawerId) {
+            document.getElementById(drawerId).classList.add('open');
+            document.getElementById('overlay').classList.add('show');
+        }
+
+        // 初始化Vue实例管理分类选择
+        function initCategoryVue() {
+            categoryVue = new Vue({
+                el: '#categorySelectContainer',
+                data: {
+                    selectedCategories: [],
+                    categoryOptions: [
+                        { value: '温度', label: '温度' },
+                        { value: '压力', label: '压力' },
+                        { value: '流量', label: '流量' },
+                        { value: '开关', label: '开关' },
+                        { value: '设备', label: '设备' },
+                        { value: '设备组', label: '设备组' }
+                    ]
+                },
+                methods: {
+                    // 添加新的分类选项
+                    addCategoryOption(category) {
+                        if (!this.categoryOptions.find(option => option.value === category)) {
+                            this.categoryOptions.push({
+                                value: category,
+                                label: category
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        // 设置分类选择器值
+        function setCategorySelectorValue(categories) {
+            if (categoryVue) {
+                categoryVue.selectedCategories = categories || [];
+            }
+        }
+
+        // 获取分类选择器值
+        function getCategorySelectorValue() {
+            if (categoryVue) {
+                return categoryVue.selectedCategories;
+            }
+            return [];
+        }
+
+
+
+        // 扫描点位
+        function scanPoints() {
+            // 显示扫描抽屉
+            document.getElementById('scanDrawerTitle').textContent = '扫描数据点位';
+            showDrawer('scanDrawer');
+            
+            // 重置扫描状态
+            document.getElementById('scanResults').style.display = 'none';
+            document.getElementById('startScanBtn').textContent = '开始扫描';
+            document.getElementById('startScanBtn').disabled = false;
+            document.getElementById('confirmImportBtn').style.display = 'none';
+        }
+
+        // 开始扫描
+        function startScan() {
+            const dataSource = document.getElementById('scanDataSource').value;
+            if (!dataSource) {
+                alert('请选择数据源');
+                return;
+            }
+            
+            const startBtn = document.getElementById('startScanBtn');
+            startBtn.textContent = '扫描中...';
+            startBtn.disabled = true;
+            
+            // 模拟扫描过程
+            setTimeout(() => {
+                // 模拟扫描结果（树形结构）
+                const scanResults = [
+                    { 
+                        name: '温度传感器_扫描01', 
+                        originalName: 'Temp_Sensor_Scan_01', 
+                        dataType: 'Float', 
+                        unit: '℃', 
+                        updateCycle: 5,
+                        path: '生产线1/设备组1/温度传感器',
+                        isAdded: false,
+                        level: 0
+                    },
+                    { 
+                        name: '压力传感器_扫描01', 
+                        originalName: 'Pressure_Sensor_Scan_01', 
+                        dataType: 'Float', 
+                        unit: 'MPa', 
+                        updateCycle: 10,
+                        path: '生产线1/设备组1/压力传感器',
+                        isAdded: false,
+                        level: 0
+                    },
+                    { 
+                        name: '流量计_扫描01', 
+                        originalName: 'Flow_Meter_Scan_01', 
+                        dataType: 'Float', 
+                        unit: 'm³/h', 
+                        updateCycle: 15,
+                        path: '生产线1/设备组2/流量计',
+                        isAdded: true,
+                        level: 0
+                    },
+                    { 
+                        name: '开关状态_扫描01', 
+                        originalName: 'Switch_Status_Scan_01', 
+                        dataType: 'Boolean', 
+                        unit: '', 
+                        updateCycle: 2,
+                        path: '生产线1/设备组2/开关',
+                        isAdded: false,
+                        level: 1
+                    },
+                    { 
+                        name: '设备ID_扫描01', 
+                        originalName: 'Device_ID_Scan_01', 
+                        dataType: 'String', 
+                        unit: '', 
+                        updateCycle: 60,
+                        path: '生产线2/设备组3/标识',
+                        isAdded: false,
+                        level: 1
+                    },
+                    { 
+                        name: '子设备_温度01', 
+                        originalName: 'Sub_Device_Temp_01', 
+                        dataType: 'Float', 
+                        unit: '℃', 
+                        updateCycle: 5,
+                        path: '生产线1/设备组1/温度传感器/子设备',
+                        isAdded: false,
+                        level: 2
+                    },
+                    { 
+                        name: '子设备_压力01', 
+                        originalName: 'Sub_Device_Pressure_01', 
+                        dataType: 'Float', 
+                        unit: 'MPa', 
+                        updateCycle: 10,
+                        path: '生产线1/设备组1/压力传感器/子设备',
+                        isAdded: true,
+                        level: 2
+                    },
+                    { 
+                        name: '阀门状态_扫描01', 
+                        originalName: 'Valve_Status_Scan_01', 
+                        dataType: 'Boolean', 
+                        unit: '', 
+                        updateCycle: 1,
+                        path: '生产线2/设备组4/阀门',
+                        isAdded: false,
+                        level: 1
+                    }
+                ];
+                
+                // 按已加入状态和层级排序：未加入的优先显示
+                scanResults.sort((a, b) => {
+                    if (a.isAdded !== b.isAdded) {
+                        return a.isAdded ? 1 : -1; // 未加入的排在前面
+                    }
+                    return a.level - b.level; // 层级低的排在前面
+                });
+                
+                // 显示扫描结果
+                const resultsList = document.getElementById('scanResultsList');
+                resultsList.innerHTML = scanResults.map(point => `
+                    <div style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; ${point.isAdded ? 'background-color: #f8f9fa;' : ''}">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                                <div style="width: ${point.level * 20}px; display: inline-block;"></div>
+                                <div style="font-weight: 500; ${point.isAdded ? 'color: #909399;' : 'color: #303133;'}">${point.name}</div>
+                                <span style="margin-left: 8px; padding: 2px 6px; border-radius: 3px; font-size: 10px; ${point.isAdded ? 'background-color: #e1f3d8; color: #67c23a;' : 'background-color: #fef0f0; color: #f56c6c;'}">
+                                    ${point.isAdded ? '已加入' : '未加入'}
+                                </span>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-left: ${point.level * 20}px;">${point.originalName}</div>
+                            <div style="font-size: 11px; color: #999; margin-left: ${point.level * 20}px;">${point.path}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px;">${point.dataType} | ${point.unit || '-'}</div>
+                            <div style="font-size: 11px; color: #666;">${point.updateCycle}秒</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('scanResults').style.display = 'block';
+                startBtn.textContent = '重新扫描';
+                startBtn.disabled = false;
+                
+                // 存储扫描结果供导入使用
+                window.scanResultsData = scanResults.filter(point => !point.isAdded); // 只导入未加入的点位
+                
+                // 显示确认导入按钮
+                document.getElementById('confirmImportBtn').style.display = 'inline-block';
+            }, 2000);
+        }
+
+        // 确认导入（支持树形结构）
+        function confirmImport() {
+            if (!window.scanResultsData || window.scanResultsData.length === 0) {
+                alert('没有可导入的扫描结果');
+                return;
+            }
+            
+            const dataSource = document.getElementById('scanDataSource').value;
+            const dataSourceName = document.getElementById('scanDataSource').options[document.getElementById('scanDataSource').selectedIndex].text;
+            
+            // 构建树形结构
+            const treeStructure = buildTreeFromScanResults(window.scanResultsData);
+            
+            // 导入树形结构
+            const allNodes = [];
+            
+            // 递归处理树形结构
+            function processNode(node, parentId = null) {
+                const newNode = {
+                    id: node.id || Date.now() + Math.random(),
+                    name: node.name,
+                    originalName: node.originalName,
+                    dataType: node.dataType,
+                    unit: node.unit,
+                    updateCycle: node.updateCycle,
+                    level: node.level,
+                    isLeaf: node.isLeaf,
+                    parentId: parentId,
+                    enabled: node.isLeaf ? true : false,
+                    modeling: node.isLeaf ? true : false,
+                    sourceId: node.isLeaf ? dataSource : null,
+                    sourceName: node.isLeaf ? dataSourceName : '',
+                    lastValue: node.isLeaf ? '0' : null,
+                    lastUpdate: node.isLeaf ? new Date() : null,
+                    categories: node.isLeaf ? [] : ['设备组'],
+                    description: node.isLeaf ? '' : node.name,
+                    lastAnomalyTime: null,
+                    anomalyType: null,
+                    expanded: true,
+                    children: node.children ? node.children.map(child => child.id || child) : []
+                };
+                
+                allNodes.push(newNode);
+                
+                // 处理子节点
+                if (node.children) {
+                    node.children.forEach(child => {
+                        if (typeof child === 'object') {
+                            processNode(child, newNode.id);
+                        }
+                    });
+                }
+            }
+            
+            treeStructure.forEach(node => {
+                processNode(node);
+            });
+            
+            // 将所有节点添加到数据点位列表
+            dataPoints.push(...allNodes);
+            
+            renderTable();
+            closeDrawer('scanDrawer');
+            alert(`成功导入 ${window.scanResultsData.length} 个数据点位`);
+        }
+
+        // 从扫描结果构建树形结构
+        function buildTreeFromScanResults(scanResults) {
+            const treeNodes = [];
+            const pathMap = new Map();
+            
+            // 按路径分组
+            scanResults.forEach(point => {
+                const pathParts = point.path.split('/');
+                let currentPath = '';
+                
+                // 创建路径中的每个节点
+                pathParts.forEach((part, index) => {
+                    const parentPath = currentPath;
+                    currentPath = currentPath ? `${currentPath}/${part}` : part;
+                    
+                    if (!pathMap.has(currentPath)) {
+                        const isLeaf = index === pathParts.length - 1;
+                        const node = {
+                            name: part,
+                            originalName: isLeaf ? point.originalName : part,
+                            dataType: isLeaf ? point.dataType : null,
+                            unit: isLeaf ? point.unit : '',
+                            updateCycle: isLeaf ? point.updateCycle : 0,
+                            level: index,
+                            isLeaf: isLeaf,
+                            parentPath: parentPath || null,
+                            children: []
+                        };
+                        
+                        pathMap.set(currentPath, node);
+                        treeNodes.push(node);
+                    }
+                });
+            });
+            
+            // 建立父子关系
+            treeNodes.forEach(node => {
+                if (node.parentPath && pathMap.has(node.parentPath)) {
+                    const parent = pathMap.get(node.parentPath);
+                    if (!parent.children) parent.children = [];
+                    parent.children.push(node);
+                }
+            });
+            
+            // 只返回根节点，并添加ID
+            return treeNodes.filter(node => !node.parentPath).map((node, index) => ({
+                ...node,
+                id: Date.now() + index * 1000
+            }));
+
+        }
+
+        // 查看点位
+        function viewPoint(id) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point) {
+                currentEditId = id;
+                document.getElementById('drawerTitle').textContent = '查看数据点位';
+                fillPointForm(point);
+                setFormReadOnly(true);
+                showDrawer('dataPointDrawer');
+            }
+        }
+
+        // 编辑点位
+        function editPoint(id) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point) {
+                currentEditId = id;
+                document.getElementById('drawerTitle').textContent = '编辑数据点位';
+                fillPointForm(point);
+                setFormReadOnly(false);
+                showDrawer('dataPointDrawer');
+            }
+        }
+
+        // 填充点位表单
+        function fillPointForm(point) {
+            document.getElementById('pointName').value = point.name || '';
+            document.getElementById('originalName').value = point.originalName || '';
+            document.getElementById('dataType').value = point.dataType || '';
+            document.getElementById('unit').value = point.unit || '';
+            document.getElementById('updateCycle').value = point.updateCycle || 5;
+            document.getElementById('dataSource').value = point.sourceId || '';
+            document.getElementById('description').value = point.description || '';
+            document.getElementById('enabled').checked = point.enabled !== false;
+            document.getElementById('modeling').checked = point.modeling !== false;
+            
+            // 设置分类标签
+            setCategorySelectorValue(point.categories || []);
+        }
+
+        // 设置表单只读状态
+        function setFormReadOnly(readonly) {
+            const inputs = document.querySelectorAll('#dataPointForm input, #dataPointForm select, #dataPointForm textarea');
+            inputs.forEach(input => {
+                // 原始点位名和数据类型始终只读
+                if (input.id === 'originalName' || input.id === 'dataType') {
+                    input.disabled = true;
+                } else {
+                    input.disabled = readonly;
+                }
+            });
+            
+            // 隐藏保存按钮
+            const saveBtn = document.querySelector('#dataPointDrawer .drawer-footer .btn-primary');
+            if (saveBtn) {
+                saveBtn.style.display = readonly ? 'none' : 'block';
+            }
+        }
+
+        // 保存数据点位
+        function saveDataPoint() {
+            const formData = {
+                name: document.getElementById('pointName').value,
+                originalName: document.getElementById('originalName').value,
+                dataType: document.getElementById('dataType').value,
+                unit: document.getElementById('unit').value,
+                updateCycle: parseInt(document.getElementById('updateCycle').value),
+                sourceId: document.getElementById('dataSource').value,
+                description: document.getElementById('description').value,
+                enabled: document.getElementById('enabled').checked,
+                modeling: document.getElementById('modeling').checked,
+                categories: getCategorySelectorValue()
+            };
+
+            if (!formData.name || !formData.originalName || !formData.dataType) {
+                alert('请填写必填字段');
+                return;
+            }
+
+            if (currentEditId) {
+                // 编辑模式
+                const index = dataPoints.findIndex(p => p.id === currentEditId);
+                if (index > -1) {
+                    dataPoints[index] = { ...dataPoints[index], ...formData };
+                }
+            } else {
+                // 新增模式
+                const newPoint = {
+                    id: Date.now(),
+                    ...formData,
+                    lastValue: '0',
+                    lastUpdate: new Date(),
+                    sourceName: getDataSourceName(formData.sourceId)
+                };
+                dataPoints.push(newPoint);
+            }
+
+            renderTable();
+            closeDrawer();
+            alert(currentEditId ? '编辑成功' : '新增成功');
+        }
+
+        // 获取数据源名称
+        function getDataSourceName(sourceId) {
+            const sourceMap = {
+                '1': 'OPC_UA_Server_01',
+                '2': 'Modbus_TCP_01',
+                '3': 'SQL_Database_01'
+            };
+            return sourceMap[sourceId] || '';
+        }
+
+        // 配置规则
+        function configureRules(id) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point) {
+                document.getElementById('rulePointName').textContent = point.name;
+                showDrawer('ruleConfigDrawer');
+            }
+        }
+
+        // 关闭规则配置抽屉
+        function closeRuleConfigDrawer() {
+            document.getElementById('ruleConfigDrawer').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // 切换规则配置显示
+        function toggleRule(ruleType) {
+            const ruleContent = document.getElementById(ruleType + 'Rule');
+            const isActive = ruleContent.classList.contains('active');
+            
+            if (isActive) {
+                ruleContent.classList.remove('active');
+            } else {
+                ruleContent.classList.add('active');
+            }
+        }
+
+        // 保存规则配置
+        function saveRuleConfig() {
+            // 收集所有规则配置
+            const rules = {
+                threshold: {
+                    min: document.getElementById('thresholdMin').value,
+                    max: document.getElementById('thresholdMax').value,
+                    level: document.getElementById('thresholdLevel').value
+                },
+                fluctuation: {
+                    threshold: document.getElementById('fluctuationThreshold').value,
+                    window: document.getElementById('fluctuationWindow').value,
+                    level: document.getElementById('fluctuationLevel').value
+                },
+                trend: {
+                    count: document.getElementById('trendCount').value,
+                    type: document.getElementById('trendType').value,
+                    level: document.getElementById('trendLevel').value
+                },
+                missing: {
+                    timeout: document.getElementById('missingTimeout').value,
+                    interval: document.getElementById('missingInterval').value,
+                    level: document.getElementById('missingLevel').value
+                }
+            };
+
+            alert('规则配置已保存');
+            closeRuleConfigDrawer();
+        }
+
+        // 删除点位
+        function deletePoint(id) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point && confirm(`确定要删除点位 "${point.name}" 吗？`)) {
+                dataPoints = dataPoints.filter(p => p.id !== id);
+                renderTable();
+                alert('删除成功');
+            }
+        }
+
+        // 切换点位启用状态
+        function togglePointStatus(id, enabled) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point) {
+                point.enabled = enabled;
+                alert(`${point.name} ${enabled ? '启用' : '禁用'}成功`);
+            }
+        }
+
+        // 切换建模状态
+        function toggleModelingStatus(id, modeling) {
+            const point = dataPoints.find(p => p.id === id);
+            if (point) {
+                point.modeling = modeling;
+                alert(`${point.name} ${modeling ? '参与' : '退出'}建模`);
+            }
+        }
+
+
+
+        // 工具函数
+        function getDataTypeTagClass(dataType) {
+            const classMap = {
+                'Float': 'primary',
+                'Integer': 'success',
+                'Boolean': 'warning',
+                'String': 'info'
+            };
+            return classMap[dataType] || 'info';
+        }
+
+        function formatValue(value, dataType) {
+            if (dataType === 'Boolean') {
+                return value === 'true' ? '是' : '否';
+            }
+            return value;
+        }
+
+        function getValueStatusClass(value, dataType) {
+            if (dataType === 'Float' || dataType === 'Integer') {
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) return '';
+                if (numValue > 100) return 'error';
+                if (numValue > 50) return 'warning';
+            }
+            return '';
+        }
+
+        function formatTime(time) {
+            if (!time) return '';
+            const date = new Date(time);
+            return date.toLocaleString('zh-CN');
+        }
+
+        function getTimeAgo(time) {
+            if (!time) return '';
+            const now = new Date();
+            const diff = now - new Date(time);
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            
+            if (seconds < 60) return `${seconds}秒前`;
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            return `${Math.floor(hours / 24)}天前`;
+        }
+    </script>
+</body>
+</html> 
+</html> 

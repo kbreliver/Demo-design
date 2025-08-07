@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据点位管理 - 数字孪生平台</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ebeef5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+        }
+
+        .table-container {
+            flex: 1;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .table-content {
+            flex: 1;
+            overflow: auto;
+        }
+
+        /* 异常状态样式 */
+        .anomaly-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .anomaly-time {
+            color: #f56c6c;
+            font-weight: 500;
+        }
+
+        .anomaly-type {
+            color: #e6a23c;
+            font-weight: 500;
+        }
+
+        /* 异常规则配置样式 */
+        .rule-config {
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .rule-header {
+            background: #f5f7fa;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e4e7ed;
+        }
+
+        .rule-title {
+            font-weight: 500;
+            color: #303133;
+            font-size: 14px;
+        }
+
+        .rule-content {
+            padding: 16px;
+            background: white;
+        }
+
+        .rule-content .el-form-item {
+            margin-bottom: 16px;
+        }
+
+        .rule-content .el-form-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 抽屉样式 */
+        .drawer-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .drawer-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .drawer-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #ebeef5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        /* 异常规则配置样式 */
+        .rule-config {
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .rule-header {
+            padding: 12px 15px;
+            background: #f5f7fa;
+            border-bottom: 1px solid #ebeef5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rule-title {
+            font-weight: 500;
+            color: #303133;
+        }
+
+        .rule-content {
+            padding: 15px;
+        }
+
+        /* 扫描结果样式 */
+        .scan-result-item {
+            padding: 10px;
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scan-result-item.not-added {
+            background-color: #f0f9ff;
+            border-color: #409eff;
+        }
+
+        .scan-result-item.added {
+            background-color: #f0f9ff;
+            border-color: #67c23a;
+            opacity: 0.6;
+        }
+
+        .scan-result-info {
+            flex: 1;
+        }
+
+        .scan-result-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .scan-result-status.not-added {
+            background-color: #409eff;
+            color: white;
+        }
+
+        .scan-result-status.added {
+            background-color: #67c23a;
+            color: white;
+        }
+
+        /* 确保抽屉不出现滚动条 */
+        .el-drawer__body {
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .el-drawer__header {
+            margin-bottom: 0 !important;
+            padding: 20px 30px 0 30px !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h1 class="page-title">数据点位管理</h1>
+            <div>
+                <el-button type="primary" @click="scanPoints">
+                    <i class="el-icon-refresh"></i>
+                    扫描点位
+                </el-button>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+                    <!-- 筛选区域 -->
+        <div class="filter-section">
+            <el-form>
+                <el-row :gutter="20" style="align-items: flex-end;">
+                    <el-col :span="5">
+                        <el-form-item>
+                            <el-input 
+                                v-model="filters.name" 
+                                placeholder="请输入点位名称"
+                                clearable>
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="5">
+                        <el-form-item>
+                            <el-select 
+                                v-model="filters.sourceId" 
+                                placeholder="请选择数据源"
+                                clearable>
+                                <el-option
+                                    v-for="source in dataSources"
+                                    :key="source.id"
+                                    :label="source.name"
+                                    :value="source.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="5">
+                        <el-form-item>
+                            <el-select 
+                                v-model="filters.categories" 
+                                multiple
+                                filterable
+                                allow-create
+                                default-first-option
+                                placeholder="请选择或输入分类"
+                                clearable>
+                                <el-option
+                                    v-for="category in categoryOptions"
+                                    :key="category.value"
+                                    :label="category.label"
+                                    :value="category.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="3">
+                        <el-form-item>
+                            <el-select 
+                                v-model="filters.enabled" 
+                                placeholder="请选择状态"
+                                clearable>
+                                <el-option label="启用" :value="true"></el-option>
+                                <el-option label="停用" :value="false"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="3">
+                        <el-form-item>
+                            <el-select 
+                                v-model="filters.modeling" 
+                                placeholder="请选择建模状态"
+                                clearable>
+                                <el-option label="参与建模" :value="true"></el-option>
+                                <el-option label="不参与建模" :value="false"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="3" style="text-align: right;">
+                        <el-button @click="clearFilters" style="min-width: 80px; margin-right: 10px;">清空</el-button>
+                        <el-button type="primary" @click="applyFilters" style="min-width: 80px;">筛选</el-button>
+                    </el-col>
+                </el-row>
+            </el-form>
+        </div>
+
+            <!-- 表格区域 -->
+            <div class="table-container">
+                <div class="table-header">
+                    <!-- <h3>数据点位列表</h3> -->
+                </div>
+                <div class="table-content">
+                    <el-table 
+                        :data="filteredDataPoints" 
+                        style="width: 100%"
+                        row-key="id"
+                        :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
+                        @row-click="handleRowClick"
+                        :default-expand-all="true">
+                        
+                        <el-table-column prop="name" label="点位名称" min-width="200">
+                            <template slot-scope="scope">
+                                <span v-if="!scope.row.isLeaf" style="font-weight: 600; color: #409eff;">
+                                    {{ scope.row.name }}
+                                </span>
+                                <span v-else>{{ scope.row.name }}</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="sourceName" label="数据源" width="150">
+                            <template slot-scope="scope">
+                                <span v-if="scope.row.isLeaf">{{ scope.row.sourceName }}</span>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="originalName" label="编码" width="150">
+                            <template slot-scope="scope">
+                                <span v-if="scope.row.isLeaf">{{ scope.row.originalName }}</span>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="categories" label="分类" width="150">
+                            <template slot-scope="scope">
+                                <el-tag 
+                                    v-for="category in scope.row.categories" 
+                                    :key="category"
+                                    size="small"
+                                    style="margin-right: 4px;">
+                                    {{ category }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="dataType" label="数据类型" width="100">
+                            <template slot-scope="scope">
+                                <span v-if="scope.row.isLeaf">{{ scope.row.dataType }}</span>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="lastValue" label="最新数据" width="180">
+                            <template slot-scope="scope">
+                                <div v-if="scope.row.isLeaf">
+                                    <div v-if="scope.row.lastValue" style="font-weight: 500;">
+                                        {{ scope.row.lastValue }}{{ scope.row.unit }}
+                                    </div>
+                                    <div v-if="scope.row.lastUpdate" style="font-size: 12px; color: #666;">
+                                        {{ formatTime(scope.row.lastUpdate) }}
+                                    </div>
+                                    <div v-if="!scope.row.lastValue && !scope.row.lastUpdate">-</div>
+                                </div>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="anomalyRules" label="异常规则" width="120">
+                            <template slot-scope="scope">
+                                <div v-if="scope.row.isLeaf">
+                                    <el-tag 
+                                        v-if="getEnabledRulesCount(scope.row) > 0"
+                                        type="warning" 
+                                        size="small">
+                                        {{ getEnabledRulesCount(scope.row) }}项
+                                    </el-tag>
+                                    <span v-else style="color: #999;">-</span>
+                                </div>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="enabled" label="启停状态" width="80">
+                            <template slot-scope="scope">
+                                <el-tag 
+                                    v-if="scope.row.isLeaf"
+                                    :type="scope.row.enabled ? 'success' : 'danger'"
+                                    size="small">
+                                    {{ scope.row.enabled ? '启用' : '停用' }}
+                                </el-tag>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column prop="modeling" label="参与建模" width="100">
+                            <template slot-scope="scope">
+                                <el-tag 
+                                    v-if="scope.row.isLeaf"
+                                    :type="scope.row.modeling ? 'primary' : 'info'"
+                                    size="small">
+                                    {{ scope.row.modeling ? '参与' : '不参与' }}
+                                </el-tag>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                        
+                        <el-table-column label="操作" width="120" fixed="right">
+                            <template slot-scope="scope">
+                                <div v-if="scope.row.isLeaf">
+                                    <el-tooltip content="查看详情" placement="top">
+                                        <el-button 
+                                            type="text" 
+                                            size="small" 
+                                            @click.stop="viewPoint(scope.row)">
+                                            <i class="el-icon-view"></i>
+                                        </el-button>
+                                    </el-tooltip>
+                                    <el-tooltip content="编辑" placement="top">
+                                        <el-button 
+                                            type="text" 
+                                            size="small" 
+                                            @click.stop="editPoint(scope.row)">
+                                            <i class="el-icon-edit"></i>
+                                        </el-button>
+                                    </el-tooltip>
+                                    <el-tooltip content="配置规则" placement="top">
+                                        <el-button 
+                                            type="text" 
+                                            size="small" 
+                                            @click.stop="configRules(scope.row)">
+                                            <i class="el-icon-setting"></i>
+                                        </el-button>
+                                    </el-tooltip>
+                                </div>
+                                <span v-else>-</span>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 点位详情抽屉 -->
+        <el-drawer
+            title="点位详情"
+            :visible.sync="drawerVisible"
+            direction="rtl"
+            size="600px">
+            <div class="drawer-container">
+                <div class="drawer-content">
+                    <el-form :model="currentPoint" label-width="120px" :disabled="drawerMode === 'view'">
+                        <el-form-item label="点位名称">
+                            <el-input v-model="currentPoint.name"></el-input>
+                        </el-form-item>
+                        
+                        <el-form-item label="原始点位名">
+                            <el-input v-model="currentPoint.originalName" readonly></el-input>
+                        </el-form-item>
+                        
+                        <el-form-item label="数据源">
+                            <el-select v-model="currentPoint.sourceId" placeholder="请选择数据源">
+                                <el-option
+                                    v-for="source in dataSources"
+                                    :key="source.id"
+                                    :label="source.name"
+                                    :value="source.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        
+                        <el-form-item label="数据类型">
+                            <el-select v-model="currentPoint.dataType" disabled>
+                                <el-option label="Float" value="Float"></el-option>
+                                <el-option label="Integer" value="Integer"></el-option>
+                                <el-option label="Boolean" value="Boolean"></el-option>
+                                <el-option label="String" value="String"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        
+                        <el-form-item label="单位">
+                            <el-input v-model="currentPoint.unit"></el-input>
+                        </el-form-item>
+                        
+                        <el-form-item label="更新周期(秒)">
+                            <el-input-number v-model="currentPoint.updateCycle" :min="1"></el-input-number>
+                        </el-form-item>
+                        
+                        <el-form-item label="点位分类">
+                            <el-select 
+                                v-model="currentPoint.categories" 
+                                multiple
+                                filterable
+                                allow-create
+                                default-first-option
+                                placeholder="请选择或输入分类">
+                                <el-option
+                                    v-for="category in categoryOptions"
+                                    :key="category.value"
+                                    :label="category.label"
+                                    :value="category.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        
+                        <el-form-item label="启用状态">
+                            <el-switch v-model="currentPoint.enabled"></el-switch>
+                        </el-form-item>
+                        
+                        <el-form-item label="建模状态">
+                            <el-switch v-model="currentPoint.modeling"></el-switch>
+                        </el-form-item>
+                        
+                        <el-form-item label="描述">
+                            <el-input 
+                                v-model="currentPoint.description" 
+                                type="textarea" 
+                                :rows="3">
+                            </el-input>
+                        </el-form-item>
+                    </el-form>
+                </div>
+                
+                <div class="drawer-footer">
+                    <el-button @click="drawerVisible = false">取消</el-button>
+                    <el-button 
+                        v-if="drawerMode !== 'view'"
+                        type="primary" 
+                        @click="savePoint">
+                        保存
+                    </el-button>
+                </div>
+            </div>
+        </el-drawer>
+
+        <!-- 异常规则配置抽屉 -->
+        <el-drawer
+            title="异常规则配置"
+            :visible.sync="ruleDrawerVisible"
+            direction="rtl"
+            size="600px">
+            <div class="drawer-container">
+                <div class="drawer-content">
+                    <el-form label-width="120px">
+                        <el-form-item label="点位名称">
+                            <div style="background: #f5f7fa; border-radius: 4px;">
+                                {{ currentPoint.name }}
+                            </div>
+                        </el-form-item>
+                        
+                        <!-- 数据缺失异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">数据缺失异常</span>
+                                <el-switch v-model="ruleConfig.missingData.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.missingData.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 缺失值检测（NaN/null）<br>
+                                            • 时间序列完整性检查
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.missingData.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.missingData.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="插值（线性、样条）" value="interpolation"></el-option>
+                                            <el-option label="前向/后向填充" value="fill"></el-option>
+                                            <el-option label="使用历史平均值填充" value="average"></el-option>
+                                            <el-option label="丢弃（重要性较低的数据）" value="discard"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 数据重复异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">数据重复异常</span>
+                                <el-switch v-model="ruleConfig.duplicateData.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.duplicateData.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 时间戳+设备ID组合唯一性检测
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.duplicateData.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.duplicateData.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="取最新值/平均值" value="latest"></el-option>
+                                            <el-option label="去重" value="deduplicate"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 超出阈值异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">超出阈值异常</span>
+                                <el-switch v-model="ruleConfig.threshold.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.threshold.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 静态阈值判断<br>
+                                            • 动态阈值判断（上下浮动范围）
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.threshold.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-row :gutter="15">
+                                        <el-col :span="12">
+                                            <el-form-item label="最小值">
+                                                <el-input-number 
+                                                    v-model="ruleConfig.threshold.min" 
+                                                    :precision="2">
+                                                </el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <el-form-item label="最大值">
+                                                <el-input-number 
+                                                    v-model="ruleConfig.threshold.max" 
+                                                    :precision="2">
+                                                </el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.threshold.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="标记为异常" value="mark"></el-option>
+                                            <el-option label="替换为边界值/插值修复" value="replace"></el-option>
+                                            <el-option label="激活告警机制" value="alarm"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 突变/波动异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">突变/波动异常</span>
+                                <el-switch v-model="ruleConfig.fluctuation.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.fluctuation.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 一阶差分判断<br>
+                                            • 滑动窗口标准差分析<br>
+                                            • Z-Score、IQR方法
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.fluctuation.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-row :gutter="15">
+                                        <el-col :span="12">
+                                            <el-form-item label="波动阈值(%)">
+                                                <el-input-number 
+                                                    v-model="ruleConfig.fluctuation.threshold" 
+                                                    :precision="1" 
+                                                    :min="0">
+                                                </el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <el-form-item label="时间窗口(秒)">
+                                                <el-input-number 
+                                                    v-model="ruleConfig.fluctuation.window" 
+                                                    :min="1">
+                                                </el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.fluctuation.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="平滑（移动平均、指数平滑）" value="smooth"></el-option>
+                                            <el-option label="替换为滑动中位数/均值" value="replace"></el-option>
+                                            <el-option label="移除异常段" value="remove"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 趋势异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">趋势异常</span>
+                                <el-switch v-model="ruleConfig.trend.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.trend.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 趋势线回归<br>
+                                            • 时间序列模型残差分析<br>
+                                            • 累积和CUSUM检测
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.trend.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-row :gutter="15">
+                                        <el-col :span="12">
+                                            <el-form-item label="连续次数">
+                                                <el-input-number 
+                                                    v-model="ruleConfig.trend.count" 
+                                                    :min="2">
+                                                </el-input-number>
+                                            </el-form-item>
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <el-form-item label="趋势类型">
+                                                <el-select v-model="ruleConfig.trend.type">
+                                                    <el-option label="连续上升" value="up"></el-option>
+                                                    <el-option label="连续下降" value="down"></el-option>
+                                                    <el-option label="双向" value="both"></el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                        </el-col>
+                                    </el-row>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.trend.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="标记为预警" value="warning"></el-option>
+                                            <el-option label="手动/自动调整结合业务规则" value="adjust"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 噪声异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">噪声异常</span>
+                                <el-switch v-model="ruleConfig.noise.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.noise.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 高频分量分析（FFT）<br>
+                                            • 滑动窗口方差判断
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.noise.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.noise.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="平滑滤波（中值、高斯滤波）" value="filter"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 时间戳异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">时间戳异常</span>
+                                <el-switch v-model="ruleConfig.timestamp.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.timestamp.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 时间戳连续性检测<br>
+                                            • 与系统时间比较
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.timestamp.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.timestamp.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="重新对齐/填充缺失时间戳" value="realign"></el-option>
+                                            <el-option label="移除异常" value="remove"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 单点离群值 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">单点离群值</span>
+                                <el-switch v-model="ruleConfig.outlier.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.outlier.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • Grubbs检验<br>
+                                            • 箱线图方法（IQR）<br>
+                                            • Z-score > 3
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.outlier.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.outlier.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="替换为邻近值" value="replace"></el-option>
+                                            <el-option label="标记并归档" value="mark"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                        
+                        <!-- 批量数据异常 -->
+                        <div class="rule-config">
+                            <div class="rule-header">
+                                <span class="rule-title">批量数据异常</span>
+                                <el-switch v-model="ruleConfig.batchData.enabled"></el-switch>
+                            </div>
+                            <div v-if="ruleConfig.batchData.enabled" class="rule-content">
+                                <el-form>
+                                    <el-form-item label="检测方法">
+                                        <div style="color: #666; font-size: 13px; line-height: 1.5;">
+                                            • 长期零值/常值检测<br>
+                                            • 分段统计
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item label="告警级别">
+                                        <el-select v-model="ruleConfig.batchData.level">
+                                            <el-option label="警告" value="warning"></el-option>
+                                            <el-option label="错误" value="error"></el-option>
+                                            <el-option label="严重" value="critical"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="处理方式">
+                                        <el-select v-model="ruleConfig.batchData.handlingMethod" placeholder="请选择处理方式">
+                                            <el-option label="移除批量异常段" value="remove"></el-option>
+                                            <el-option label="判断是否为设备停机或其他业务状态" value="judge"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </div>
+                    </el-form>
+                </div>
+                
+                <div class="drawer-footer">
+                    <el-button @click="ruleDrawerVisible = false">取消</el-button>
+                    <el-button type="primary" @click="saveRuleConfig">保存配置</el-button>
+                    <el-button type="success" @click="pushToEdge">推送至边缘侧</el-button>
+                </div>
+            </div>
+        </el-drawer>
+
+        <!-- 扫描数据点位抽屉 -->
+        <el-drawer
+            title="扫描数据点位"
+            :visible.sync="scanDrawerVisible"
+            direction="rtl"
+            size="600px">
+            <div class="drawer-container">
+                <div class="drawer-content">
+                    <el-form label-width="120px">
+                        <el-form-item label="选择数据源">
+                            <el-select v-model="scanConfig.sourceId" placeholder="请选择数据源">
+                                <el-option
+                                    v-for="source in dataSources"
+                                    :key="source.id"
+                                    :label="source.name"
+                                    :value="source.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        
+                        <el-form-item>
+                            <el-button 
+                                type="primary" 
+                                @click="startScan"
+                                :loading="scanning">
+                                开始扫描
+                            </el-button>
+                        </el-form-item>
+                    </el-form>
+                    
+                    <div v-if="scanResults.length > 0">
+                        <h4 style="margin-bottom: 15px; color: #303133;">扫描结果</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <div 
+                                v-for="result in scanResults" 
+                                :key="result.id"
+                                class="scan-result-item"
+                                :class="result.isAdded ? 'added' : 'not-added'">
+                                <div class="scan-result-info">
+                                    <div style="font-weight: 500;">{{ result.name }}</div>
+                                    <div style="font-size: 12px; color: #666;">
+                                        {{ result.originalName }} | {{ result.dataType }}
+                                    </div>
+                                </div>
+                                <div class="scan-result-status" :class="result.isAdded ? 'added' : 'not-added'">
+                                    {{ result.isAdded ? '已加入' : '未加入' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="drawer-footer">
+                    <el-button @click="scanDrawerVisible = false">取消</el-button>
+                    <el-button 
+                        v-if="scanResults.length > 0"
+                        type="success" 
+                        @click="confirmImport">
+                        确认导入
+                    </el-button>
+                </div>
+            </div>
+        </el-drawer>
+    </div>
+
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 数据点位列表
+                    dataPoints: [],
+                    
+                    // 数据源列表
+                    dataSources: [
+                        { id: 1, name: 'OPC_UA_Server_01' },
+                        { id: 2, name: 'Modbus_TCP_01' },
+                        { id: 3, name: 'SQL_Database_01' }
+                    ],
+                    
+                    // 分类选项
+                    categoryOptions: [
+                        { value: '温度', label: '温度' },
+                        { value: '压力', label: '压力' },
+                        { value: '流量', label: '流量' },
+                        { value: '开关', label: '开关' },
+                        { value: '设备', label: '设备' },
+                        { value: '设备组', label: '设备组' },
+                        { value: '传感器', label: '传感器' },
+                        { value: '仪表', label: '仪表' },
+                        { value: '状态', label: '状态' },
+                        { value: '标识', label: '标识' }
+                    ],
+                    
+                    // 筛选条件
+                    filters: {
+                        name: '',
+                        sourceId: null,
+                        categories: [],
+                        enabled: null,
+                        modeling: null
+                    },
+                    
+                    // 抽屉控制
+                    drawerVisible: false,
+                    ruleDrawerVisible: false,
+                    scanDrawerVisible: false,
+                    drawerMode: 'view', // view, edit, add
+                    
+                    // 当前操作的点位
+                    currentPoint: {},
+                    
+                    // 异常规则配置
+                    ruleConfig: {
+                        missingData: { enabled: false, handlingMethod: 'interpolation', level: 'warning' },
+                        duplicateData: { enabled: false, handlingMethod: 'latest', level: 'warning' },
+                        threshold: { enabled: false, min: 0, max: 100, handlingMethod: 'mark', level: 'warning' },
+                        fluctuation: { enabled: false, threshold: 10, window: 60, handlingMethod: 'smooth', level: 'warning' },
+                        trend: { enabled: false, count: 3, type: 'up', handlingMethod: 'warning', level: 'warning' },
+                        noise: { enabled: false, handlingMethod: 'filter', level: 'warning' },
+                        timestamp: { enabled: false, handlingMethod: 'realign', level: 'warning' },
+                        outlier: { enabled: false, handlingMethod: 'replace', level: 'warning' },
+                        batchData: { enabled: false, handlingMethod: 'remove', level: 'warning' }
+                    },
+                    
+                    // 扫描配置
+                    scanConfig: {
+                        sourceId: null
+                    },
+                    
+                    // 扫描结果
+                    scanResults: [],
+                    scanning: false
+                }
+            },
+            
+            computed: {
+                // 过滤后的数据点位
+                filteredDataPoints() {
+                    let filtered = this.dataPoints;
+                    
+                    if (this.filters.name) {
+                        filtered = filtered.filter(point => 
+                            point.name.toLowerCase().includes(this.filters.name.toLowerCase())
+                        );
+                    }
+                    
+                    if (this.filters.sourceId) {
+                        filtered = filtered.filter(point => 
+                            point.sourceId === this.filters.sourceId
+                        );
+                    }
+                    
+                    if (this.filters.categories.length > 0) {
+                        filtered = filtered.filter(point => 
+                            point.categories.some(cat => 
+                                this.filters.categories.includes(cat)
+                            )
+                        );
+                    }
+                    
+                    if (this.filters.enabled !== null) {
+                        filtered = filtered.filter(point => 
+                            point.enabled === this.filters.enabled
+                        );
+                    }
+                    
+                    if (this.filters.modeling !== null) {
+                        filtered = filtered.filter(point => 
+                            point.modeling === this.filters.modeling
+                        );
+                    }
+                    
+                    return this.buildTreeData(filtered);
+                }
+            },
+            
+            mounted() {
+                this.loadDataPoints();
+            },
+            
+            methods: {
+                // 加载数据点位
+                loadDataPoints() {
+                    this.dataPoints = [
+                        {
+                            id: 1,
+                            name: '设备组1',
+                            originalName: 'Device_Group_1',
+                            dataType: null,
+                            unit: '',
+                            updateCycle: 0,
+                            enabled: true,
+                            modeling: false,
+                            lastValue: null,
+                            lastUpdate: null,
+                            sourceId: null,
+                            sourceName: '',
+                            categories: ['设备组'],
+                            description: '设备组1',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 0,
+                            isLeaf: false
+                        },
+                        {
+                            id: 2,
+                            name: '设备组2',
+                            originalName: 'Device_Group_2',
+                            dataType: null,
+                            unit: '',
+                            updateCycle: 0,
+                            enabled: true,
+                            modeling: false,
+                            lastValue: null,
+                            lastUpdate: null,
+                            sourceId: null,
+                            sourceName: '',
+                            categories: ['设备组'],
+                            description: '设备组2',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 0,
+                            isLeaf: false
+                        },
+                        {
+                            id: 3,
+                            name: '设备组3',
+                            originalName: 'Device_Group_3',
+                            dataType: null,
+                            unit: '',
+                            updateCycle: 0,
+                            enabled: true,
+                            modeling: false,
+                            lastValue: null,
+                            lastUpdate: null,
+                            sourceId: null,
+                            sourceName: '',
+                            categories: ['设备组'],
+                            description: '设备组3',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 0,
+                            isLeaf: false
+                        },
+                        {
+                            id: 4,
+                            name: '温度传感器_01',
+                            originalName: 'Temp_Sensor_01',
+                            dataType: 'Float',
+                            unit: '℃',
+                            updateCycle: 5,
+                            enabled: true,
+                            modeling: true,
+                            lastValue: '25.6',
+                            lastUpdate: new Date(),
+                            sourceId: 1,
+                            sourceName: 'OPC_UA_Server_01',
+                            categories: ['温度', '传感器'],
+                            description: '一号生产线温度传感器',
+                            lastAnomalyTime: new Date(Date.now() - 3600000),
+                            anomalyType: '静态阈值超限',
+                            level: 1,
+                            isLeaf: true,
+                            parentId: 1
+                        },
+                        {
+                            id: 5,
+                            name: '压力传感器_01',
+                            originalName: 'Pressure_Sensor_01',
+                            dataType: 'Float',
+                            unit: 'MPa',
+                            updateCycle: 10,
+                            enabled: true,
+                            modeling: true,
+                            lastValue: '0.85',
+                            lastUpdate: new Date(Date.now() - 5000),
+                            sourceId: 1,
+                            sourceName: 'OPC_UA_Server_01',
+                            categories: ['压力', '传感器'],
+                            description: '一号生产线压力传感器',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 1,
+                            isLeaf: true,
+                            parentId: 1
+                        },
+                        {
+                            id: 6,
+                            name: '流量计_01',
+                            originalName: 'Flow_Meter_01',
+                            dataType: 'Float',
+                            unit: 'm³/h',
+                            updateCycle: 15,
+                            enabled: true,
+                            modeling: false,
+                            lastValue: '120.5',
+                            lastUpdate: new Date(Date.now() - 10000),
+                            sourceId: 2,
+                            sourceName: 'Modbus_TCP_01',
+                            categories: ['流量', '仪表'],
+                            description: '一号生产线流量计',
+                            lastAnomalyTime: new Date(Date.now() - 1800000),
+                            anomalyType: '波动率异常',
+                            level: 1,
+                            isLeaf: true,
+                            parentId: 2
+                        },
+                        {
+                            id: 7,
+                            name: '开关状态_01',
+                            originalName: 'Switch_Status_01',
+                            dataType: 'Boolean',
+                            unit: '',
+                            updateCycle: 2,
+                            enabled: false,
+                            modeling: false,
+                            lastValue: 'true',
+                            lastUpdate: new Date(Date.now() - 30000),
+                            sourceId: 2,
+                            sourceName: 'Modbus_TCP_01',
+                            categories: ['开关', '状态'],
+                            description: '一号生产线开关状态',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 1,
+                            isLeaf: true,
+                            parentId: 2
+                        },
+                        {
+                            id: 8,
+                            name: '设备ID_01',
+                            originalName: 'Device_ID_01',
+                            dataType: 'String',
+                            unit: '',
+                            updateCycle: 60,
+                            enabled: true,
+                            modeling: true,
+                            lastValue: 'DEV_001',
+                            lastUpdate: new Date(Date.now() - 60000),
+                            sourceId: 3,
+                            sourceName: 'SQL_Database_01',
+                            categories: ['设备', '标识'],
+                            description: '一号生产线设备标识',
+                            lastAnomalyTime: new Date(Date.now() - 7200000),
+                            anomalyType: '数据丢失',
+                            level: 1,
+                            isLeaf: true,
+                            parentId: 3
+                        }
+                    ];
+                },
+                
+                // 构建树形数据
+                buildTreeData(data) {
+                    const treeData = [];
+                    const processedIds = new Set();
+                    
+                    // 先添加根节点（设备组）
+                    data.filter(point => !point.parentId && !point.isLeaf).forEach(point => {
+                        const nodeWithChildren = { ...point };
+                        nodeWithChildren.children = [];
+                        
+                        // 查找子节点
+                        data.filter(child => child.parentId === point.id).forEach(child => {
+                            nodeWithChildren.children.push(child);
+                            processedIds.add(child.id);
+                        });
+                        
+                        treeData.push(nodeWithChildren);
+                        processedIds.add(point.id);
+                    });
+                    
+                    // 添加没有父节点的叶子节点
+                    data.filter(point => point.isLeaf && !point.parentId).forEach(point => {
+                        if (!processedIds.has(point.id)) {
+                            treeData.push(point);
+                            processedIds.add(point.id);
+                        }
+                    });
+                    
+                    return treeData;
+                },
+                
+                // 格式化时间
+                formatTime(time) {
+                    if (!time) return '-';
+                    const date = new Date(time);
+                    return date.toLocaleString('zh-CN');
+                },
+                
+                // 清空筛选条件
+                clearFilters() {
+                    this.filters = {
+                        name: '',
+                        sourceId: null,
+                        categories: [],
+                        enabled: null,
+                        modeling: null
+                    };
+                },
+                
+                // 应用筛选
+                applyFilters() {
+                    // 筛选逻辑已在computed中实现
+                },
+                
+                // 查看点位
+                viewPoint(point) {
+                    this.currentPoint = { ...point };
+                    this.drawerMode = 'view';
+                    this.drawerVisible = true;
+                },
+                
+                // 编辑点位
+                editPoint(point) {
+                    this.currentPoint = { ...point };
+                    this.drawerMode = 'edit';
+                    this.drawerVisible = true;
+                },
+                
+                // 配置异常规则
+                configRules(point) {
+                    this.currentPoint = { ...point };
+                    this.ruleDrawerVisible = true;
+                },
+                
+                // 保存点位
+                savePoint() {
+                    const index = this.dataPoints.findIndex(p => p.id === this.currentPoint.id);
+                    if (index !== -1) {
+                        this.dataPoints[index] = { ...this.currentPoint };
+                    }
+                    
+                    this.$message.success('保存成功');
+                    this.drawerVisible = false;
+                },
+                
+                // 保存异常规则配置
+                saveRuleConfig() {
+                    this.$message.success('异常规则配置保存成功');
+                    this.ruleDrawerVisible = false;
+                },
+                
+                // 推送至边缘侧
+                pushToEdge() {
+                    // 检查是否有启用的规则
+                    const enabledRules = Object.values(this.ruleConfig).filter(rule => rule.enabled);
+                    
+                    if (enabledRules.length === 0) {
+                        this.$message.warning('请先启用至少一个异常检测规则');
+                        return;
+                    }
+                    
+                    // 模拟推送过程
+                    this.$message.info('正在推送规则配置至边缘侧...');
+                    
+                    setTimeout(() => {
+                        this.$message.success('规则配置已成功推送至边缘侧');
+                        this.ruleDrawerVisible = false;
+                    }, 1500);
+                },
+                
+                // 扫描点位
+                scanPoints() {
+                    this.scanDrawerVisible = true;
+                    this.scanResults = [];
+                },
+                
+                // 开始扫描
+                startScan() {
+                    if (!this.scanConfig.sourceId) {
+                        this.$message.warning('请选择数据源');
+                        return;
+                    }
+                    
+                    this.scanning = true;
+                    
+                    // 模拟扫描过程
+                    setTimeout(() => {
+                        this.scanResults = [
+                            {
+                                id: 101,
+                                name: '新温度传感器_01',
+                                originalName: 'New_Temp_Sensor_01',
+                                dataType: 'Float',
+                                isAdded: false
+                            },
+                            {
+                                id: 102,
+                                name: '新压力传感器_01',
+                                originalName: 'New_Pressure_Sensor_01',
+                                dataType: 'Float',
+                                isAdded: false
+                            },
+                            {
+                                id: 103,
+                                name: '新流量计_01',
+                                originalName: 'New_Flow_Meter_01',
+                                dataType: 'Float',
+                                isAdded: false
+                            },
+                            {
+                                id: 104,
+                                name: '新开关状态_01',
+                                originalName: 'New_Switch_Status_01',
+                                dataType: 'Boolean',
+                                isAdded: false
+                            }
+                        ];
+                        
+                        // 按未加入优先排序
+                        this.scanResults.sort((a, b) => {
+                            if (a.isAdded === b.isAdded) return 0;
+                            return a.isAdded ? 1 : -1;
+                        });
+                        
+                        this.scanning = false;
+                    }, 2000);
+                },
+                
+                // 确认导入
+                confirmImport() {
+                    const newPoints = this.scanResults.filter(result => !result.isAdded);
+                    
+                    if (newPoints.length === 0) {
+                        this.$message.warning('没有新的数据点位需要导入');
+                        return;
+                    }
+                    
+                    // 添加新的数据点位
+                    newPoints.forEach(point => {
+                        const newPoint = {
+                            id: Date.now() + Math.random(),
+                            name: point.name,
+                            originalName: point.originalName,
+                            dataType: point.dataType,
+                            unit: '',
+                            updateCycle: 5,
+                            enabled: true,
+                            modeling: false,
+                            lastValue: null,
+                            lastUpdate: null,
+                            sourceId: this.scanConfig.sourceId,
+                            sourceName: this.dataSources.find(s => s.id === this.scanConfig.sourceId)?.name || '',
+                            categories: [],
+                            description: '',
+                            lastAnomalyTime: null,
+                            anomalyType: null,
+                            level: 1,
+                            isLeaf: true
+                        };
+                        
+                        this.dataPoints.push(newPoint);
+                    });
+                    
+                    this.$message.success(`成功导入 ${newPoints.length} 个数据点位`);
+                    this.scanDrawerVisible = false;
+                },
+                
+                // 行点击事件
+                handleRowClick(row, column, event) {
+                    // 可以在这里添加行点击逻辑
+                },
+                
+                // 获取已启用的异常规则数量
+                getEnabledRulesCount(point) {
+                    // 这里应该从实际的数据中获取规则配置
+                    // 暂时返回模拟数据
+                    const mockRules = {
+                        4: 2, // 温度传感器_01 有2个规则
+                        5: 0, // 压力传感器_01 没有规则
+                        6: 1, // 流量计_01 有1个规则
+                        7: 0, // 开关状态_01 没有规则
+                        8: 1  // 设备ID_01 有1个规则
+                    };
+                    return mockRules[point.id] || 0;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

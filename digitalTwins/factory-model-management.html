@@ -218,6 +218,15 @@
             transform-origin: center;
         }
 
+        /* 状态操作按钮样式 */
+        .status-display .el-button--mini {
+            padding: 4px 8px;
+            font-size: 11px;
+            height: 24px;
+            line-height: 16px;
+            margin-left: 8px;
+        }
+
         /* 页签验证样式 */
         .el-tabs__item {
             transition: color 0.3s ease;
@@ -280,6 +289,23 @@
         .asset-name {
             color: #303133;
             font-weight: 500;
+        }
+
+        /* 视频表格样式 */
+        .video-table .el-table {
+            margin-top: 16px;
+        }
+
+        .video-table .el-input {
+            width: 100%;
+        }
+
+        .video-table .el-input__suffix {
+            cursor: pointer;
+        }
+
+        .video-table .el-input__suffix:hover {
+            color: #409EFF;
         }
 
         /* 状态图标样式 */
@@ -1539,11 +1565,11 @@
         
         /* 输入模式切换样式 */
         .input-mode-tabs {
-            margin-bottom: 16px;
+            margin-bottom: 0px;
         }
         
         .input-mode-tabs .el-tabs__header {
-            margin-bottom: 16px;
+            margin-bottom: 0px;
         }
         
         .input-mode-tabs .el-tabs__nav-wrap {
@@ -3009,6 +3035,7 @@
                                         
                                     </el-button>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -3064,12 +3091,13 @@
                                     <div class="section-actions">
                                         <!-- 资产表单模式下的操作按钮 -->
                                         <template v-if="isAddingAsset || isViewingAsset || isEditingAsset">
-                                            <el-button @click="cancelAssetForm" size="small">
-                                                返回列表
-                                            </el-button>
                                             <el-button v-if="!isViewingAsset" type="primary" size="small" @click="saveAsset">
                                                 {{ isAddingAsset ? '确认添加资产' : '确认修改资产' }}
                                             </el-button>
+                                            <el-button @click="cancelAssetForm" size="small">
+                                                返回资产列表
+                                            </el-button>
+                                           
                                         </template>
                                         <!-- 正常模式下的按钮 -->
                                         <template v-else>
@@ -3160,11 +3188,11 @@
                                                     </el-tooltip>
                                                     <el-button 
                                                         v-if="!isViewingAsset"
-                                                        type="text" 
+                                                        :type="assetForm.connectionStatus === '已接入' ? 'danger' : 'success'"
                                                         size="mini" 
                                                         :icon="assetForm.connectionStatus === '已接入' ? 'el-icon-close' : 'el-icon-link'"
-                                                        :title="assetForm.connectionStatus === '已接入' ? '断开连接' : '接入设备'"
                                                         @click="toggleAssetFormConnection">
+                                                        {{ assetForm.connectionStatus === '已接入' ? '断开' : '接入' }}
                                                     </el-button>
                                                 </div>
                                             </div>
@@ -3177,11 +3205,11 @@
                                                     </el-tooltip>
                                                     <el-button 
                                                         v-if="!isViewingAsset && assetForm.connectionStatus === '已接入'"
-                                                        type="text" 
+                                                        type="primary" 
                                                         size="mini" 
                                                         icon="el-icon-refresh"
-                                                        title="刷新状态"
                                                         @click="refreshAssetFormStatus">
+                                                        刷新
                                                     </el-button>
                                                 </div>
                                             </div>
@@ -3351,7 +3379,7 @@
                                                                          </el-select>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column label="数据源" min-width="80" fixed="right">
+                                                                 <el-table-column label="数据绑定" min-width="80" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <el-button 
                                                                              type="text" 
@@ -3515,24 +3543,16 @@
                                                                          </div>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column label="数据源配置" min-width="120">
+                                                                 <el-table-column label="绑定数据" min-width="80" fixed="right">
                                                                      <template slot-scope="scope">
-                                                                         <div v-if="scope.row.isEditing">
-                                                                             <el-select v-model="scope.row.dataSource" placeholder="选择数据源" size="mini" style="width: 100%">
-                                                                                 <el-option label="数据库表" value="database"></el-option>
-                                                                                 <el-option label="API接口" value="api"></el-option>
-                                                                                 <el-option label="文件系统" value="file"></el-option>
-                                                                                 <el-option label="消息队列" value="message_queue"></el-option>
-                                                                             </el-select>
-                                                                         </div>
-                                                                         <div v-else>
-                                                                         <el-select v-model="scope.row.dataSource" placeholder="选择数据源" size="small" style="width: 100%">
-                                                                             <el-option label="数据库表" value="database"></el-option>
-                                                                             <el-option label="API接口" value="api"></el-option>
-                                                                             <el-option label="文件系统" value="file"></el-option>
-                                                                             <el-option label="消息队列" value="message_queue"></el-option>
-                                                                         </el-select>
-                                                                         </div>
+                                                                         <el-button 
+                                                                             type="text" 
+                                                                             size="small" 
+                                                                             @click="configureBusinessPropertyDataBinding(scope.row)"
+                                                                             :class="getBusinessPropertyDataBindingDisplayText(scope.row) === '绑定数据' ? 'binding-data-btn' : ''"
+                                                                             style="color: #409EFF; cursor: pointer;">
+                                                                             {{ getBusinessPropertyDataBindingDisplayText(scope.row) }}
+                                                                         </el-button>
                                                                      </template>
                                                                  </el-table-column>
                                                                  <el-table-column label="操作" min-width="120" fixed="right">
@@ -4186,7 +4206,7 @@
                                                                         <el-button 
                                                                             type="text" 
                                                                             size="small" 
-                                                                            icon="el-icon-view"
+                                                                            icon="el-icon-info"
                                                                             @click="viewAlarmDetail(scope.row)"
                                                                             title="查看详情">
                                                                         </el-button>
@@ -4217,6 +4237,81 @@
                                                                         <span v-if="scope.row.isHandled" style="color: #909399; font-size: 12px;">
                                                                             已处理
                                                                         </span>
+                                                                    </template>
+                                                                </el-table-column>
+                                                            </el-table>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <el-empty description="请先选择资产类型"></el-empty>
+                                                    </div>
+                                                </div>
+                                            </el-tab-pane>
+                                            <el-tab-pane name="video">
+                                                <template slot="label">
+                                                    <span>视频</span>
+                                                </template>
+                                                <div class="tab-content">
+                                                    <div v-if="selectedAssetType">
+                                                        <!-- 视频操作按钮 -->
+                                                        <div style="margin-bottom: 16px;">
+                                                            <el-button type="primary" size="small" icon="el-icon-plus" @click="addVideo">新增</el-button>
+                                                            <el-button type="danger" size="small" icon="el-icon-delete" @click="deleteVideo" :disabled="selectedVideos.length === 0">删除</el-button>
+                                                        </div>
+
+                                                        <!-- 视频表格 -->
+                                                        <div class="video-table">
+                                                            <el-table 
+                                                                :data="currentAssetTypeVideos" 
+                                                                size="small" 
+                                                                stripe
+                                                                @selection-change="handleVideoSelectionChange"
+                                                                style="width: 100%;">
+                                                                <el-table-column type="selection" width="55"></el-table-column>
+                                                                <!-- <el-table-column type="index" label="序号" width="60">
+                                                                    <template slot-scope="scope">
+                                                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                                                            <i class="el-icon-rank" style="cursor: move; color: #909399;"></i>
+                                                                            <span>{{ scope.$index + 1 }}</span>
+                                                                        </div>
+                                                                    </template>
+                                                                </el-table-column> -->
+                                                                <el-table-column prop="cameraAddress" label="摄像头地址" min-width="200">
+                                                                    <template slot-scope="scope">
+                                                                        <el-input 
+                                                                            v-model="scope.row.cameraAddress" 
+                                                                            placeholder="请输入摄像头地址"
+                                                                            size="small">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="cameraNumber" label="摄像头编号" min-width="150">
+                                                                    <template slot-scope="scope">
+                                                                        <el-input 
+                                                                            v-model="scope.row.cameraNumber" 
+                                                                            placeholder="请输入摄像头编号"
+                                                                            size="small">
+                                                                            <i slot="suffix" class="el-input__icon el-icon-search" style="cursor: pointer;" @click="openCameraList(scope.row)"></i>
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column prop="cameraName" label="摄像头名称" min-width="150">
+                                                                    <template slot-scope="scope">
+                                                                        <el-input 
+                                                                            v-model="scope.row.cameraName" 
+                                                                            placeholder="请输入摄像头名称"
+                                                                            size="small">
+                                                                        </el-input>
+                                                                    </template>
+                                                                </el-table-column>
+                                                                <el-table-column label="操作" width="120">
+                                                                    <template slot-scope="scope">
+                                                                        <el-button 
+                                                                            type="text" 
+                                                                            size="small" 
+                                                                            @click="configureVideo(scope.row)">
+                                                                            画面配置
+                                                                        </el-button>
                                                                     </template>
                                                                 </el-table-column>
                                                             </el-table>
@@ -4345,7 +4440,7 @@
                                             </el-table-column>
                                             <el-table-column label="操作" min-width="100" max-width="120">
                                                 <template slot-scope="scope">
-                                                    <el-button type="text" size="mini" icon="el-icon-view" title="查看详情" @click="viewAsset(scope.row)"></el-button>
+                                                    <el-button type="text" size="mini" icon="el-icon-info" title="查看详情" @click="viewAsset(scope.row)"></el-button>
                                                     <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-edit" title="编辑" @click="editAsset(scope.row)"></el-button>
                                                     <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-delete" title="删除" style="color: #f56c6c;" @click="deleteAsset(scope.row)"></el-button>
                                                 </template>
@@ -4378,7 +4473,7 @@
                                             </div>
                                         </div>
                                         <div class="child-node-actions">
-                                            <el-button type="text" size="mini" icon="el-icon-view" title="查看详情" @click="selectNode(child)"></el-button>
+                                            <el-button type="text" size="mini" icon="el-icon-info" title="查看详情" @click="selectNode(child)"></el-button>
                                             <el-button v-if="isEditMode" type="text" size="mini" icon="el-icon-edit" title="编辑" @click="editNode(child)"></el-button>
                                         </div>
                                     </div>
@@ -4541,7 +4636,7 @@
                         <div slot="header">
                             <span>操作</span>
                         </div>
-                        <div style="text-align: center;">
+                        <div style="text-align: right;">
                             <el-button 
                                 v-if="!currentAlarm.isHandled"
                                 type="primary" 
@@ -4726,7 +4821,7 @@
                                     <el-row :gutter="16" align="bottom">
                                         <el-col :span="6">
                                             <el-form-item label="数据源">
-                                                <el-select v-model="dataBindingForm.dataSource" placeholder="请选择数据源" style="width: 100%">
+                                                <el-select v-model="configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.dataSource : dataBindingForm.dataSource" placeholder="请选择数据源" style="width: 100%">
                                                     <el-option 
                                                         v-for="source in dataSources" 
                                                         :key="source.value" 
@@ -4739,7 +4834,7 @@
                                         <el-col :span="6">
                                             <el-form-item label="数据点位名称">
                                                 <el-input 
-                                                    v-model="dataBindingForm.pointName" 
+                                                    v-model="configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.pointName : dataBindingForm.pointName" 
                                                     placeholder="请输入数据点位名称"
                                                     clearable>
                                                 </el-input>
@@ -4748,7 +4843,7 @@
                                         <el-col :span="6">
                                             <el-form-item label="编码">
                                                 <el-input 
-                                                    v-model="dataBindingForm.pointCode" 
+                                                    v-model="configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.pointCode : dataBindingForm.pointCode" 
                                                     placeholder="请输入数据点位编码"
                                                     clearable>
                                                 </el-input>
@@ -4787,11 +4882,11 @@
                     <!-- 右侧：已选择的数据点位 + 计算公式配置 -->
                     <el-col :span="8" class="right-panel">
                         <!-- 已选择的数据点位 -->
-                        <div class="selected-points-section" v-if="dataBindingForm.selectedPoints.length > 0">
-                            <h4>已选择的数据点位 ({{ dataBindingForm.selectedPoints.length }})</h4>
+                        <div class="selected-points-section" v-if="(configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints.length : dataBindingForm.selectedPoints.length) > 0">
+                            <h4>已选择的数据点位 ({{ configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints.length : dataBindingForm.selectedPoints.length }})</h4>
                             <div class="selected-points-list">
                                 <div 
-                                    v-for="(point, index) in dataBindingForm.selectedPoints" 
+                                    v-for="(point, index) in (configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints : dataBindingForm.selectedPoints)" 
                                     :key="point.code"
                                     class="selected-point-item"
                                     @dblclick="insertDataPoint(point)">
@@ -4883,7 +4978,7 @@
                                                         <span class="section-title">变量：</span>
                                                         <div class="variable-list">
                                                             <span 
-                                                                v-for="point in dataBindingForm.selectedPoints" 
+                                                                v-for="point in (configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints : dataBindingForm.selectedPoints)" 
                                                                 :key="point.code"
                                                                 class="variable-item"
                                                                 @dblclick="insertVariable(point)">
@@ -4916,7 +5011,7 @@
                                         <el-tab-pane label="表达式输入" name="expression">
                                             <div class="expression-input">
                                                 <el-input
-                                                    v-model="dataBindingForm.formula"
+                                                    v-model="configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.formula : dataBindingForm.formula"
                                                     type="textarea"
                                                     :rows="3"
                                                     placeholder="请输入计算公式，可使用已选择的数据点位和运算符"
@@ -5011,13 +5106,13 @@
                         </div>
 
                         <!-- 操作按钮 -->
-                        <div class="drawer-actions" v-if="dataBindingForm.selectedPoints.length > 0">
+                        <div class="drawer-actions" v-if="(configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints.length : dataBindingForm.selectedPoints.length) > 0">
                             <el-button @click="dataBindingDrawerVisible = false">取消</el-button>
-                            <el-button type="primary" @click="saveDataBindingConfig">保存</el-button>
+                            <el-button type="primary" @click="configType === 'businessPropertyBinding' ? saveBusinessPropertyDataBindingConfig() : saveDataBindingConfig()">保存</el-button>
                         </div>
 
                         <!-- 空状态提示 -->
-                        <div class="empty-selection" v-if="dataBindingForm.selectedPoints.length === 0">
+                        <div class="empty-selection" v-if="(configType === 'businessPropertyBinding' ? businessPropertyDataBindingForm.selectedPoints.length : dataBindingForm.selectedPoints.length) === 0">
                             <div class="empty-icon">📋</div>
                             <div class="empty-text">请从左侧选择数据点位</div>
                         </div>
@@ -5046,7 +5141,7 @@
         <div class="drawer">
             <div class="drawer-header">
                 <h3 class="drawer-title" id="indicator-drawer-title">{{ indicatorDrawerTitle }}</h3>
-                <button class="drawer-close" @click="closeIndicatorDrawer">&times;</button>
+                <button class="drawer-close" @click="closeIndicatorDrawer">×</button>
             </div>
             <div class="drawer-body">
                 <div class="drawer-form">
@@ -5131,7 +5226,7 @@
                                             <span class="variable-item-name">{{ variable }}</span>
                                             <span class="variable-item-description">{{ getVariableDescription(variable) }}</span>
                                         </div>
-                                        <span class="variable-item-remove" @click="removeParticipatingVariable(variable)" v-if="!isIndicatorViewMode">&times;</span>
+                                        <span class="variable-item-remove" @click="removeParticipatingVariable(variable)" v-if="!isIndicatorViewMode">×</span>
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-sm" @click="showVariableSelector" v-if="!isIndicatorViewMode">添加变量</button>
@@ -5541,7 +5636,7 @@
         <div class="drawer">
             <div class="drawer-header">
                 <h3 class="drawer-title">选择参与变量</h3>
-                <button class="drawer-close" @click="closeVariableSelector">&times;</button>
+                <button class="drawer-close" @click="closeVariableSelector">×</button>
             </div>
             <div class="drawer-body">
                 <div class="variable-selector-content">
@@ -6059,6 +6154,10 @@
                         { id: 3, level: 'low', type: '设备停机', description: '设备运行状态异常，已停机', alarmTime: '2024-01-18 12:20:08', triggerRule: '设备停机检测', triggerRuleName: '设备停机检测', triggerExpression: '设备状态 = 停机', dataItems: [{ name: '设备状态', value: '停机', dataSource: 'DCS.STATUS_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 4, level: 'medium', type: '振动异常', description: '设备振动值达到12mm/s，超过正常范围', alarmTime: '2024-01-18 10:15:30', triggerRule: '振动异常检测', triggerRuleName: '振动异常检测', triggerExpression: '振动值 > 10', dataItems: [{ name: '振动值', value: '12mm/s', dataSource: 'DCS.VIB_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 5, level: 'high', type: '电流超限', description: '主电机电流达到120A，超过安全阈值', alarmTime: '2024-01-17 16:45:20', triggerRule: '电流超限告警', triggerRuleName: '电流超限告警', triggerExpression: '主电机电流 > 100', dataItems: [{ name: '主电机电流', value: '120A', dataSource: 'DCS.CURRENT_001' }], isHandled: false, handler: '', status: 'active' }
+                    ], videos: [
+                        { id: 1, cameraAddress: 'rtsp://192.168.1.200:554/stream1', cameraNumber: 'CAM101', cameraName: '磨机入口监控' },
+                        { id: 2, cameraAddress: 'rtsp://192.168.1.201:554/stream1', cameraNumber: 'CAM102', cameraName: '磨机出口监控' },
+                        { id: 3, cameraAddress: 'rtsp://192.168.1.202:554/stream1', cameraNumber: 'CAM103', cameraName: '磨机运行监控' }
                     ]},
                     { value: 'rotary_kiln_001', label: '回转窑', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6095,6 +6194,10 @@
                         { id: 3, level: 'medium', type: '燃料消耗异常', description: '燃料消耗达到1200kg/h，超出正常范围', alarmTime: '2024-01-18 13:30:20', triggerRule: '燃料消耗异常', triggerRuleName: '燃料消耗异常', triggerExpression: '燃料消耗 > 1000', dataItems: [{ name: '燃料消耗', value: '1200kg/h', dataSource: 'DCS.FUEL_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 4, level: 'low', type: '窑压异常', description: '窑内压力为-50Pa，低于正常范围', alarmTime: '2024-01-18 11:25:15', triggerRule: '窑压异常检测', triggerRuleName: '窑压异常检测', triggerExpression: '窑内压力 < -30', dataItems: [{ name: '窑内压力', value: '-50Pa', dataSource: 'DCS.KILN_PRESS_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 5, level: 'high', type: '氧气浓度异常', description: '窑尾氧气浓度达到8%，超过安全阈值', alarmTime: '2024-01-17 09:45:30', triggerRule: '氧气浓度告警', triggerRuleName: '氧气浓度告警', triggerExpression: '氧气浓度 > 5', dataItems: [{ name: '氧气浓度', value: '8%', dataSource: 'DCS.O2_001' }], isHandled: false, handler: '', status: 'active' }
+                    ], videos: [
+                        { id: 1, cameraAddress: 'rtsp://192.168.1.300:554/stream1', cameraNumber: 'CAM201', cameraName: '窑头监控' },
+                        { id: 2, cameraAddress: 'rtsp://192.168.1.301:554/stream1', cameraNumber: 'CAM202', cameraName: '窑尾监控' },
+                        { id: 3, cameraAddress: 'rtsp://192.168.1.302:554/stream1', cameraNumber: 'CAM203', cameraName: '窑体运行监控' }
                     ]},
                     { value: 'raw_material_bin_001', label: '原料仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6126,6 +6229,10 @@
                         { id: 2, level: 'high', type: '温度异常', description: '料仓温度达到65℃，超过安全阈值', alarmTime: '2024-01-17 15:45:30', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '料仓温度 > 60', dataItems: [{ name: '料仓温度', value: '65℃', dataSource: 'SCADA.TEMP_001' }], isHandled: true, handler: '王工程师', status: 'handled' },
                         { id: 3, level: 'low', type: '湿度异常', description: '料仓湿度达到85%，超过正常范围', alarmTime: '2024-01-18 14:20:45', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 4, level: 'medium', type: '料位高告警', description: '原料仓料位高度为9.2m，接近满仓', alarmTime: '2024-01-17 10:30:20', triggerRule: '料位高告警', triggerRuleName: '料位高告警', triggerExpression: '料位高度 > 9.0', dataItems: [{ name: '料位高度', value: '9.2m', dataSource: 'SCADA.LEVEL_001' }], isHandled: false, handler: '', status: 'active' }
+                    ], videos: [
+                        { id: 1, cameraAddress: 'rtsp://192.168.1.400:554/stream1', cameraNumber: 'CAM301', cameraName: '原料仓入口监控' },
+                        { id: 2, cameraAddress: 'rtsp://192.168.1.401:554/stream1', cameraNumber: 'CAM302', cameraName: '原料仓出口监控' },
+                        { id: 3, cameraAddress: 'rtsp://192.168.1.402:554/stream1', cameraNumber: 'CAM303', cameraName: '原料仓顶部监控' }
                     ]},
                     { value: 'grate_cooler_001', label: '篦冷机', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6158,6 +6265,10 @@
                         { id: 2, level: 'medium', type: '出料温度异常', description: '出料温度为110℃，超出正常范围', alarmTime: '2024-01-17 16:30:45', triggerRule: '出料温度异常', triggerRuleName: '出料温度异常', triggerExpression: '出料温度 > 100', dataItems: [{ name: '出料温度', value: '110℃', dataSource: 'PLC.DISCHARGE_TEMP_001' }], isHandled: true, handler: '赵工程师', status: 'handled' },
                         { id: 3, level: 'low', type: '篦板速度异常', description: '篦板速度为5.5m/min，超出正常范围', alarmTime: '2024-01-18 13:15:30', triggerRule: '篦板速度异常', triggerRuleName: '篦板速度异常', triggerExpression: '篦板速度 > 5.0', dataItems: [{ name: '篦板速度', value: '5.5m/min', dataSource: 'PLC.GRATE_SPEED_001' }], isHandled: false, handler: '', status: 'active' },
                         { id: 4, level: 'medium', type: '冷却效率异常', description: '冷却效率为65%，低于正常范围', alarmTime: '2024-01-17 12:45:15', triggerRule: '冷却效率异常', triggerRuleName: '冷却效率异常', triggerExpression: '冷却效率 < 70', dataItems: [{ name: '冷却效率', value: '65%', dataSource: 'PLC.COOLING_EFF_001' }], isHandled: false, handler: '', status: 'active' }
+                    ], videos: [
+                        { id: 1, cameraAddress: 'rtsp://192.168.1.500:554/stream1', cameraNumber: 'CAM401', cameraName: '篦冷机入口监控' },
+                        { id: 2, cameraAddress: 'rtsp://192.168.1.501:554/stream1', cameraNumber: 'CAM402', cameraName: '篦冷机出口监控' },
+                        { id: 3, cameraAddress: 'rtsp://192.168.1.502:554/stream1', cameraNumber: 'CAM403', cameraName: '篦冷机运行监控' }
                     ]},
                     { value: 'cement_bin_001', label: '水泥仓', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6189,6 +6300,10 @@
                         { id: 2, level: 'high', type: '湿度异常', description: '水泥仓湿度达到85%，超过安全阈值', alarmTime: '2024-01-17 17:55:30', triggerRule: '湿度异常检测', triggerRuleName: '湿度异常检测', triggerExpression: '湿度 > 80', dataItems: [{ name: '湿度', value: '85%', dataSource: 'SCADA.HUMIDITY_001' }], isHandled: true, handler: '陈工程师', status: 'handled' },
                         { id: 3, level: 'low', type: '温度异常', description: '水泥仓温度达到45℃，超过正常范围', alarmTime: '2024-01-18 15:30:25', triggerRule: '温度异常检测', triggerRuleName: '温度异常检测', triggerExpression: '温度 > 40', dataItems: [{ name: '温度', value: '45℃', dataSource: 'SCADA.TEMP_002' }], isHandled: false, handler: '', status: 'active' },
                         { id: 4, level: 'medium', type: '库存满告警', description: '水泥仓料位高度为9.1m，接近满仓', alarmTime: '2024-01-17 14:15:40', triggerRule: '库存满告警', triggerRuleName: '库存满告警', triggerExpression: '料位高度 > 9.0', dataItems: [{ name: '料位高度', value: '9.1m', dataSource: 'SCADA.LEVEL_002' }], isHandled: false, handler: '', status: 'active' }
+                    ], videos: [
+                        { id: 1, cameraAddress: 'rtsp://192.168.1.100:554/stream1', cameraNumber: 'CAM001', cameraName: '水泥仓入口监控' },
+                        { id: 2, cameraAddress: 'rtsp://192.168.1.101:554/stream1', cameraNumber: 'CAM002', cameraName: '水泥仓出口监控' },
+                        { id: 3, cameraAddress: 'rtsp://192.168.1.102:554/stream1', cameraNumber: 'CAM003', cameraName: '水泥仓顶部监控' }
                     ]}
                 ],
                 activeTab: 'basicInfo',
@@ -6283,6 +6398,15 @@
                     selectedPoints: [],
                     formula: ''
                 },
+
+                // 业务属性数据绑定表单
+                businessPropertyDataBindingForm: {
+                    dataSource: 'REST_API',
+                    pointName: '',
+                    pointCode: '',
+                    selectedPoints: [],
+                    formula: ''
+                },
                 
                 // 数据源列表
                 dataSources: [
@@ -6291,8 +6415,13 @@
                     { value: 'PLC', label: 'PLC系统' },
                     { value: 'RTU', label: 'RTU设备' },
                     { value: 'OPC', label: 'OPC服务器' },
-                    { value: 'MODBUS', label: 'Modbus设备' }
+                    { value: 'MODBUS', label: 'Modbus设备' },
+                    { value: 'REST_API', label: 'REST API' }
                 ],
+                
+                // 视频管理相关数据
+                selectedVideos: [],
+                videoList: [],
                 
                 // 数据点位列表
                 dataPoints: [
@@ -6440,6 +6569,19 @@
                 // 告警页签标签
                 alarmsTabLabel() {
                     return '告警';
+                },
+
+                // 视频页签标签
+                videoTabLabel() {
+                    return '视频';
+                },
+
+                // 获取当前资产类型的视频列表
+                currentAssetTypeVideos() {
+                    if (!this.selectedAssetType || !this.selectedAssetType.videos) {
+                        return [];
+                    }
+                    return this.selectedAssetType.videos;
                 },
 
                 // 过滤后的告警列表
@@ -6743,6 +6885,15 @@
                         });
                     },
                     deep: true
+                },
+
+                // 监听资产类型变化，更新视频列表
+                'assetForm.assetType'(newType) {
+                    if (newType && this.selectedAssetType && this.selectedAssetType.videos) {
+                        this.videoList = [...this.selectedAssetType.videos];
+                    } else {
+                        this.videoList = [];
+                    }
                 },
                 
 
@@ -7057,6 +7208,8 @@
                     this.openNodeDialog('edit', node);
                 },
 
+
+
                 // 复制节点
                 copyNode(node) {
                     this.$confirm(`确定要复制节点"${node.name}"及其所有子节点吗？`, '确认复制', {
@@ -7355,7 +7508,7 @@
                     this.$message.success('已收起所有节点');
                 },
 
-                // 打开节点编辑对话框 (新增)
+                // 打开节点编辑对话框
                 openNodeDialog(mode, parentNode) {
                     this.nodeDialogVisible = true;
                     this.nodeDialogTitle = mode === 'add' ? '添加节点' : '编辑节点';
@@ -7383,7 +7536,9 @@
                     }
                     
                     this.$nextTick(() => {
-                        this.$refs.nodeForm.clearValidate();
+                        if (this.$refs.nodeForm) {
+                            this.$refs.nodeForm.clearValidate();
+                        }
                     });
                 },
 
@@ -7447,7 +7602,7 @@
                     });
                 },
 
-                // 重置节点表单 (新增)
+                // 重置节点表单
                 resetNodeForm() {
                     this.nodeForm = {
                         name: '',
@@ -7456,6 +7611,8 @@
                         description: ''
                     };
                 },
+
+
 
                 // 复制节点及其子节点
                 copyNodeAndChildren(sourceNode) {
@@ -7736,7 +7893,7 @@
                     if (this.isAddingAsset) {
                         return 'el-icon-plus';
                     } else if (this.isViewingAsset) {
-                        return 'el-icon-view';
+                        return 'el-icon-info';
                     } else if (this.isEditingAsset) {
                         return 'el-icon-edit';
                     }
@@ -8377,6 +8534,59 @@
                     return typeMap[level] || '';
                 },
 
+                // 视频管理相关方法
+                // 新增视频
+                addVideo() {
+                    const newVideo = {
+                        id: Date.now(),
+                        cameraAddress: '',
+                        cameraNumber: '',
+                        cameraName: ''
+                    };
+                    this.selectedAssetType.videos.push(newVideo);
+                    this.$message.success('新增视频成功');
+                },
+
+                // 删除视频
+                deleteVideo() {
+                    if (this.selectedVideos.length === 0) {
+                        this.$message.warning('请选择要删除的视频');
+                        return;
+                    }
+
+                    this.$confirm(`确定要删除选中的 ${this.selectedVideos.length} 个视频吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const selectedIds = this.selectedVideos.map(video => video.id);
+                        this.selectedAssetType.videos = this.selectedAssetType.videos.filter(
+                            video => !selectedIds.includes(video.id)
+                        );
+                        this.selectedVideos = [];
+                        this.$message.success('删除视频成功');
+                    }).catch(() => {
+                        // 用户取消操作
+                    });
+                },
+
+                // 处理视频选择变化
+                handleVideoSelectionChange(selection) {
+                    this.selectedVideos = selection;
+                },
+
+                // 配置视频画面
+                configureVideo(video) {
+                    this.$message.info(`需调用摄像头管理的视频配置画面：${video.cameraName || video.cameraNumber}`);
+                    // 这里可以打开视频配置抽屉或弹窗
+                },
+
+                // 打开摄像头列表
+                openCameraList(video) {
+                    this.$message.info('需调用视频控制平台的摄像头列表页面');
+                    // 这里可以打开摄像头选择弹窗或跳转到摄像头列表页面
+                },
+
                 // 获取告警级别显示标签
                 getAlarmLevelLabel(level) {
                     const labelMap = {
@@ -8816,9 +9026,98 @@
                     }
                 },
 
+                // 业务属性数据绑定相关方法
+                // 获取业务属性数据绑定显示文本
+                getBusinessPropertyDataBindingDisplayText(row) {
+                    if (!row.dataSource) {
+                        return '绑定数据';
+                    }
+                    
+                    // 检查是否包含公式（通过检查是否包含"公式:"关键字）
+                    if (row.dataSource.includes('公式:')) {
+                        return '已配公式';
+                    }
+                    
+                    // 检查是否为单一数据点位（不包含逗号分隔的多个点位）
+                    if (!row.dataSource.includes(',')) {
+                        return row.dataSource;
+                    }
+                    
+                    // 多个数据点位但没有公式，也显示"已配公式"
+                    return '已配公式';
+                },
+
+                // 配置业务属性数据绑定
+                configureBusinessPropertyDataBinding(row) {
+                    this.currentConfigVariable = row;
+                    this.configType = 'businessPropertyBinding';
+                    this.dataBindingDrawerVisible = true;
+                    
+                    // 初始化业务属性数据绑定表单，默认数据源为REST_API
+                    this.businessPropertyDataBindingForm = {
+                        dataSource: 'REST_API',
+                        pointName: '',
+                        pointCode: '',
+                        selectedPoints: [],
+                        formula: ''
+                    };
+                    
+                    // 如果已有配置，尝试解析并加载
+                    if (row.dataSource) {
+                        // 检查是否包含公式
+                        if (row.dataSource.includes('公式:')) {
+                            // 提取公式部分
+                            const formulaMatch = row.dataSource.match(/公式: (.+)$/);
+                            if (formulaMatch) {
+                                this.businessPropertyDataBindingForm.formula = formulaMatch[1];
+                            }
+                            
+                            // 提取数据点位名称（去掉公式部分）
+                            const pointNamesPart = row.dataSource.replace(/ \(公式: .+\)$/, '');
+                            const pointNames = pointNamesPart.split(', ');
+                            
+                            // 根据名称找到对应的数据点位对象
+                            this.businessPropertyDataBindingForm.selectedPoints = this.dataPoints.filter(point => 
+                                pointNames.includes(point.name)
+                            );
+                        } else {
+                            // 单一数据点位，根据名称查找
+                            const point = this.dataPoints.find(p => p.name === row.dataSource);
+                            if (point) {
+                                this.businessPropertyDataBindingForm.selectedPoints = [point];
+                            }
+                        }
+                    }
+                    
+                    // 初始化过滤后的数据点位列表
+                    this.filteredDataPoints = [...this.dataPoints];
+                },
+
+                // 保存业务属性数据绑定配置
+                saveBusinessPropertyDataBindingConfig() {
+                    if (this.currentConfigVariable && this.businessPropertyDataBindingForm.selectedPoints.length > 0) {
+                        const selectedPointNames = this.businessPropertyDataBindingForm.selectedPoints.map(point => point.name);
+                        
+                        // 如果只有一个数据点位且没有公式，只保存数据点位名称
+                        if (selectedPointNames.length === 1 && !this.businessPropertyDataBindingForm.formula) {
+                            this.currentConfigVariable.dataSource = selectedPointNames[0];
+                        } else {
+                            // 多个数据点位或有公式，保存完整信息
+                            this.currentConfigVariable.dataSource = selectedPointNames.join(', ');
+                            if (this.businessPropertyDataBindingForm.formula) {
+                                this.currentConfigVariable.dataSource += ` (公式: ${this.businessPropertyDataBindingForm.formula})`;
+                            }
+                        }
+                        
+                        this.dataBindingDrawerVisible = false;
+                        this.$message.success('业务属性数据绑定配置已保存');
+                    }
+                },
+
                 // 搜索数据点位
                 searchDataPoints() {
-                    const { dataSource, pointName, pointCode } = this.dataBindingForm;
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    const { dataSource, pointName, pointCode } = form;
                     
                     this.filteredDataPoints = this.dataPoints.filter(point => {
                         let match = true;
@@ -8841,34 +9140,39 @@
 
                 // 清空数据点位搜索
                 clearDataPointSearch() {
-                    this.dataBindingForm.dataSource = '';
-                    this.dataBindingForm.pointName = '';
-                    this.dataBindingForm.pointCode = '';
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    form.dataSource = this.configType === 'businessPropertyBinding' ? 'REST_API' : '';
+                    form.pointName = '';
+                    form.pointCode = '';
                     this.filteredDataPoints = [...this.dataPoints];
                 },
 
                 // 处理表格选择变化
                 handleSelectionChange(selection) {
-                    this.dataBindingForm.selectedPoints = selection;
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    form.selectedPoints = selection;
                 },
 
                 // 切换数据点位选择状态
                 toggleDataPointSelection(row) {
-                    const index = this.dataBindingForm.selectedPoints.findIndex(point => point.code === row.code);
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    const index = form.selectedPoints.findIndex(point => point.code === row.code);
                     if (index > -1) {
-                        this.dataBindingForm.selectedPoints.splice(index, 1);
+                        form.selectedPoints.splice(index, 1);
                     } else {
-                        this.dataBindingForm.selectedPoints.push(row);
+                        form.selectedPoints.push(row);
                     }
                 },
 
                 // 移除已选择的数据点位
                 removeSelectedPoint(index) {
-                    this.dataBindingForm.selectedPoints.splice(index, 1);
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    form.selectedPoints.splice(index, 1);
                 },
 
                 // 插入运算符到公式
                 insertOperator(operator) {
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
                     // 根据当前输入模式处理
                     if (this.formulaInputMode === 'visual') {
                         // 可视化模式：添加到可视化部分
@@ -8880,28 +9184,29 @@
                     } else {
                         // 表达式模式：直接添加到公式
                         if (this.logicalOperators.includes(operator) || this.conditionalOperators.includes(operator)) {
-                            if (this.dataBindingForm.formula && !this.dataBindingForm.formula.endsWith(' ')) {
-                                this.dataBindingForm.formula += ' ';
+                            if (form.formula && !form.formula.endsWith(' ')) {
+                                form.formula += ' ';
                             }
-                            this.dataBindingForm.formula += operator + ' ';
+                            form.formula += operator + ' ';
                         } else {
-                            this.dataBindingForm.formula += operator;
+                            form.formula += operator;
                         }
                     }
                 },
 
                 // 插入数据点位到公式
                 insertDataPoint(point) {
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
                     // 根据当前输入模式处理
                     if (this.formulaInputMode === 'visual') {
                         // 可视化模式：添加到可视化部分
                         this.insertVariable(point);
                     } else {
                         // 表达式模式：直接添加到公式
-                        if (this.dataBindingForm.formula && !this.dataBindingForm.formula.endsWith(' ')) {
-                            this.dataBindingForm.formula += ' ';
+                        if (form.formula && !form.formula.endsWith(' ')) {
+                            form.formula += ' ';
                         }
-                        this.dataBindingForm.formula += `[${point.dataSource}].[${point.name}]`;
+                        form.formula += `[${point.dataSource}].[${point.name}]`;
                     }
                 },
                 
@@ -8909,7 +9214,8 @@
                 
                 // 验证公式语法
                 validateFormula() {
-                    const formula = this.dataBindingForm.formula.trim();
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    const formula = form.formula.trim();
                     
                     if (!formula) {
                         this.$message.warning('请先输入公式');
@@ -8956,8 +9262,9 @@
                 
                 // 处理输入模式切换
                 handleInputModeChange(tab) {
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
                     // 当切换到可视化输入时，同步表达式到可视化显示
-                    if (tab.name === 'visual' && this.dataBindingForm.formula) {
+                    if (tab.name === 'visual' && form.formula) {
                         this.syncExpressionToVisual();
                     }
                     // 当切换到表达式输入时，同步可视化到表达式
@@ -8979,7 +9286,8 @@
                     setTimeout(() => {
                         const translated = this.translateNaturalLanguage(this.naturalLanguageInput);
                         this.translatedExpression = translated;
-                        this.dataBindingForm.formula = translated;
+                        const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                        form.formula = translated;
                         this.isTranslating = false;
                         this.$message.success('自然语言已转换为表达式');
                         // AI转换成功后自动跳转到表达式输入模式
@@ -9060,13 +9368,15 @@
                 
                 // 同步可视化到表达式
                 syncVisualToExpression() {
-                    this.dataBindingForm.formula = this.visualFormulaDisplay;
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
+                    form.formula = this.visualFormulaDisplay;
                 },
                 
                 // 同步表达式到可视化
                 syncExpressionToVisual() {
+                    const form = this.configType === 'businessPropertyBinding' ? this.businessPropertyDataBindingForm : this.dataBindingForm;
                     // 简单的表达式解析，将表达式转换为可视化部分
-                    const formula = this.dataBindingForm.formula;
+                    const formula = form.formula;
                     this.visualFormulaParts = [];
                     this.selectedBlockIndex = -1;
                     

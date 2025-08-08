@@ -410,6 +410,113 @@
             gap: 10px;
         }
 
+        /* 继承选择弹窗样式 */
+        .inherit-modal {
+            width: 600px;
+        }
+
+        .inherit-description {
+            color: #606266;
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .inherit-search {
+            margin-bottom: 20px;
+        }
+
+        .inherit-search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #303133;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .inherit-search-input:focus {
+            border-color: #409eff;
+        }
+
+        .inherit-search-input::placeholder {
+            color: #c0c4cc;
+        }
+
+        .inherit-options {
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .inherit-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .inherit-option:hover {
+            border-color: #409eff;
+            background-color: #f5f7fa;
+        }
+
+        .inherit-option.selected {
+            border-color: #409eff;
+            background-color: #ecf5ff;
+        }
+
+        .inherit-option.hidden {
+            display: none;
+        }
+
+        .inherit-option input[type="radio"] {
+            margin-right: 12px;
+        }
+
+        .inherit-option-info {
+            flex: 1;
+        }
+
+        .inherit-option-name {
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 4px;
+        }
+
+        .inherit-option-desc {
+            font-size: 12px;
+            color: #909399;
+        }
+
+        .inherit-option-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .inherit-tag {
+            background-color: #f0f2f5;
+            color: #606266;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #909399;
+            font-size: 14px;
+            padding: 20px;
+            font-style: italic;
+        }
+
         /* 版本历史表格 */
         .version-table {
             width: 100%;
@@ -488,7 +595,7 @@
         <div class="page-header">
             <h1 class="page-title">资产类型</h1>
             <div class="header-actions">
-                <button class="btn btn-primary" onclick="alert('创建新的资产类型，打开资产类型编辑页面')">
+                <button class="btn btn-primary" onclick="showInheritModal()">
                     <i>+</i> 新建资产类型
                 </button>
             </div>
@@ -721,6 +828,138 @@
         </div>
     </div>
 
+    <!-- 继承选择弹窗 -->
+    <div class="modal-backdrop" id="inherit-modal">
+        <div class="modal inherit-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">选择继承类型</h3>
+                <button class="modal-close" id="inherit-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="inherit-description">
+                    请选择要继承的资产类型（状态为已发布，且允许被继承），继承后将自动包含该类型的所有属性和规则，并且随着父类型的更新，子类型也会自动更新。您也可以选择不继承，直接创建新的资产类型。
+                </div>
+                <div class="inherit-search">
+                    <input type="text" class="inherit-search-input" id="inherit-search" placeholder="搜索资产类型..." oninput="filterInheritOptions()">
+                </div>
+                <div class="inherit-options" id="inherit-options">
+                    <div class="inherit-option" onclick="selectInheritOption('none')">
+                        <input type="radio" name="inherit-type" value="none" id="inherit-none">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">不继承任何类型</div>
+                            <div class="inherit-option-desc">创建一个全新的资产类型，不继承任何现有类型的属性和规则</div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="水泥磨机 cement_mill 设备 粉磨 核心设备" onclick="selectInheritOption('cement_mill')">
+                        <input type="radio" name="inherit-type" value="cement_mill" id="inherit-cement_mill">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">水泥磨机</div>
+                            <div class="inherit-option-desc">用于水泥粉磨这一类资产，包括球磨机、立磨等</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">设备</span>
+                                <span class="inherit-tag">粉磨</span>
+                                <span class="inherit-tag">核心设备</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="回转窑 rotary_kiln 设备 煅烧 核心设备" onclick="selectInheritOption('rotary_kiln')">
+                        <input type="radio" name="inherit-type" value="rotary_kiln" id="inherit-rotary_kiln">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">回转窑</div>
+                            <div class="inherit-option-desc">用于水泥熟料煅烧的核心设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">设备</span>
+                                <span class="inherit-tag">煅烧</span>
+                                <span class="inherit-tag">核心设备</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="篦冷机 grate_cooler 设备 冷却" onclick="selectInheritOption('grate_cooler')">
+                        <input type="radio" name="inherit-type" value="grate_cooler" id="inherit-grate_cooler">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">篦冷机</div>
+                            <div class="inherit-option-desc">用于水泥熟料冷却的设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">设备</span>
+                                <span class="inherit-tag">冷却</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="原料仓 raw_material_bin 设备 仓储" onclick="selectInheritOption('raw_material_bin')">
+                        <input type="radio" name="inherit-type" value="raw_material_bin" id="inherit-raw_material_bin">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">原料仓</div>
+                            <div class="inherit-option-desc">用于存储水泥生产原料的仓储设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">设备</span>
+                                <span class="inherit-tag">仓储</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="水泥仓 cement_bin 设备 仓储" onclick="selectInheritOption('cement_bin')">
+                        <input type="radio" name="inherit-type" value="cement_bin" id="inherit-cement_bin">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">水泥仓</div>
+                            <div class="inherit-option-desc">用于存储成品水泥的仓储设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">设备</span>
+                                <span class="inherit-tag">仓储</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="管道 pipeline 输送" onclick="selectInheritOption('pipeline')">
+                        <input type="radio" name="inherit-type" value="pipeline" id="inherit-pipeline">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">管道</div>
+                            <div class="inherit-option-desc">用于物料输送的管道系统</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">管道</span>
+                                <span class="inherit-tag">输送</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="阀门 valve 控制" onclick="selectInheritOption('valve')">
+                        <input type="radio" name="inherit-type" value="valve" id="inherit-valve">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">阀门</div>
+                            <div class="inherit-option-desc">用于控制流体流动的控制设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">阀门</span>
+                                <span class="inherit-tag">控制</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="电机 motor 动力" onclick="selectInheritOption('motor')">
+                        <input type="radio" name="inherit-type" value="motor" id="inherit-motor">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">电机</div>
+                            <div class="inherit-option-desc">为设备提供动力的电动机</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">电机</span>
+                                <span class="inherit-tag">动力</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inherit-option" data-search="泵 pump 输送" onclick="selectInheritOption('pump')">
+                        <input type="radio" name="inherit-type" value="pump" id="inherit-pump">
+                        <div class="inherit-option-info">
+                            <div class="inherit-option-name">泵</div>
+                            <div class="inherit-option-desc">用于液体输送的泵设备</div>
+                            <div class="inherit-option-tags">
+                                <span class="inherit-tag">泵</span>
+                                <span class="inherit-tag">输送</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="inherit-modal-cancel">取消</button>
+                <button class="btn btn-primary" id="inherit-modal-confirm" onclick="confirmInherit()">确认创建</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 全选功能
         document.getElementById('select-all').addEventListener('change', function(e) {
@@ -821,6 +1060,114 @@
         document.getElementById('batch-publish').addEventListener('click', function() {
             const selectedCount = document.getElementById('selected-count').textContent;
             alert(`批量发布 ${selectedCount} 项资产类型`);
+        });
+
+        // 继承选择弹窗控制
+        function showInheritModal() {
+            const modal = document.getElementById('inherit-modal');
+            modal.classList.add('active');
+            // 默认选择"不继承任何类型"
+            selectInheritOption('none');
+            // 清空搜索框
+            document.getElementById('inherit-search').value = '';
+            // 显示所有选项
+            filterInheritOptions();
+        }
+
+        function selectInheritOption(value) {
+            // 移除所有选中状态
+            document.querySelectorAll('.inherit-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 设置选中的radio
+            const radio = document.getElementById(`inherit-${value}`);
+            if (radio) {
+                radio.checked = true;
+                radio.closest('.inherit-option').classList.add('selected');
+            }
+        }
+
+        function filterInheritOptions() {
+            const searchTerm = document.getElementById('inherit-search').value.toLowerCase().trim();
+            const options = document.querySelectorAll('.inherit-option');
+            let visibleCount = 0;
+
+            options.forEach(option => {
+                const searchData = option.getAttribute('data-search');
+                const optionName = option.querySelector('.inherit-option-name').textContent.toLowerCase();
+                const optionDesc = option.querySelector('.inherit-option-desc').textContent.toLowerCase();
+                
+                // 如果没有搜索数据属性，说明是"不继承任何类型"选项
+                if (!searchData) {
+                    if (searchTerm === '' || optionName.includes(searchTerm) || optionDesc.includes(searchTerm)) {
+                        option.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        option.classList.add('hidden');
+                    }
+                } else {
+                    // 检查搜索数据、名称和描述
+                    const searchDataLower = searchData.toLowerCase();
+                    if (searchTerm === '' || 
+                        searchDataLower.includes(searchTerm) || 
+                        optionName.includes(searchTerm) || 
+                        optionDesc.includes(searchTerm)) {
+                        option.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        option.classList.add('hidden');
+                    }
+                }
+            });
+
+            // 显示或隐藏"无结果"提示
+            const noResults = document.querySelector('.no-results');
+            if (visibleCount === 0) {
+                if (!noResults) {
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.className = 'no-results';
+                    noResultsDiv.textContent = '没有找到匹配的资产类型';
+                    document.getElementById('inherit-options').appendChild(noResultsDiv);
+                }
+            } else {
+                if (noResults) {
+                    noResults.remove();
+                }
+            }
+        }
+
+        function confirmInherit() {
+            const selectedValue = document.querySelector('input[name="inherit-type"]:checked').value;
+            const modal = document.getElementById('inherit-modal');
+            
+            // 关闭弹窗
+            modal.classList.remove('active');
+            
+            // 根据选择跳转到相应的页面
+            if (selectedValue === 'none') {
+                // 跳转到资产类型管理页面，不继承任何类型
+                window.location.href = 'asset-type-mgt.html?inherit=none';
+            } else {
+                // 跳转到资产类型管理页面，继承选中的类型
+                window.location.href = `asset-type-mgt.html?inherit=${selectedValue}`;
+            }
+        }
+
+        // 继承弹窗关闭事件
+        document.getElementById('inherit-modal-close').addEventListener('click', function() {
+            document.getElementById('inherit-modal').classList.remove('active');
+        });
+
+        document.getElementById('inherit-modal-cancel').addEventListener('click', function() {
+            document.getElementById('inherit-modal').classList.remove('active');
+        });
+
+        // 点击模态框背景关闭
+        document.getElementById('inherit-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
         });
     </script>
 </body>

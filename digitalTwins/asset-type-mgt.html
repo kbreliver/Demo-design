@@ -146,6 +146,20 @@
             color: #ffffff;
         }
 
+        .btn-back {
+            background: #f5f7fa;
+            border-color: #dcdfe6;
+            color: #606266;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .btn-back:hover {
+            background: #e6e8eb;
+            border-color: #c0c4cc;
+            color: #409eff;
+        }
+
         /* 下方内容区域 */
         .content-container {
             display: flex;
@@ -491,6 +505,13 @@
             box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2);
         }
 
+        /* 禁用状态样式 */
+        .form-select:disabled {
+            background-color: #f5f7fa;
+            color: #c0c4cc;
+            cursor: not-allowed;
+        }
+
         .form-select[multiple] {
             min-height: 100px;
         }
@@ -514,24 +535,29 @@
             align-items: center;
             gap: 10px;
             margin-top: 0;
-            padding-top: 8px;
+            padding-top: 0;
+            min-height: 32px; /* 与select框高度保持一致 */
         }
 
         .checkbox-label {
             display: flex;
             align-items: center;
             cursor: pointer;
+            height: 100%;
         }
 
         .checkbox-label input[type="checkbox"] {
             margin: 0;
             cursor: pointer;
+            width: 16px;
+            height: 16px;
         }
 
         .checkbox-text {
-            margin-left: 5px;
+            margin-left: 8px;
             font-size: 14px;
             color: #606266;
+            line-height: 1.4;
         }
 
         .log-table {
@@ -564,11 +590,116 @@
         .form-row {
             display: flex;
             gap: 20px;
-            align-items: flex-end;
+            align-items: flex-start;
         }
 
         .form-row .form-group {
             flex: 1;
+        }
+
+                /* 继承关系特殊样式 */
+        .form-row .form-group:first-child {
+            flex: 1;
+        }
+
+        .form-row .form-group:last-child {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row .form-group:last-child .form-label {
+            margin-bottom: 8px; /* 确保label间距一致 */
+        }
+
+        .form-row .form-group:last-child .checkbox-group {
+            padding-top: 0;
+            height: 32px; /* 与select框高度完全一致 */
+            display: flex;
+            align-items: center;
+        }
+
+        /* 父类型容器样式 */
+        .parent-type-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .parent-type-container .form-select {
+            flex: 1;
+        }
+
+        .parent-type-container .btn {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 警告消息样式 */
+        .warning-message {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .warning-icon {
+            font-size: 24px;
+            color: #e6a23c;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .warning-content h4 {
+            margin: 0 0 10px 0;
+            color: #303133;
+            font-size: 16px;
+        }
+
+        .warning-content p {
+            margin: 0 0 10px 0;
+            color: #606266;
+            font-size: 14px;
+        }
+
+        .warning-content ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #606266;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .warning-content li {
+            margin-bottom: 5px;
+        }
+
+        /* 数据标签多选样式 */
+        .placeholder-text {
+            color: #c0c4cc;
+            font-style: italic;
+        }
+
+        .selected-tags .tag-item {
+            display: inline-flex;
+            align-items: center;
+            background-color: #ecf5ff;
+            color: #409eff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
+
+        .selected-tags .tag-remove {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #409eff;
+        }
+
+        .selected-tags .tag-remove:hover {
+            color: #f56c6c;
         }
 
         /* Custom Select Styles */
@@ -2885,6 +3016,9 @@
             <div class="asset-info-top">
                 <div class="asset-basic-info">
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 8px;">
+                        <button class="btn btn-back" onclick="goBackToList()" style="margin-right: 10px;">
+                            <span style="margin-right: 5px;">←</span>返回列表
+                        </button>
                         <div class="asset-name">水泥磨机</div>
                         <span class="status-badge status-active">已发布</span>
                         <span style="color: #909399; font-size: 14px;">v1.2.0</span>
@@ -2979,6 +3113,36 @@
                     <!-- 类型基本信息内容 -->
                     <div id="basic-info" class="page-content active">
                         <div class="basic-info-container">
+                            <!-- 继承关系 -->
+                            <div class="form-section">
+                                <h3 class="section-title">继承关系</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">父类型</label>
+                                        <div class="parent-type-container">
+                                            <select class="form-select" disabled>
+                                                <option value="">无父类型</option>
+                                                <option value="equipment" selected>设备</option>
+                                                <option value="pipeline">管道</option>
+                                                <option value="valve">阀门</option>
+                                            </select>
+                                            <button class="btn btn-warning btn-sm" onclick="showRemoveInheritanceModal()" id="remove-inheritance-btn">
+                                                解除继承关系
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">是否可被继承</label>
+                                        <div class="checkbox-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" checked>
+                                                <span class="checkbox-text">允许其他类型继承此类型</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- 基本信息表单 -->
                             <div class="form-section">
                                 <h3 class="section-title">基本信息</h3>
@@ -3002,7 +3166,7 @@
                                             <textarea class="form-textarea" placeholder="请输入类型描述">用于水泥粉磨这一类资产，包括球磨机、立磨等</textarea>
                                         </div>
                                         <div class="form-group tags-group">
-                                            <label class="form-label">分类标签</label>
+                                            <label class="form-label">标签</label>
                                             <div class="custom-select">
                                                 <div class="select-trigger" onclick="toggleDropdown()">
                                                     <div class="selected-tags" id="selectedTags">
@@ -3075,30 +3239,7 @@
                                 </div>
                             </div>
 
-                                    <!-- 继承关系 -->
-                            <div class="form-section">
-                                <h3 class="section-title">继承关系</h3>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label">父类型</label>
-                                        <select class="form-select">
-                                            <option value="">无父类型</option>
-                                            <option value="equipment" selected>设备</option>
-                                            <option value="pipeline">管道</option>
-                                            <option value="valve">阀门</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">是否可被继承</label>
-                                        <div class="checkbox-group">
-                                            <label class="checkbox-label">
-                                                <input type="checkbox" checked>
-                                                <span class="checkbox-text">允许其他类型继承此类型</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <!-- 日志信息 -->
                             <div class="form-section">
@@ -3198,7 +3339,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>-</td>
                                                  <td>设备的型号标识</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(2)">编辑</button>
                                                  </td>
@@ -3213,7 +3354,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>-</td>
                                                  <td>设备的规格参数</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(3)">编辑</button>
                                                  </td>
@@ -3228,7 +3369,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>-</td>
                                                  <td>设备供应商信息</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(4)">编辑</button>
                                                  </td>
@@ -3243,7 +3384,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>-</td>
                                                  <td>设备制造商信息</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(5)">编辑</button>
                                                  </td>
@@ -3258,7 +3399,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>正常</td>
                                                  <td>设备运行状态</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(6)">编辑</button>
                                                  </td>
@@ -3273,7 +3414,7 @@
                                                  <td><span class="status-badge status-active">否</span></td>
                                                  <td>-</td>
                                                  <td>备注信息</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(6)">编辑</button>
                                                  </td>
@@ -3303,7 +3444,7 @@
                                                  <td><span class="status-badge status-active">是</span></td>
                                                  <td>A</td>
                                                  <td>设备重要性分类</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(10)">编辑</button>
                                                  </td>
@@ -3318,7 +3459,7 @@
                                                  <td><span class="status-badge status-active">否</span></td>
                                                  <td>5</td>
                                                  <td>设备报修年限</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(11)">编辑</button>
                                                  </td>
@@ -3333,7 +3474,7 @@
                                                  <td><span class="status-badge status-active">否</span></td>
                                                  <td>15</td>
                                                  <td>设备使用年限</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(12)">编辑</button>
                                                  </td>
@@ -3348,7 +3489,7 @@
                                                  <td><span class="status-badge status-active">否</span></td>
                                                  <td>-</td>
                                                  <td>设备保管责任人</td>
-                                                 <td><span class="status-badge status-system">系统字段</span></td>
+                                                 <td><span class="status-badge status-system">继承字段</span></td>
                                                  <td>
                                                      <button class="btn btn-sm" onclick="editPropertyFromDrawer(13)">编辑</button>
                                                  </td>
@@ -3802,7 +3943,7 @@
                     
                     <div id="geometry-models" class="page-content">
                         <div class="content-placeholder">
-                            几何/组态模型 - 配置内容将在这里显示
+                            （待设计）几何/组态模型 - 配置内容将在这里显示
                         </div>
                     </div>
                 </div>
@@ -5289,7 +5430,7 @@
                 document.getElementById('drawer-value-range').value = data.valueRange || '';
                 document.getElementById('drawer-default-value').value = data.defaultValue || '';
                 document.getElementById('drawer-format-validation').value = data.formatValidation || '';
-                document.getElementById('drawer-category').value = data.category || '';
+                setDataTags('drawer-category', data.category ? data.category.split(',') : []);
                 document.getElementById('drawer-business-category').value = data.businessCategory || '';
                 document.getElementById('drawer-display-order').value = data.displayOrder || '';
                 document.getElementById('drawer-property-description').value = data.description || '';
@@ -5317,7 +5458,7 @@
                 document.getElementById('drawer-value-range').value = data.valueRange || '';
                 document.getElementById('drawer-default-value').value = data.defaultValue || '';
                 document.getElementById('drawer-format-validation').value = data.formatValidation || '';
-                document.getElementById('drawer-category').value = data.category || '';
+                setDataTags('drawer-category', data.category ? data.category.split(',') : []);
                 document.getElementById('drawer-business-category').value = data.businessCategory || '';
                 document.getElementById('drawer-display-order').value = data.displayOrder || '';
                 document.getElementById('drawer-property-description').value = data.description || '';
@@ -5338,7 +5479,7 @@
                 document.getElementById('drawer-value-range').value = '';
                 document.getElementById('drawer-default-value').value = '';
                 document.getElementById('drawer-format-validation').value = '';
-                document.getElementById('drawer-category').value = '';
+                setDataTags('drawer-category', []);
                 document.getElementById('drawer-business-category').value = '';
                 document.getElementById('drawer-display-order').value = '';
                 document.getElementById('drawer-property-description').value = '';
@@ -5385,7 +5526,7 @@
                 valueRange: document.getElementById('drawer-value-range').value,
                 defaultValue: document.getElementById('drawer-default-value').value,
                 formatValidation: document.getElementById('drawer-format-validation').value,
-                category: document.getElementById('drawer-category').value,
+                category: getSelectedDataTags('drawer-category').join(','),
                 businessCategory: document.getElementById('drawer-business-category').value,
                 displayOrder: document.getElementById('drawer-display-order').value,
                 description: document.getElementById('drawer-property-description').value,
@@ -5961,7 +6102,7 @@
                 document.getElementById('drawer-business-value-range').value = data.valueRange || '';
                 document.getElementById('drawer-business-default-value').value = data.defaultValue || '';
                 document.getElementById('drawer-business-format-validation').value = data.formatValidation || '';
-                document.getElementById('drawer-business-category').value = data.category || '';
+                setDataTags('drawer-business-category', data.category ? data.category.split(',') : []);
                 document.getElementById('drawer-business-business-category').value = data.businessCategory || '';
                 document.getElementById('drawer-business-display-order').value = data.displayOrder || '';
                 document.getElementById('drawer-business-property-description').value = data.description || '';
@@ -7641,8 +7782,8 @@
                 <div class="drawer-form">
                     <div class="drawer-form-row">
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">所属变量属性组</label>
-                            <select class="drawer-form-select" id="drawer-property-group">
+                            <label class="drawer-form-label">属性组</label>
+                            <select class="drawer-form-select" id="drawer-property-group" disabled>
                                 <option value="">请选择变量属性组</option>
                                 <option value="basic">基本信息组</option>
                                 <option value="tech">技术参数组</option>
@@ -7675,9 +7816,9 @@
                     </div>
                                         <div class="drawer-form-row">
                                             <div class="drawer-form-group">
-                                                <label class="drawer-form-label">业务分类</label>
+                                                <label class="drawer-form-label">业务域</label>
                                                 <select class="drawer-form-select" id="drawer-business-category">
-                                                    <option value="">请选择业务分类</option>
+                                                    <option value="">请选择业务域</option>
                                                     <option value="production">生产</option>
                                                     <option value="quality">质量</option>
                                                     <option value="maintenance">运维</option>
@@ -7713,16 +7854,41 @@
                             <input type="text" class="drawer-form-input" id="drawer-format-validation" placeholder="如：正则表达式或验证规则">
                         </div>
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">数据分类</label>
-                            <select class="drawer-form-select" id="drawer-category">
-                                <option value="">请选择数据分类</option>
-                                <option value="electricity">电耗</option>
-                                <option value="coal">煤耗</option>
-                                <option value="energy">能耗</option>
-                                <option value="machine_hours">台时</option>
-                                <option value="ratio">配比</option>
-                                <option value="operation_rate">运转率</option>
-                            </select>
+                            <label class="drawer-form-label">数据标签</label>
+                            <div class="custom-select">
+                                <div class="select-trigger" onclick="toggleDataTagDropdown('drawer-category')">
+                                    <div class="selected-tags" id="drawer-category-tags">
+                                        <span class="placeholder-text">请选择数据标签</span>
+                                    </div>
+                                    <span class="select-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="drawer-category-dropdown">
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-electricity" value="electricity">
+                                        <label for="tag-electricity">电耗</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-coal" value="coal">
+                                        <label for="tag-coal">煤耗</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-energy" value="energy">
+                                        <label for="tag-energy">能耗</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-machine_hours" value="machine_hours">
+                                        <label for="tag-machine_hours">台时</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-ratio" value="ratio">
+                                        <label for="tag-ratio">配比</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="tag-operation_rate" value="operation_rate">
+                                        <label for="tag-operation_rate">运转率</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="drawer-form-row">
@@ -7767,7 +7933,7 @@
                     <div class="drawer-form-row">
                         <div class="drawer-form-group">
                             <label class="drawer-form-label">所属变量属性组</label>
-                            <select class="drawer-form-select" id="drawer-business-property-group">
+                            <select class="drawer-form-select" id="drawer-business-property-group" disabled>
                                 <option value="">请选择变量属性组</option>
                                 <option value="basic">基本信息组</option>
                                 <option value="tech">技术参数组</option>
@@ -7821,25 +7987,56 @@
                             <input type="text" class="drawer-form-input" id="drawer-business-format-validation" placeholder="如：正则表达式或验证规则">
                         </div>
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">数据分类</label>
-                            <select class="drawer-form-select" id="drawer-business-category">
-                                <option value="">请选择数据分类</option>
-                                <option value="current">电流</option>
-                                <option value="pressure">压力</option>
-                                <option value="temperature">温度</option>
-                                <option value="vibration">振动</option>
-                                <option value="flow">流量</option>
-                                <option value="operation">运行</option>
-                                <option value="output">产量</option>
-                                <option value="power">电量</option>
-                            </select>
+                            <label class="drawer-form-label">数据标签</label>
+                            <div class="custom-select">
+                                <div class="select-trigger" onclick="toggleDataTagDropdown('drawer-business-category')">
+                                    <div class="selected-tags" id="drawer-business-category-tags">
+                                        <span class="placeholder-text">请选择数据标签</span>
+                                    </div>
+                                    <span class="select-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="drawer-business-category-dropdown">
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-current" value="current">
+                                        <label for="business-tag-current">电流</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-pressure" value="pressure">
+                                        <label for="business-tag-pressure">压力</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-temperature" value="temperature">
+                                        <label for="business-tag-temperature">温度</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-vibration" value="vibration">
+                                        <label for="business-tag-vibration">振动</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-flow" value="flow">
+                                        <label for="business-tag-flow">流量</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-operation" value="operation">
+                                        <label for="business-tag-operation">运行</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-output" value="output">
+                                        <label for="business-tag-output">产量</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="business-tag-power" value="power">
+                                        <label for="business-tag-power">电量</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="drawer-form-row">
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">业务分类</label>
+                            <label class="drawer-form-label">业务域</label>
                             <select class="drawer-form-select" id="drawer-business-business-category">
-                                <option value="">请选择业务分类</option>
+                                <option value="">请选择业务域</option>
                                 <option value="production">生产</option>
                                 <option value="quality">质量</option>
                                 <option value="maintenance">运维</option>
@@ -8054,7 +8251,7 @@
                     <div class="drawer-form-row">
                         <div class="drawer-form-group">
                             <label class="drawer-form-label">所属变量属性组</label>
-                            <select class="drawer-form-select" id="drawer-variable-group">
+                            <select class="drawer-form-select" id="drawer-variable-group" disabled>
                                 <option value="">请选择变量属性组</option>
                                 <option value="temp_group">温度监控组</option>
                                 <option value="pressure_group">压力监控组</option>
@@ -8110,25 +8307,56 @@
                             <input type="text" class="drawer-form-input" id="drawer-variable-format-validation" placeholder="如：正则表达式或验证规则">
                         </div>
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">数据分类</label>
-                            <select class="drawer-form-select" id="drawer-variable-category">
-                                <option value="">请选择数据分类</option>
-                                <option value="current">电流</option>
-                                <option value="pressure">压力</option>
-                                <option value="temperature">温度</option>
-                                <option value="vibration">振动</option>
-                                <option value="flow">流量</option>
-                                <option value="operation">运行</option>
-                                <option value="output">产量</option>
-                                <option value="power">电量</option>
-                            </select>
+                            <label class="drawer-form-label">数据标签</label>
+                            <div class="custom-select">
+                                <div class="select-trigger" onclick="toggleDataTagDropdown('drawer-variable-category')">
+                                    <div class="selected-tags" id="drawer-variable-category-tags">
+                                        <span class="placeholder-text">请选择数据标签</span>
+                                    </div>
+                                    <span class="select-arrow">▼</span>
+                                </div>
+                                <div class="select-dropdown" id="drawer-variable-category-dropdown">
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-current" value="current">
+                                        <label for="variable-tag-current">电流</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-pressure" value="pressure">
+                                        <label for="variable-tag-pressure">压力</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-temperature" value="temperature">
+                                        <label for="variable-tag-temperature">温度</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-vibration" value="vibration">
+                                        <label for="variable-tag-vibration">振动</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-flow" value="flow">
+                                        <label for="variable-tag-flow">流量</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-operation" value="operation">
+                                        <label for="variable-tag-operation">运行</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-output" value="output">
+                                        <label for="variable-tag-output">产量</label>
+                                    </div>
+                                    <div class="select-option">
+                                        <input type="checkbox" id="variable-tag-power" value="power">
+                                        <label for="variable-tag-power">电量</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="drawer-form-row">
                         <div class="drawer-form-group">
-                            <label class="drawer-form-label">业务分类</label>
+                            <label class="drawer-form-label">业务域</label>
                             <select class="drawer-form-select" id="drawer-variable-business-category">
-                                <option value="">请选择业务分类</option>
+                                <option value="">请选择业务域</option>
                                 <option value="production">生产</option>
                                 <option value="quality">质量</option>
                                 <option value="maintenance">运维</option>
@@ -8276,7 +8504,7 @@
                     <!-- 步骤2：配置条件 -->
                     <div id="step-2" class="rule-step-content">
                         <h4>配置条件</h4>
-                        <p class="step-description">请配置所选变量的监控条件</p>
+                        <p class="step-description">请配置所选变量的监控条件 （***可复用当前已有的规则组件***）</p>
                         
                         <div class="conditions-container">
                             <div class="condition-group">
@@ -9202,6 +9430,212 @@
                 });
             });
         });
+
+        // 解除继承关系弹窗控制
+        function showRemoveInheritanceModal() {
+            const modal = document.getElementById('remove-inheritance-modal');
+            if (modal) {
+                modal.classList.add('active');
+            } else {
+                console.error('Remove inheritance modal not found');
+            }
+        }
+
+        function removeInheritance() {
+            // 解除继承关系的逻辑
+            const select = document.querySelector('.parent-type-container select');
+            const button = document.getElementById('remove-inheritance-btn');
+            const modal = document.getElementById('remove-inheritance-modal');
+            
+            if (select) {
+                // 清空父类型选择
+                select.value = '';
+                select.disabled = true;
+            }
+            
+            if (button) {
+                // 隐藏解除按钮
+                button.style.display = 'none';
+            }
+            
+            if (modal) {
+                // 关闭弹窗
+                modal.classList.remove('active');
+            }
+            
+            // 显示成功提示
+            alert('继承关系已成功解除！当前继承的属性将保留，但不再接收父类型的更新。');
+        }
+
+        // 解除继承弹窗关闭事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalClose = document.getElementById('remove-inheritance-modal-close');
+            const modalCancel = document.getElementById('remove-inheritance-cancel');
+            const modalConfirm = document.getElementById('remove-inheritance-confirm');
+            const modal = document.getElementById('remove-inheritance-modal');
+
+            if (modalClose) {
+                modalClose.addEventListener('click', function() {
+                    modal.classList.remove('active');
+                });
+            }
+
+            if (modalCancel) {
+                modalCancel.addEventListener('click', function() {
+                    modal.classList.remove('active');
+                });
+            }
+
+            if (modalConfirm) {
+                modalConfirm.addEventListener('click', function() {
+                    removeInheritance();
+                });
+            }
+
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            }
+
+            // 数据标签多选功能
+            // 为所有数据标签复选框添加change事件
+            document.querySelectorAll('[id$="-dropdown"] input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const fieldId = this.closest('.select-dropdown').id.replace('-dropdown', '');
+                    updateDataTags(fieldId);
+                });
+            });
+
+            // 点击外部关闭下拉框
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.custom-select')) {
+                    document.querySelectorAll('.select-dropdown').forEach(dd => {
+                        dd.classList.remove('active');
+                        dd.previousElementSibling.classList.remove('active');
+                    });
+                }
+            });
+        });
+
+        // 数据标签多选功能
+        function toggleDataTagDropdown(fieldId) {
+            const dropdown = document.getElementById(fieldId + '-dropdown');
+            const trigger = dropdown.previousElementSibling;
+            
+            // 关闭其他下拉框
+            document.querySelectorAll('.select-dropdown').forEach(dd => {
+                if (dd !== dropdown) {
+                    dd.classList.remove('active');
+                    dd.previousElementSibling.classList.remove('active');
+                }
+            });
+            
+            // 切换当前下拉框
+            dropdown.classList.toggle('active');
+            trigger.classList.toggle('active');
+        }
+
+        // 更新数据标签显示
+        function updateDataTags(fieldId) {
+            const tagsContainer = document.getElementById(fieldId + '-tags');
+            const checkboxes = document.querySelectorAll(`#${fieldId}-dropdown input[type="checkbox"]:checked`);
+            
+            if (checkboxes.length === 0) {
+                tagsContainer.innerHTML = '<span class="placeholder-text">请选择数据标签</span>';
+            } else {
+                let tagsHtml = '';
+                checkboxes.forEach(checkbox => {
+                    const label = checkbox.nextElementSibling.textContent;
+                    const value = checkbox.value;
+                    tagsHtml += `<span class="tag-item">${label}<span class="tag-remove" onclick="removeDataTag('${fieldId}', '${value}')">×</span></span>`;
+                });
+                tagsContainer.innerHTML = tagsHtml;
+            }
+        }
+
+        // 移除数据标签
+        function removeDataTag(fieldId, value) {
+            const checkbox = document.querySelector(`#${fieldId}-dropdown input[value="${value}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateDataTags(fieldId);
+            }
+        }
+
+        // 获取选中的数据标签值
+        function getSelectedDataTags(fieldId) {
+            const checkboxes = document.querySelectorAll(`#${fieldId}-dropdown input[type="checkbox"]:checked`);
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // 设置数据标签值
+        function setDataTags(fieldId, values) {
+            // 先清空所有选择
+            const checkboxes = document.querySelectorAll(`#${fieldId}-dropdown input[type="checkbox"]`);
+            checkboxes.forEach(cb => cb.checked = false);
+            
+            // 设置选中的值
+            if (values && values.length > 0) {
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`#${fieldId}-dropdown input[value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+            
+            updateDataTags(fieldId);
+        }
+
+        // 返回资产类型列表
+        function goBackToList() {
+            // 检查是否有未保存的更改
+            if (hasUnsavedChanges()) {
+                if (confirm('您有未保存的更改，确定要离开吗？')) {
+                    window.location.href = 'asset-type-list.html';
+                }
+            } else {
+                window.location.href = 'asset-type-list.html';
+            }
+        }
+
+        // 检查是否有未保存的更改
+        function hasUnsavedChanges() {
+            // 这里可以添加检查逻辑，比如检查表单是否有修改
+            // 暂时返回false，表示没有未保存的更改
+            return false;
+        }
     </script>
+
+    <!-- 解除继承关系确认弹窗 -->
+    <div class="modal-backdrop" id="remove-inheritance-modal">
+        <div class="modal" style="width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">解除继承关系</h3>
+                <button class="modal-close" id="remove-inheritance-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-content">
+                        <h4>确认解除继承关系？</h4>
+                        <p>解除继承关系后：</p>
+                        <ul>
+                            <li>当前继承自父类型的所有属性、规则等信息都将保留</li>
+                            <li>父类型后续的变更将不再同步更新到此类型</li>
+                            <li>此操作不可撤销，请谨慎操作</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="remove-inheritance-cancel">取消</button>
+                <button class="btn btn-danger" id="remove-inheritance-confirm">确认解除</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

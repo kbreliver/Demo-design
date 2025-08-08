@@ -5646,7 +5646,13 @@
                 document.getElementById('drawer-variable-range').value = data.valueRange || data.range || '';
                 document.getElementById('drawer-variable-default-value').value = data.defaultValue || '';
                 document.getElementById('drawer-variable-format-validation').value = data.formatValidation || '';
-                document.getElementById('drawer-variable-category').value = data.category || '';
+                // 设置数据标签（自定义多选组件）
+                const categoryArray = (data.category || '').split(',').filter(c => c.trim());
+                const categoryCheckboxes = document.querySelectorAll('#drawer-variable-category-dropdown input[type="checkbox"]');
+                categoryCheckboxes.forEach(cb => {
+                    cb.checked = categoryArray.includes(cb.value);
+                });
+                updateDataTagDisplay('drawer-variable-category');
                 document.getElementById('drawer-variable-business-category').value = data.businessCategory || '';
                 document.getElementById('drawer-variable-display-order').value = data.displayOrder || '';
                 document.getElementById('drawer-variable-description').value = data.description || '';
@@ -5668,7 +5674,13 @@
                 document.getElementById('drawer-variable-range').value = data.valueRange || data.range || '';
                 document.getElementById('drawer-variable-default-value').value = data.defaultValue || '';
                 document.getElementById('drawer-variable-format-validation').value = data.formatValidation || '';
-                document.getElementById('drawer-variable-category').value = data.category || '';
+                // 设置数据标签（自定义多选组件）
+                const categoryArray = (data.category || '').split(',').filter(c => c.trim());
+                const categoryCheckboxes = document.querySelectorAll('#drawer-variable-category-dropdown input[type="checkbox"]');
+                categoryCheckboxes.forEach(cb => {
+                    cb.checked = categoryArray.includes(cb.value);
+                });
+                updateDataTagDisplay('drawer-variable-category');
                 document.getElementById('drawer-variable-business-category').value = data.businessCategory || '';
                 document.getElementById('drawer-variable-display-order').value = data.displayOrder || '';
                 document.getElementById('drawer-variable-description').value = data.description || '';
@@ -5690,7 +5702,12 @@
                 document.getElementById('drawer-variable-range').value = '';
                 document.getElementById('drawer-variable-default-value').value = '';
                 document.getElementById('drawer-variable-format-validation').value = '';
-                document.getElementById('drawer-variable-category').value = '';
+                // 清空数据标签（自定义多选组件）
+                const categoryCheckboxes = document.querySelectorAll('#drawer-variable-category-dropdown input[type="checkbox"]');
+                categoryCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+                updateDataTagDisplay('drawer-variable-category');
                 document.getElementById('drawer-variable-business-category').value = '';
                 document.getElementById('drawer-variable-display-order').value = '';
                 document.getElementById('drawer-variable-description').value = '';
@@ -5720,9 +5737,12 @@
             const name = document.getElementById('drawer-variable-name').value;
             const code = document.getElementById('drawer-variable-code').value;
             const dataType = document.getElementById('drawer-variable-data-type').value;
-            const category = document.getElementById('drawer-variable-category').value;
             
-            if (!name.trim() || !code.trim() || !dataType || !category) {
+            // 获取数据标签的值（自定义多选组件）
+            const categoryCheckboxes = document.querySelectorAll('#drawer-variable-category-dropdown input[type="checkbox"]:checked');
+            const category = Array.from(categoryCheckboxes).map(cb => cb.value).join(',');
+            
+            if (!name.trim() || !code.trim() || !dataType) {
                 alert('请填写必填字段');
                 return;
             }
@@ -5762,7 +5782,6 @@
                 'drawer-variable-range',
                 'drawer-variable-default-value',
                 'drawer-variable-format-validation',
-                'drawer-variable-category',
                 'drawer-variable-business-category',
                 'drawer-variable-display-order',
                 'drawer-variable-description',
@@ -5789,7 +5808,6 @@
                 'drawer-variable-range',
                 'drawer-variable-default-value',
                 'drawer-variable-format-validation',
-                'drawer-variable-category',
                 'drawer-variable-business-category',
                 'drawer-variable-display-order',
                 'drawer-variable-description',
@@ -5802,6 +5820,26 @@
                 if (field) {
                     field.disabled = true;
                 }
+            });
+        }
+
+        // 更新数据标签显示
+        function updateDataTagDisplay(containerId) {
+            const container = document.getElementById(containerId + '-tags');
+            const dropdown = document.getElementById(containerId + '-dropdown');
+            const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+            
+            if (checkboxes.length === 0) {
+                container.innerHTML = '<span class="placeholder-text">请选择数据标签</span>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            checkboxes.forEach(checkbox => {
+                const tag = document.createElement('span');
+                tag.className = 'selected-tag';
+                tag.textContent = checkbox.nextElementSibling.textContent;
+                container.appendChild(tag);
             });
         }
 

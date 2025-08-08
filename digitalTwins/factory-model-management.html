@@ -3389,6 +3389,14 @@
                                                                          </el-select>
                                                                      </template>
                                                                  </el-table-column>
+                                                                 <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                                     <template slot-scope="scope">
+                                                                         <el-switch 
+                                                                             v-model="scope.row.enabled"
+                                                                             @change="toggleCollectionVariableStatus(scope.row)">
+                                                                         </el-switch>
+                                                                     </template>
+                                                                 </el-table-column>
                                                                  <el-table-column label="数据绑定" min-width="80" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <el-button 
@@ -3413,7 +3421,7 @@
                                                                          <span v-else>{{ scope.row.dataTransform }}</span>
                                                                      </template>
                                                                  </el-table-column> -->
-                                                                 <el-table-column label="操作" min-width="120" fixed="right">
+                                                                  <el-table-column label="操作" min-width="120" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <div v-if="scope.row.isEditing">
                                                                              <el-button 
@@ -3439,13 +3447,6 @@
                                                                                  style="padding: 0; margin-right: 8px;">
                                                                                  <i class="el-icon-edit" style="color: #409EFF; font-size: 16px;"></i>
                                                                              </el-button>
-                                                                             <el-button 
-                                                                                 type="text" 
-                                                                                 size="mini" 
-                                                                                 @click="deleteRow(scope.row)"
-                                                                                 style="padding: 0;">
-                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
-                                                                             </el-button>
                                                                          </div>
                                                                      </template>
                                                                  </el-table-column>
@@ -3461,7 +3462,7 @@
                                                  <div class="tab-content">
                                                      <div v-if="selectedAssetType && selectedAssetType.businessProperties">
                                                          <div class="business-properties-table">
-                                                             <el-table 
+                                                              <el-table 
                                                                  :data="selectedAssetType.businessProperties" 
                                                                  size="small" 
                                                                  stripe
@@ -3553,7 +3554,15 @@
                                                                          </div>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column label="绑定数据" min-width="80" fixed="right">
+                                                                  <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                                      <template slot-scope="scope">
+                                                                          <el-switch 
+                                                                              v-model="scope.row.enabled"
+                                                                              @change="toggleBusinessPropertyStatus(scope.row)">
+                                                                          </el-switch>
+                                                                      </template>
+                                                                  </el-table-column>
+                                                                  <el-table-column label="绑定数据" min-width="80" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <el-button 
                                                                              type="text" 
@@ -3565,7 +3574,7 @@
                                                                          </el-button>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column label="操作" min-width="120" fixed="right">
+                                                                  <el-table-column label="操作" min-width="120" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <div v-if="scope.row.isEditing">
                                                                              <el-button 
@@ -3590,13 +3599,6 @@
                                                                                  @click="enterBusinessPropertyEditMode(scope.row)"
                                                                                  style="padding: 0; margin-right: 8px;">
                                                                                  <i class="el-icon-edit" style="color: #409EFF; font-size: 16px;"></i>
-                                                                             </el-button>
-                                                                             <el-button 
-                                                                                 type="text" 
-                                                                                 size="mini" 
-                                                                                 @click="deleteBusinessProperty(scope.row)"
-                                                                                 style="padding: 0;">
-                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
                                                                              </el-button>
                                                                          </div>
                                                                      </template>
@@ -3656,7 +3658,7 @@
                                                         
                                                         <!-- 指标列表 -->
                                                         <div class="metrics-table-container">
-                                                            <el-table 
+                                                             <el-table 
                                                                 :data="filteredIndicators" 
                                                                 size="small"
                                                                 stripe
@@ -3841,13 +3843,6 @@
                                                                                  style="padding: 0; margin-right: 8px;">
                                                                                  <i class="el-icon-setting" style="color: #409EFF; font-size: 16px;"></i>
                                                                              </el-button>
-                                                                             <el-button 
-                                                                                 type="text" 
-                                                                                 size="mini" 
-                                                                                 @click="deleteIndicator(scope.row)"
-                                                                                 style="padding: 0;">
-                                                                                 <i class="el-icon-delete" style="color: #F56C6C; font-size: 16px;"></i>
-                                                                             </el-button>
                                                                          </div>
                                                                     </template>
                                                                 </el-table-column>
@@ -3980,18 +3975,12 @@
                                                                         </el-select>
                                                                     </template>
                                                                 </el-table-column>
-                                                                <el-table-column prop="enabled" label="状态" min-width="80">
+                                                                <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
                                                                     <template slot-scope="scope">
-                                                                        <div v-if="!scope.row.isEditing">
-                                                                            <el-tag size="small" :type="scope.row.enabled ? 'success' : 'info'">
-                                                                                {{ scope.row.enabled ? '启用' : '禁用' }}
-                                                                            </el-tag>
-                                                                        </div>
                                                                         <el-switch 
-                                                                            v-else 
                                                                             v-model="scope.row.enabled"
-                                                                            active-text="启用"
-                                                                            inactive-text="禁用">
+                                                                           
+                                                                            @change="toggleEventRuleStatus(scope.row)">
                                                                         </el-switch>
                                                                     </template>
                                                                 </el-table-column>
@@ -4081,14 +4070,7 @@
                                                                                 @click="toggleEventRuleStatus(scope.row)"
                                                                                 :title="scope.row.enabled ? '停用' : '启用'">
                                                                             </el-button>
-                                                                            <el-button 
-                                                                                v-if="!isViewingAsset"
-                                                                                type="text" 
-                                                                                size="small" 
-                                                                                icon="el-icon-delete"
-                                                                                @click="deleteEventRule(scope.row)"
-                                                                                title="删除">
-                                                                            </el-button>
+
                                                                         </div>
                                                                         <div v-else>
                                                                             <el-button 
@@ -5475,6 +5457,14 @@
                                                     <el-table-column prop="category" label="分类" min-width="80"></el-table-column>
                                                     <el-table-column prop="unit" label="单位" min-width="60"></el-table-column>
                                                     <el-table-column prop="description" label="描述" min-width="120"></el-table-column>
+                                                    <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                        <template slot-scope="scope">
+                                                            <el-switch 
+                                                                v-model="scope.row.enabled"
+                                                                @change="toggleIndicatorStatus(scope.row)">
+                                                            </el-switch>
+                                                        </template>
+                                                    </el-table-column>
                                                 </el-table>
                                             </div>
                                         </div>
@@ -8630,6 +8620,60 @@
                         this.$message.success(`已${action}事件规则"${ruleName}"`);
                     }).catch(() => {
                         // 用户取消操作
+                    });
+                },
+
+                // 切换采集参数状态
+                toggleCollectionVariableStatus(variable) {
+                    const action = variable.enabled ? '停用' : '启用';
+                    const variableName = variable.name;
+                    
+                    this.$confirm(`确定要${action}采集参数"${variableName}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        variable.enabled = !variable.enabled;
+                        this.$message.success(`已${action}采集参数"${variableName}"`);
+                    }).catch(() => {
+                        // 用户取消操作，恢复开关状态
+                        variable.enabled = !variable.enabled;
+                    });
+                },
+
+                // 切换业务属性状态
+                toggleBusinessPropertyStatus(property) {
+                    const action = property.enabled ? '停用' : '启用';
+                    const propertyName = property.name;
+                    
+                    this.$confirm(`确定要${action}业务属性"${propertyName}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        property.enabled = !property.enabled;
+                        this.$message.success(`已${action}业务属性"${propertyName}"`);
+                    }).catch(() => {
+                        // 用户取消操作，恢复开关状态
+                        property.enabled = !property.enabled;
+                    });
+                },
+
+                // 切换指标状态
+                toggleIndicatorStatus(indicator) {
+                    const action = indicator.enabled ? '停用' : '启用';
+                    const indicatorName = indicator.name;
+                    
+                    this.$confirm(`确定要${action}指标"${indicatorName}"吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        indicator.enabled = !indicator.enabled;
+                        this.$message.success(`已${action}指标"${indicatorName}"`);
+                    }).catch(() => {
+                        // 用户取消操作，恢复开关状态
+                        indicator.enabled = !indicator.enabled;
                     });
                 },
 

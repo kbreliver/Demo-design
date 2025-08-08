@@ -374,14 +374,14 @@
                     <!-- <p class="page-description">{{ pageDescription }}</p> -->
                 </div>
                 <div class="header-actions">
+                    <el-button @click="goBack" icon="el-icon-arrow-left">
+                        返回列表
+                    </el-button>
                     <el-button type="success" @click="instantiateFactoryModel" icon="el-icon-s-management">
                         实例化工厂模型
                     </el-button>
                     <el-button type="primary" @click="saveTemplate" icon="el-icon-document-checked">
                         保存模板
-                    </el-button>
-                    <el-button @click="goBack" icon="el-icon-arrow-left">
-                        返回列表
                     </el-button>
                 </div>
             </div>

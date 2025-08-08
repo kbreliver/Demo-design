@@ -1065,6 +1065,32 @@
             height: 24px;
         }
 
+        /* 配置检查弹框样式 */
+        .config-check-dialog {
+            width: 600px !important;
+        }
+        
+        .config-check-dialog .el-message-box__header {
+            padding: 20px 20px 10px;
+        }
+        
+        .config-check-dialog .el-message-box__content {
+            padding: 10px 20px 20px;
+        }
+        
+        .config-check-dialog .el-message-box__message {
+            padding: 0;
+        }
+        
+        /* 隐藏Element UI自动添加的警告图标 */
+        .config-check-dialog .el-message-box__status {
+            display: none !important;
+        }
+        
+        .config-check-dialog .el-message-box__message p:before {
+            display: none !important;
+        }
+        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .header-content {
@@ -3190,20 +3216,13 @@
                                         </div>
                                         <div class="form-row">
                                             <div class="form-group">
-                                                <!-- <label>接入状态</label> -->
                                                 <div class="status-display">
-                                                    <span class="status-text">接入状态：</span>
-                                                    <el-tooltip :content="assetForm.connectionStatus" placement="top">
-                                                        <i :class="assetForm.connectionStatus === '已接入' ? 'el-icon-link status-icon status-connected' : 'el-icon-scissors status-icon status-disconnected'"></i>
-                                                    </el-tooltip>
-                                                    <el-button 
-                                                        v-if="!isViewingAsset"
-                                                        :type="assetForm.connectionStatus === '已接入' ? 'danger' : 'success'"
-                                                        size="mini" 
-                                                        :icon="assetForm.connectionStatus === '已接入' ? 'el-icon-close' : 'el-icon-link'"
-                                                        @click="toggleAssetFormConnection">
-                                                        {{ assetForm.connectionStatus === '已接入' ? '断开' : '接入' }}
-                                                    </el-button>
+                                                    <span class="status-text">启用状态：</span>
+                                                    <el-switch 
+                                                        v-model="assetEnabled"
+                                                        :disabled="isViewingAsset"
+                                                        @change="toggleAssetEnabled">
+                                                    </el-switch>
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -4098,6 +4117,7 @@
                                                     </div>
                                                 </div>
                                             </el-tab-pane>
+                                            
                                             <el-tab-pane name="alarms">
                                                 <template slot="label">
                                                     <span>告警</span>
@@ -4241,7 +4261,7 @@
                                             </el-tab-pane>
                                             <el-tab-pane name="video">
                                                 <template slot="label">
-                                                    <span>视频</span>
+                                                    <span>视频接入</span>
                                                 </template>
                                                 <div class="tab-content">
                                                     <div v-if="selectedAssetType">
@@ -6158,6 +6178,8 @@
                     connectionStatus: '待接入',
                     runningStatus: '-'
                 },
+                // 启用状态（替代接入状态的开关）
+                assetEnabled: false,
                 assetTypes: [
                     { value: 'cement_mill_001', label: '水泥磨机', staticProperties: [
                         { name: '设备名称', code: 'device_name', type: '字符串', required: true, defaultValue: '' },
@@ -6169,19 +6191,19 @@
                     ], dynamicVariables: [
                         { name: '设备温度', code: 'device_temp', type: '数值', unit: '℃', precision: '0.1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
                         { name: '运行压力', code: 'operating_pressure', type: '数值', unit: 'MPa', precision: '0.01', frequency: '5秒', dataCategory: '压力', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '累计运行时间', code: 'total_runtime', type: '数值', unit: '小时', precision: '1', frequency: '1分钟', dataCategory: '台时', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '最后一个值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '设备状态', code: 'device_status', type: '枚举', unit: '', precision: '', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false }
+                        { name: '累计运行时间', code: 'total_runtime', type: '数值', unit: '小时', precision: '1', frequency: '1分钟', dataCategory: '台时', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '最后一个值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '设备状态', code: 'device_status', type: '枚举', unit: '', precision: '', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true }
                     ], businessProperties: [
-                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '' },
-                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '' }
+                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true }
                     ], indicators: [
-                        { id: 1, name: '设备效率', code: 'device_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '设备运行效率，基于实际产量与理论产量的比值', formula: '[实际产量] / [理论产量] * 100', participatingVariables: ['实际产量', '理论产量'] },
-                        { id: 2, name: '单位能耗', code: 'unit_energy_consumption', category: '环保指标', direction: 'negative', unit: 'kWh/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的能源消耗量', formula: '[总能耗] / [总产量]', participatingVariables: ['总能耗', '总产量'] },
-                        { id: 3, name: '故障率', code: 'failure_rate', category: '安全指标', direction: 'negative', unit: '次/月', calculationCycle: 'month', updateFrequency: '1d', description: '设备故障次数与运行时间的比值', formula: '[故障次数] / [运行时间] * 100', participatingVariables: ['故障次数'] }
+                        { id: 1, name: '设备效率', code: 'device_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '设备运行效率，基于实际产量与理论产量的比值', formula: '[实际产量] / [理论产量] * 100', participatingVariables: ['实际产量', '理论产量'], enabled: true },
+                        { id: 2, name: '单位能耗', code: 'unit_energy_consumption', category: '环保指标', direction: 'negative', unit: 'kWh/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的能源消耗量', formula: '[总能耗] / [总产量]', participatingVariables: ['总能耗', '总产量'], enabled: true },
+                        { id: 3, name: '故障率', code: 'failure_rate', category: '安全指标', direction: 'negative', unit: '次/月', calculationCycle: 'month', updateFrequency: '1d', description: '设备故障次数与运行时间的比值', formula: '[故障次数] / [运行时间] * 100', participatingVariables: ['故障次数'], enabled: true }
                     ], eventRules: [
                         { id: 1, name: '温度超限告警', code: 'temp_over_limit', category: '安全告警', description: '设备温度超过设定阈值时触发告警', triggerCondition: '设备温度 > 80', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 2, name: '压力异常检测', code: 'pressure_abnormal', category: '运行监控', description: '运行压力超出正常范围时触发事件', triggerCondition: '运行压力 < 0.5 OR 运行压力 > 2.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
@@ -6207,21 +6229,21 @@
                         { name: '窑体长度', code: 'kiln_length', type: '数值', required: false, defaultValue: '' },
                         { name: '窑体直径', code: 'kiln_diameter', type: '数值', required: false, defaultValue: '' }
                     ], dynamicVariables: [
-                        { name: '窑体温度', code: 'kiln_temperature', type: '数值', unit: '℃', precision: '1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '转速', code: 'rotation_speed', type: '数值', unit: 'rpm', precision: '0.1', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '燃料消耗', code: 'fuel_consumption', type: '数值', unit: 'kg/h', precision: '0.1', frequency: '1分钟', dataCategory: '能耗', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '平均值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '运行状态', code: 'operation_status', type: '枚举', unit: '', precision: '', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false }
+                        { name: '窑体温度', code: 'kiln_temperature', type: '数值', unit: '℃', precision: '1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '转速', code: 'rotation_speed', type: '数值', unit: 'rpm', precision: '0.1', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '燃料消耗', code: 'fuel_consumption', type: '数值', unit: 'kg/h', precision: '0.1', frequency: '1分钟', dataCategory: '能耗', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '平均值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '运行状态', code: 'operation_status', type: '枚举', unit: '', precision: '', frequency: '1秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true }
                     ], businessProperties: [
-                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '' },
-                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '' }
+                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true }
                     ], indicators: [
-                        { id: 1, name: '窑体效率', code: 'kiln_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑运行效率，基于实际产量与设计产能的比值', formula: '[实际产量] / [设计产能] * 100', participatingVariables: ['实际产量', '设计产能'] },
-                        { id: 2, name: '热效率', code: 'thermal_efficiency', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑热效率，反映能源利用效率', formula: '[有效热量] / [总热量] * 100', participatingVariables: ['有效热量', '总热量'] },
-                        { id: 3, name: '燃料消耗率', code: 'fuel_consumption_rate', category: '环保指标', direction: 'negative', unit: 'kg/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的燃料消耗量', formula: '[燃料消耗] / [产量]', participatingVariables: ['燃料消耗', '产量'] }
+                        { id: 1, name: '窑体效率', code: 'kiln_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑运行效率，基于实际产量与设计产能的比值', formula: '[实际产量] / [设计产能] * 100', participatingVariables: ['实际产量', '设计产能'], enabled: true },
+                        { id: 2, name: '热效率', code: 'thermal_efficiency', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '回转窑热效率，反映能源利用效率', formula: '[有效热量] / [总热量] * 100', participatingVariables: ['有效热量', '总热量'], enabled: true },
+                        { id: 3, name: '燃料消耗率', code: 'fuel_consumption_rate', category: '环保指标', direction: 'negative', unit: 'kg/吨', calculationCycle: 'day', updateFrequency: '1d', description: '单位产品的燃料消耗量', formula: '[燃料消耗] / [产量]', participatingVariables: ['燃料消耗', '产量'], enabled: true }
                     ], eventRules: [
                         { id: 1, name: '窑体温度超限', code: 'kiln_temp_over_limit', category: '安全告警', description: '窑体温度超过安全阈值时触发告警', triggerCondition: '窑体温度 > 1200', severity: 'high', enabled: true, actions: ['发送告警', '记录日志', '自动降温'], isEditing: false },
                         { id: 2, name: '转速异常检测', code: 'speed_abnormal', category: '运行监控', description: '窑体转速超出正常范围时触发事件', triggerCondition: '转速 < 0.5 OR 转速 > 3.0', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
@@ -6245,19 +6267,19 @@
                         { name: '容量', code: 'capacity', type: '数值', required: false, defaultValue: '' },
                         { name: '材质', code: 'material', type: '字符串', required: false, defaultValue: '' }
                     ], dynamicVariables: [
-                        { name: '料位高度', code: 'material_level', type: '数值', unit: 'm', precision: '0.01', frequency: '5秒', dataCategory: '产量', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '料仓温度', code: 'bin_temperature', type: '数值', unit: '℃', precision: '0.1', frequency: '10秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '10秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '湿度', code: 'humidity', type: '数值', unit: '%', precision: '0.1', frequency: '30秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '30秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false }
+                        { name: '料位高度', code: 'material_level', type: '数值', unit: 'm', precision: '0.01', frequency: '5秒', dataCategory: '产量', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '料仓温度', code: 'bin_temperature', type: '数值', unit: '℃', precision: '0.1', frequency: '10秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '10秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '湿度', code: 'humidity', type: '数值', unit: '%', precision: '0.1', frequency: '30秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '30秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true }
                     ], businessProperties: [
-                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '' },
-                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '' }
+                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true }
                     ], indicators: [
-                        { id: 1, name: '料位利用率', code: 'material_level_utilization', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '料仓料位利用率，反映存储效率', formula: '[当前料位] / [最大料位] * 100', participatingVariables: ['当前料位', '最大料位'] },
-                        { id: 2, name: '存储周转率', code: 'storage_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '原料存储周转率，反映库存管理效率', formula: '[出料量] / [平均库存]', participatingVariables: ['出料量', '平均库存'] }
+                        { id: 1, name: '料位利用率', code: 'material_level_utilization', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '料仓料位利用率，反映存储效率', formula: '[当前料位] / [最大料位] * 100', participatingVariables: ['当前料位', '最大料位'], enabled: true },
+                        { id: 2, name: '存储周转率', code: 'storage_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '原料存储周转率，反映库存管理效率', formula: '[出料量] / [平均库存]', participatingVariables: ['出料量', '平均库存'], enabled: true }
                     ], eventRules: [
                         { id: 1, name: '料位低告警', code: 'material_level_low', category: '库存告警', description: '料位低于安全库存时触发告警', triggerCondition: '料位高度 < 1.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 2, name: '料位高告警', code: 'material_level_high', category: '库存告警', description: '料位接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
@@ -6280,20 +6302,20 @@
                         { name: '冷却能力', code: 'cooling_capacity', type: '数值', required: false, defaultValue: '' },
                         { name: '篦板数量', code: 'grate_plate_count', type: '数值', required: false, defaultValue: '' }
                     ], dynamicVariables: [
-                        { name: '冷却水温度', code: 'cooling_water_temp', type: '数值', unit: '℃', precision: '0.1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '出料温度', code: 'discharge_temp', type: '数值', unit: '℃', precision: '0.1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '篦板速度', code: 'grate_speed', type: '数值', unit: 'm/min', precision: '0.01', frequency: '5秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '冷却效率', code: 'cooling_efficiency', type: '数值', unit: '%', precision: '0.1', frequency: '1分钟', dataCategory: '运转率', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '平均值', dataBinding: '', dataTransform: '', isEditing: false }
+                        { name: '冷却水温度', code: 'cooling_water_temp', type: '数值', unit: '℃', precision: '0.1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '出料温度', code: 'discharge_temp', type: '数值', unit: '℃', precision: '0.1', frequency: '1秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '1秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '篦板速度', code: 'grate_speed', type: '数值', unit: 'm/min', precision: '0.01', frequency: '5秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '冷却效率', code: 'cooling_efficiency', type: '数值', unit: '%', precision: '0.1', frequency: '1分钟', dataCategory: '运转率', businessCategory: '生产', valueCycle: '1分钟', valueMethod: '平均值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true }
                     ], businessProperties: [
-                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '' },
-                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '' }
+                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true }
                     ], indicators: [
-                        { id: 1, name: '冷却效率', code: 'cooling_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '篦冷机冷却效率，反映冷却效果', formula: '([进料温度] - [出料温度]) / [进料温度] * 100', participatingVariables: ['进料温度', '出料温度'] },
-                        { id: 2, name: '冷却水利用率', code: 'cooling_water_utilization', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '冷却水利用效率', formula: '[有效冷却量] / [总冷却量] * 100', participatingVariables: ['有效冷却量', '总冷却量'] }
+                        { id: 1, name: '冷却效率', code: 'cooling_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '篦冷机冷却效率，反映冷却效果', formula: '([进料温度] - [出料温度]) / [进料温度] * 100', participatingVariables: ['进料温度', '出料温度'], enabled: true },
+                        { id: 2, name: '冷却水利用率', code: 'cooling_water_utilization', category: '环保指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '冷却水利用效率', formula: '[有效冷却量] / [总冷却量] * 100', participatingVariables: ['有效冷却量', '总冷却量'], enabled: true }
                     ], eventRules: [
                         { id: 1, name: '冷却水温度异常', code: 'cooling_water_temp_abnormal', category: '安全告警', description: '冷却水温度异常时触发告警', triggerCondition: '冷却水温度 > 50', severity: 'high', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 2, name: '出料温度异常', code: 'discharge_temp_abnormal', category: '质量监控', description: '出料温度超出正常范围时触发事件', triggerCondition: '出料温度 > 100', severity: 'medium', enabled: true, actions: ['发送通知', '记录日志'], isEditing: false },
@@ -6316,19 +6338,19 @@
                         { name: '容量', code: 'capacity', type: '数值', required: false, defaultValue: '' },
                         { name: '材质', code: 'material', type: '字符串', required: false, defaultValue: '' }
                     ], dynamicVariables: [
-                        { name: '料位高度', code: 'material_level', type: '数值', unit: 'm', precision: '0.01', frequency: '5秒', dataCategory: '产量', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '仓内温度', code: 'bin_temperature', type: '数值', unit: '℃', precision: '0.1', frequency: '10秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '10秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false },
-                        { name: '湿度', code: 'humidity', type: '数值', unit: '%', precision: '0.1', frequency: '30秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '30秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false }
+                        { name: '料位高度', code: 'material_level', type: '数值', unit: 'm', precision: '0.01', frequency: '5秒', dataCategory: '产量', businessCategory: '生产', valueCycle: '5秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '仓内温度', code: 'bin_temperature', type: '数值', unit: '℃', precision: '0.1', frequency: '10秒', dataCategory: '温度', businessCategory: '生产', valueCycle: '10秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true },
+                        { name: '湿度', code: 'humidity', type: '数值', unit: '%', precision: '0.1', frequency: '30秒', dataCategory: '运行', businessCategory: '生产', valueCycle: '30秒', valueMethod: '瞬时值', dataBinding: '', dataTransform: '', isEditing: false, enabled: true }
                     ], businessProperties: [
-                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '' },
-                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '' },
-                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '' }
+                        { name: '生产计划', code: 'production_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '质量标准', code: 'quality_standard', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '维护计划', code: 'maintenance_plan', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '设备负责人', code: 'device_manager', type: '字符串', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '采购成本', code: 'purchase_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true },
+                        { name: '运营成本', code: 'operation_cost', type: '数值', required: false, defaultValue: '', dataSource: '', enabled: true }
                     ], indicators: [
-                        { id: 1, name: '库存周转率', code: 'inventory_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '水泥库存周转率，反映销售效率', formula: '[出库量] / [平均库存]', participatingVariables: ['出库量', '平均库存'] },
-                        { id: 2, name: '存储效率', code: 'storage_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '水泥仓存储效率', formula: '[当前库存] / [最大容量] * 100', participatingVariables: ['当前库存', '最大容量'] }
+                        { id: 1, name: '库存周转率', code: 'inventory_turnover_rate', category: '经济指标', direction: 'positive', unit: '次/天', calculationCycle: 'day', updateFrequency: '1d', description: '水泥库存周转率，反映销售效率', formula: '[出库量] / [平均库存]', participatingVariables: ['出库量', '平均库存'], enabled: true },
+                        { id: 2, name: '存储效率', code: 'storage_efficiency', category: '性能指标', direction: 'positive', unit: '%', calculationCycle: 'hour', updateFrequency: '1h', description: '水泥仓存储效率', formula: '[当前库存] / [最大容量] * 100', participatingVariables: ['当前库存', '最大容量'], enabled: true }
                     ], eventRules: [
                         { id: 1, name: '库存低告警', code: 'inventory_low', category: '库存告警', description: '水泥库存低于安全库存时触发告警', triggerCondition: '料位高度 < 1.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
                         { id: 2, name: '库存满告警', code: 'inventory_full', category: '库存告警', description: '水泥库存接近满仓时触发告警', triggerCondition: '料位高度 > 9.0', severity: 'medium', enabled: true, actions: ['发送告警', '记录日志'], isEditing: false },
@@ -6611,7 +6633,7 @@
 
                 // 视频页签标签
                 videoTabLabel() {
-                    return '视频';
+                    return '视频接入';
                 },
 
                 // 当前资产类型
@@ -6951,6 +6973,28 @@
                             this.updateTabStyles();
                         }
                     });
+
+                    // 根据连接状态初始化启用开关
+                    this.assetEnabled = this.assetForm.connectionStatus === '已接入';
+
+                    // 初始化各列表的启停默认值（缺省时默认启用）
+                    if (this.selectedAssetType) {
+                        if (Array.isArray(this.selectedAssetType.dynamicVariables)) {
+                            this.selectedAssetType.dynamicVariables.forEach(item => {
+                                if (typeof item.enabled === 'undefined') this.$set(item, 'enabled', true);
+                            });
+                        }
+                        if (Array.isArray(this.selectedAssetType.businessProperties)) {
+                            this.selectedAssetType.businessProperties.forEach(item => {
+                                if (typeof item.enabled === 'undefined') this.$set(item, 'enabled', true);
+                            });
+                        }
+                        if (Array.isArray(this.selectedAssetType.indicators)) {
+                            this.selectedAssetType.indicators.forEach(item => {
+                                if (typeof item.enabled === 'undefined') this.$set(item, 'enabled', true);
+                            });
+                        }
+                    }
                 },
 
                 // 监听表单数据变化，更新页签样式
@@ -6991,6 +7035,171 @@
 
             },
             methods: {
+                // 检查设备启用前的配置完整性
+                checkAssetEnableRequirements() {
+                    const checkResults = [];
+                    
+                    // 1. 检查基础信息必填项
+                    const basicInfoIssues = [];
+                    if (!this.assetForm.assetType) {
+                        basicInfoIssues.push('请选择资产类型');
+                    }
+                    if (!this.assetForm.deviceCode) {
+                        basicInfoIssues.push('请填写资产编号');
+                    }
+                    if (!this.assetForm.deviceName) {
+                        basicInfoIssues.push('请填写资产名称');
+                    }
+                    if (basicInfoIssues.length > 0) {
+                        checkResults.push({
+                            category: '基础信息',
+                            issues: basicInfoIssues
+                        });
+                    }
+                    
+                    // 2. 检查静态属性必填项
+                    const staticPropIssues = [];
+                    if (this.selectedAssetType && this.selectedAssetType.staticProperties) {
+                        this.selectedAssetType.staticProperties.forEach(prop => {
+                            if (prop.required && !prop.defaultValue) {
+                                staticPropIssues.push(`请填写必填属性：${prop.name}`);
+                            }
+                        });
+                    }
+                    if (staticPropIssues.length > 0) {
+                        checkResults.push({
+                            category: '静态属性',
+                            issues: staticPropIssues
+                        });
+                    }
+                    
+                    // 3. 检查已启用的采集参数是否已绑定数据源
+                    const collectionIssues = [];
+                    if (this.selectedAssetType && this.selectedAssetType.dynamicVariables) {
+                        this.selectedAssetType.dynamicVariables.forEach(variable => {
+                            if (variable.enabled && !variable.dataBinding) {
+                                collectionIssues.push(`已启用的采集参数"${variable.name}"未绑定数据源`);
+                            }
+                        });
+                    }
+                    if (collectionIssues.length > 0) {
+                        checkResults.push({
+                            category: '采集参数',
+                            issues: collectionIssues
+                        });
+                    }
+                    
+                    // 4. 检查已启用的业务属性是否已绑定数据源
+                    const businessPropIssues = [];
+                    if (this.selectedAssetType && this.selectedAssetType.businessProperties) {
+                        this.selectedAssetType.businessProperties.forEach(property => {
+                            if (property.enabled && !property.dataSource) {
+                                businessPropIssues.push(`已启用的业务属性"${property.name}"未绑定数据源`);
+                            }
+                        });
+                    }
+                    if (businessPropIssues.length > 0) {
+                        checkResults.push({
+                            category: '业务属性',
+                            issues: businessPropIssues
+                        });
+                    }
+                    
+                    // 5. 检查已启用的指标是否已配置计算公式
+                    const indicatorIssues = [];
+                    if (this.selectedAssetType && this.selectedAssetType.indicators) {
+                        this.selectedAssetType.indicators.forEach(indicator => {
+                            if (indicator.enabled && !indicator.formula) {
+                                indicatorIssues.push(`已启用的指标【"${indicator.name}"】未配置计算公式`);
+                            }
+                        });
+                    }
+                    if (indicatorIssues.length > 0) {
+                        checkResults.push({
+                            category: '指标',
+                            issues: indicatorIssues
+                        });
+                    }
+                    
+                    // 6. 检查已启用的事件规则是否已配置完成
+                    const eventRuleIssues = [];
+                    if (this.selectedAssetType && this.selectedAssetType.eventRules) {
+                        this.selectedAssetType.eventRules.forEach(rule => {
+                            if (rule.enabled && (!rule.triggerCondition || !rule.actions || rule.actions.length === 0)) {
+                                eventRuleIssues.push(`已启用的事件规则"${rule.name}"配置不完整`);
+                            }
+                        });
+                    }
+                    if (eventRuleIssues.length > 0) {
+                        checkResults.push({
+                            category: '事件规则',
+                            issues: eventRuleIssues
+                        });
+                    }
+                    
+                    return checkResults;
+                },
+
+                // 启用状态开关切换：同步原“接入状态”与运行状态
+                toggleAssetEnabled(val) {
+                    // val: true 表示启用（已接入），false 表示停用（待接入）
+                    const nextStatus = val ? '已接入' : '待接入';
+                    const action = val ? '启用' : '停用';
+                    
+                    // 启用前检查配置完整性
+                    if (val) {
+                        const checkResults = this.checkAssetEnableRequirements();
+                        if (checkResults.length > 0) {
+                            let tableHtml = '<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
+                            tableHtml += '<thead><tr style="background-color: #f5f7fa;">';
+                            tableHtml += '<th style="border: 1px solid #dcdfe6; padding: 8px; text-align: left; width: 30%;">检查对象</th>';
+                            tableHtml += '<th style="border: 1px solid #dcdfe6; padding: 8px; text-align: left; width: 70%;">检查项结果</th>';
+                            tableHtml += '</tr></thead><tbody>';
+                            
+                            checkResults.forEach(result => {
+                                tableHtml += '<tr>';
+                                tableHtml += `<td style="border: 1px solid #dcdfe6; padding: 8px; font-weight: bold;">${result.category}</td>`;
+                                tableHtml += `<td style="border: 1px solid #dcdfe6; padding: 8px;">`;
+                                result.issues.forEach((issue, index) => {
+                                    tableHtml += `${index + 1}. ${issue}<br>`;
+                                });
+                                tableHtml += '</td>';
+                                tableHtml += '</tr>';
+                            });
+                            
+                            tableHtml += '</tbody></table>';
+                            
+                            this.$alert(`<i class="el-icon-warning" style="color: #E6A23C; margin-right: 8px;"></i><strong>启用设备前，您还有以下配置需要完成：</strong>${tableHtml}`, '配置检查', {
+                                confirmButtonText: '我知道了',
+                                type: 'info',
+                                dangerouslyUseHTMLString: true,
+                                customClass: 'config-check-dialog'
+                            });
+                            // 恢复开关状态
+                            this.assetEnabled = false;
+                            return;
+                        }
+                    }
+                    
+                    this.$confirm(`确定要${action}${assetForm.deviceName}吗？`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        this.assetForm.connectionStatus = nextStatus;
+                        this.assetEnabled = val;
+                        this.assetForm.runningStatus = val ? '运行中' : '-';
+                        // 若存在当前编辑资产，保持布尔兼容
+                        if (this.currentEditingAsset) {
+                            this.currentEditingAsset.isConnected = val;
+                        }
+                        this.$message.success(`设备${action}成功`);
+                    }).catch(() => {
+                        // 恢复开关原状态
+                        this.assetEnabled = !val;
+                        this.$message.info('已取消操作');
+                    });
+                },
                 // 在computed中查找父节点的辅助方法
                 findParentNodeInComputed(node) {
                     if (!node) return null;
@@ -8198,7 +8407,7 @@
                 // 切换资产表单连接状态
                 toggleAssetFormConnection() {
                     const action = this.assetForm.connectionStatus === '已接入' ? '断开' : '接入';
-                    this.$confirm(`确定要${action}设备吗？`, '提示', {
+                    this.$confirm(`确定要${action}【${assetForm.deviceName}】吗？`, '提示', {
                         confirmButtonText: '确定',
                         cancelButtonText: '取消',
                         type: 'info'
@@ -8273,6 +8482,7 @@
                         valueMethod: '瞬时值',
                         dataBinding: '',
                         dataTransform: '',
+                         enabled: true,
                         isEditing: true,
                         isNew: true
                     };
@@ -8356,6 +8566,7 @@
                             valueMethod: '瞬时值',
                             dataBinding: `${dataPoint.dataSource}.${dataPoint.code}`,
                             dataTransform: '',
+                             enabled: true,
                             isEditing: false,
                             isNew: false
                         };
@@ -9921,6 +10132,7 @@
                         participatingVariables: [],
                         formula: '',
                         description: '',
+                         enabled: true,
                         isEditing: true, // 标记为编辑模式
                         isNew: true // 标记为新行
                     };

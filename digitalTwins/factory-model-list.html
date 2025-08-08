@@ -568,6 +568,11 @@
                                 <el-tag size="small" type="info">{{ scope.row.templateName }}</el-tag>
                             </template>
                         </el-table-column>
+                         <el-table-column prop="orgName" label="所属组织" width="160">
+                             <template slot-scope="scope">
+                                 <span style="color:#606266;">{{ scope.row.orgName || '-' }}</span>
+                             </template>
+                         </el-table-column>
                         <el-table-column prop="status" label="状态" width="100">
                             <template slot-scope="scope">
                                 <span class="status-tag" :class="getStatusClass(scope.row.status)">
@@ -728,7 +733,61 @@
                     </el-pagination>
                 </div>
             </div>
-        </div>
+        
+        <!-- 创建模型对话框（置于应用根节点内） -->
+        <el-dialog
+            title="创建工厂模型"
+            :visible.sync="createDialogVisible"
+            width="520px"
+            :close-on-click-modal="false">
+            <el-form :model="createForm" label-width="110px">
+                <el-form-item label="所属组织">
+                    <!-- 使用 reference 插槽作为触发器，避免指令在 el-input 上的兼容问题 -->
+                    <el-popover
+                        ref="orgTreePopover"
+                        placement="bottom-start"
+                        width="320"
+                        trigger="click"
+                        :append-to-body="true">
+                        <el-tree
+                            :data="orgTree"
+                            node-key="id"
+                            :props="orgTreeProps"
+                            :expand-on-click-node="false"
+                            default-expand-all
+                            @node-click="onOrgNodeClick">
+                            <span slot-scope="{ data }">
+                                <i :class="getOrgIcon(data.type)" style="margin-right:6px;color:#909399;"></i>
+                                <span>{{ data.name }}</span>
+                                <el-tag v-if="data.type" size="mini" style="margin-left:8px;" type="info">{{ data.type }}</el-tag>
+                            </span>
+                        </el-tree>
+                        <el-input
+                            slot="reference"
+                            v-model="createForm.orgName"
+                            placeholder="请选择工厂"
+                            readonly>
+                            <i slot="suffix" class="el-input__icon el-icon-arrow-down"></i>
+                        </el-input>
+                    </el-popover>
+                </el-form-item>
+
+                <el-form-item label="工厂模型模板">
+                    <el-select v-model="createForm.template" placeholder="请选择工厂模型模板" style="width:100%">
+                        <el-option
+                            v-for="tpl in templateOptions"
+                            :key="tpl.value"
+                            :label="tpl.label"
+                            :value="tpl.value"/>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="closeCreateDialog">取消</el-button>
+                <el-button type="primary" @click="confirmCreateModel">确定</el-button>
+            </div>
+        </el-dialog>
+
     </div>
 
     <!-- 导入模型对话框 -->
@@ -770,6 +829,8 @@
             <el-button type="primary" @click="confirmImport" :disabled="!importForm.file">确定导入</el-button>
         </div>
     </el-dialog>
+
+    <!-- 创建模型对话框（已移至#app容器内部） -->
 
     <!-- 引入Vue和Element UI -->
     <script src="assets/vue.js"></script>
@@ -813,6 +874,37 @@
                 },
                 fileList: [],
                 uploadAction: '#', // 实际项目中应该指向真实的上传接口
+
+                // 创建模型对话框
+                createDialogVisible: false,
+                createForm: {
+                    orgId: '',
+                    orgName: '',
+                    orgType: '',
+                    template: ''
+                },
+                // 组织树（示例）
+                orgTree: [
+                    {
+                        id: 'group-1', name: '华东集团', type: '集团', children: [
+                            { id: 'company-1', name: '上海公司', type: '公司', children: [
+                                { id: 'factory-101', name: '上海一厂', type: '工厂' },
+                                { id: 'factory-102', name: '上海二厂', type: '工厂' }
+                            ]},
+                            { id: 'company-2', name: '杭州公司', type: '公司', children: [
+                                { id: 'factory-201', name: '杭州一厂', type: '工厂' }
+                            ]}
+                        ]
+                    },
+                    {
+                        id: 'group-2', name: '华南集团', type: '集团', children: [
+                            { id: 'company-3', name: '广州公司', type: '公司', children: [
+                                { id: 'factory-301', name: '广州一厂', type: '工厂' }
+                            ]}
+                        ]
+                    }
+                ],
+                orgTreeProps: { label: 'name', children: 'children' },
                 
                 // 模型数据
                 models: [
@@ -821,6 +913,7 @@
                         name: '华东水泥生产基地',
                         description: '华东地区主要水泥生产基地，年产水泥500万吨，包含完整的熟料生产线、粉磨系统和包装系统。',
                         templateName: '标准水泥工厂模板',
+                             orgName: '上海一厂',
                         status: 'enabled',
                         creator: '张工程师',
                         createTime: '2024-01-15 10:30:00',
@@ -833,6 +926,7 @@
                         name: '华南智能水泥厂',
                         description: '华南地区智能化水泥工厂，采用先进的DCS控制系统和自动化设备，年产水泥300万吨。',
                         templateName: '智能水泥工厂模板',
+                             orgName: '广州一厂',
                         status: 'enabled',
                         creator: '李技术员',
                         createTime: '2024-01-10 09:15:00',
@@ -845,6 +939,7 @@
                         name: '华北绿色水泥厂',
                         description: '华北地区环保型水泥工厂，注重节能减排和可持续发展，采用余热发电和脱硝技术。',
                         templateName: '绿色水泥工厂模板',
+                             orgName: '北京一厂',
                         status: 'draft',
                         creator: '王环保师',
                         createTime: '2024-01-12 11:00:00',
@@ -857,6 +952,7 @@
                         name: '西部水泥生产基地',
                         description: '西部地区水泥生产基地，年产水泥200万吨，采用新型干法工艺，注重环保和节能。',
                         templateName: '新型干法水泥模板',
+                             orgName: '西安一厂',
                         status: 'disabled',
                         creator: '赵工程师',
                         createTime: '2024-01-08 15:30:00',
@@ -869,6 +965,7 @@
                         name: '东北重工业水泥厂',
                         description: '东北地区重工业水泥工厂，专注于高标号水泥生产，包含大型回转窑和粉磨设备。',
                         templateName: '重工业水泥模板',
+                             orgName: '沈阳一厂',
                         status: 'enabled',
                         creator: '孙技术员',
                         createTime: '2024-01-05 08:45:00',
@@ -966,6 +1063,29 @@
                 toggleSearch() {
                     this.searchExpanded = !this.searchExpanded;
                 },
+                // 组织图标
+                getOrgIcon(type) {
+                    switch (type) {
+                        case '集团': return 'el-icon-office-building';
+                        case '公司': return 'el-icon-s-home';
+                        case '工厂': return 'el-icon-s-platform';
+                        default: return 'el-icon-s-order';
+                    }
+                },
+                // 选择组织节点（仅允许工厂）
+                onOrgNodeClick(node) {
+                    if (node.type !== '工厂') {
+                        this.$message.warning('只能选择“工厂”类型的节点');
+                        return;
+                    }
+                    this.createForm.orgId = node.id;
+                    this.createForm.orgName = node.name;
+                    this.createForm.orgType = node.type;
+                    // 关闭弹出层（ElementUI 正确关闭方式）
+                    if (this.$refs.orgTreePopover && this.$refs.orgTreePopover.doClose) {
+                        this.$refs.orgTreePopover.doClose();
+                    }
+                },
                 
                 // 重置搜索条件
                 resetSearch() {
@@ -992,8 +1112,31 @@
                 
                 // 创建模型
                 createModel() {
-                    this.$message.info('跳转到创建模型页面...');
-                    // 这里可以跳转到创建页面或打开创建对话框
+                    this.createDialogVisible = true;
+                    this.createForm = { orgId: '', orgName: '', orgType: '', template: '' };
+                },
+                // 关闭创建对话框
+                closeCreateDialog() {
+                    this.createDialogVisible = false;
+                },
+                // 确认创建
+                confirmCreateModel() {
+                    if (!this.createForm.orgId || this.createForm.orgType !== '工厂') {
+                        this.$message.warning('请选择所属组织（工厂）');
+                        return;
+                    }
+                    if (!this.createForm.template) {
+                        this.$message.warning('请选择工厂模型模板');
+                        return;
+                    }
+                    // 构造跳转URL参数
+                    const orgId = encodeURIComponent(this.createForm.orgId);
+                    const orgName = encodeURIComponent(this.createForm.orgName);
+                    const template = encodeURIComponent(this.createForm.template);
+                    // 关闭弹窗
+                    this.createDialogVisible = false;
+                    // 跳转到模型管理页面（新建模式）
+                    window.location.href = `factory-model-management.html?action=create&orgId=${orgId}&orgName=${orgName}&template=${template}`;
                 },
                 
                 // 显示导入对话框

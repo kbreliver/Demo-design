@@ -690,6 +690,53 @@
             </div>
         </div>
 
+        <!-- 创建工厂模型对话框 -->
+        <el-dialog
+            title="创建工厂模型"
+            :visible.sync="createDialogVisible"
+            width="520px"
+            :close-on-click-modal="false">
+            <el-form :model="createForm" label-width="110px">
+                <el-form-item label="所属组织">
+                    <el-popover
+                        ref="orgTreePopover"
+                        placement="bottom-start"
+                        width="320"
+                        trigger="click"
+                        :append-to-body="true">
+                        <el-tree
+                            :data="orgTree"
+                            node-key="id"
+                            :props="orgTreeProps"
+                            :expand-on-click-node="false"
+                            default-expand-all
+                            @node-click="onOrgNodeClick">
+                            <span slot-scope="{ data }">
+                                <i :class="getOrgIcon(data.type)" style="margin-right:6px;color:#909399;"></i>
+                                <span>{{ data.name }}</span>
+                                <el-tag v-if="data.type" size="mini" style="margin-left:8px;" type="info">{{ data.type }}</el-tag>
+                            </span>
+                        </el-tree>
+                        <el-input
+                            slot="reference"
+                            v-model="createForm.orgName"
+                            placeholder="请选择工厂"
+                            readonly>
+                            <i slot="suffix" class="el-input__icon el-icon-arrow-down"></i>
+                        </el-input>
+                    </el-popover>
+                </el-form-item>
+
+                <el-form-item label="工厂模型模板">
+                    <el-input v-model="createForm.templateName" placeholder="模板名称" readonly></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="closeCreateDialog">取消</el-button>
+                <el-button type="primary" @click="confirmCreateModel">确定</el-button>
+            </div>
+        </el-dialog>
+
         <!-- 模板详情对话框 -->
         <el-dialog 
             :title="selectedTemplate ? selectedTemplate.name : '模板详情'" 
@@ -1022,7 +1069,38 @@
             selectedCategory: 'all',
             selectedStatus: 'all',
             templateDetailVisible: false,
-            selectedTemplate: null
+            selectedTemplate: null,
+            // 创建模型对话框
+            createDialogVisible: false,
+            createForm: {
+                orgId: '',
+                orgName: '',
+                orgType: '',
+                template: '', // 存放模板ID
+                templateName: '' // 仅用于展示
+            },
+            // 组织树（示例）
+            orgTree: [
+                {
+                    id: 'group-1', name: '华东集团', type: '集团', children: [
+                        { id: 'company-1', name: '上海公司', type: '公司', children: [
+                            { id: 'factory-101', name: '上海一厂', type: '工厂' },
+                            { id: 'factory-102', name: '上海二厂', type: '工厂' }
+                        ]},
+                        { id: 'company-2', name: '杭州公司', type: '公司', children: [
+                            { id: 'factory-201', name: '杭州一厂', type: '工厂' }
+                        ]}
+                    ]
+                },
+                {
+                    id: 'group-2', name: '华南集团', type: '集团', children: [
+                        { id: 'company-3', name: '广州公司', type: '公司', children: [
+                            { id: 'factory-301', name: '广州一厂', type: '工厂' }
+                        ]}
+                    ]
+                }
+            ],
+            orgTreeProps: { label: 'name', children: 'children' }
         };
 
         // 逻辑层 - Vue实例
@@ -1067,6 +1145,28 @@
                 }
             },
             methods: {
+                // 组织图标
+                getOrgIcon(type) {
+                    switch (type) {
+                        case '集团': return 'el-icon-office-building';
+                        case '公司': return 'el-icon-s-home';
+                        case '工厂': return 'el-icon-s-platform';
+                        default: return 'el-icon-s-order';
+                    }
+                },
+                // 选择组织节点（仅允许工厂）
+                onOrgNodeClick(node) {
+                    if (node.type !== '工厂') {
+                        this.$message.warning('只能选择“工厂”类型的节点');
+                        return;
+                    }
+                    this.createForm.orgId = node.id;
+                    this.createForm.orgName = node.name;
+                    this.createForm.orgType = node.type;
+                    if (this.$refs.orgTreePopover && this.$refs.orgTreePopover.doClose) {
+                        this.$refs.orgTreePopover.doClose();
+                    }
+                },
                 // 获取标签样式类
                 getTagClass(category) {
                     return category === 'standard' ? 'tag-standard' : 'tag-custom';
@@ -1151,24 +1251,33 @@
                         this.$message.warning('只有已发布的模板才能创建工厂模型。');
                         return;
                     }
-                    this.$confirm(`确定要使用模板"${template.name}"创建新的工厂模型吗？`, '提示', {
-                        confirmButtonText: '确定',
-                        cancelButtonText: '取消',
-                        type: 'info'
-                    }).then(() => {
-                        // 增加实例化数量
-                        if (!template.instanceCount) {
-                            template.instanceCount = 0;
-                        }
-                        template.instanceCount++;
-                        
-                        this.$message.success(`已使用模板"${template.name}"创建工厂模型`);
-                        // 这里可以跳转到工厂模型管理页面
-                        console.log('创建工厂模型:', template);
-                        // window.location.href = 'factory-model-management.html?template=' + template.id + '&action=create';
-                    }).catch(() => {
-                        this.$message.info('已取消创建工厂模型');
-                    });
+                    // 打开创建对话框并预填模板
+                    this.createDialogVisible = true;
+                    this.createForm.orgId = '';
+                    this.createForm.orgName = '';
+                    this.createForm.orgType = '';
+                    this.createForm.template = template.id;
+                    this.createForm.templateName = template.name;
+                },
+                // 关闭创建对话框
+                closeCreateDialog() {
+                    this.createDialogVisible = false;
+                },
+                // 确认创建
+                confirmCreateModel() {
+                    if (!this.createForm.orgId || this.createForm.orgType !== '工厂') {
+                        this.$message.warning('请选择所属组织（工厂）');
+                        return;
+                    }
+                    if (!this.createForm.template) {
+                        this.$message.warning('模板信息缺失');
+                        return;
+                    }
+                    const orgId = encodeURIComponent(this.createForm.orgId);
+                    const orgName = encodeURIComponent(this.createForm.orgName);
+                    const template = encodeURIComponent(this.createForm.template);
+                    this.createDialogVisible = false;
+                    window.location.href = `factory-model-management.html?action=create&orgId=${orgId}&orgName=${orgName}&template=${template}`;
                 },
 
                 // 复制模板

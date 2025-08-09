@@ -91,6 +91,37 @@
             min-height: 300px;
         }
 
+        /* 左右结构布局 */
+        .hierarchy-split {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .hierarchy-left {
+            flex: 1;
+            min-width: 0;
+        }
+        .hierarchy-right {
+            width: 620px;
+            max-width: 45%;
+        }
+        .node-detail-card {
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+        }
+        .node-detail-header {
+            padding: 16px 16px 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .node-detail-body {
+            padding: 16px;
+        }
+
         .node-item {
             display: flex;
             align-items: center;
@@ -434,95 +465,141 @@
                     层级结构管理
                 </div>
 
-                <div class="hierarchy-actions">
-                    <el-button @click="expandAll" icon="el-icon-s-unfold">
-                        全部展开
-                    </el-button>
-                    <el-button @click="collapseAll" icon="el-icon-s-fold">
-                        全部收起
-                    </el-button>
-                </div>
+                <div class="hierarchy-split">
+                    <div class="hierarchy-left">
+                        <div class="hierarchy-actions">
+                            <el-button @click="expandAll" icon="el-icon-s-unfold">
+                                全部展开
+                            </el-button>
+                            <el-button @click="collapseAll" icon="el-icon-s-fold">
+                                全部收起
+                            </el-button>
+                        </div>
 
-                <div class="hierarchy-tree" 
-                     @dragover="onDragOver" 
-                     @drop="onDrop"
-                     @dragleave="onDragLeave">
-                    <div v-if="!hasRootNode" class="empty-hierarchy">
-                        <i class="el-icon-folder-opened"></i>
-                        <div class="empty-hierarchy-text">暂无层级结构，请添加根节点</div>
-                        <el-button type="primary" @click="addRootNode">
-                            添加第一个节点
-                        </el-button>
-                    </div>
-                    
-                    <div v-else>
-                        <div 
-                            v-for="(node, index) in visibleNodes" 
-                            :key="node.id"
-                            class="node-item"
-                            :class="[
-                                'node-level-' + node.level, 
-                                { 
-                                    selected: selectedNode === node,
-                                    dragging: draggingNode === node,
-                                    'drag-over': dragOverNode === node
-                                }
-                            ]"
-                            :data-node-id="node.id"
-                            :draggable="true"
-                            @click="selectNode(node)"
-                            @dragstart="onDragStart($event, node)"
-                            @dragend="onDragEnd">
-                            
-                            <i class="el-icon-rank drag-handle"></i>
-                            
-                            <i class="node-expand-icon"
-                               :class="[
-                                   hasChildren(node) ? (isExpanded(node) ? 'el-icon-arrow-down expanded' : 'el-icon-arrow-right') : 'leaf'
-                               ]"
-                               @click.stop="toggleExpand(node)">
-                            </i>
-                            
-                            <i class="node-icon" :class="getNodeIcon(node.type)"></i>
-                            
-                            <div class="node-content">
-                                <span class="node-name">{{ node.name }}</span>
-                                <span class="node-type">{{ node.type }}</span>
-                                <span class="node-description">{{ node.description }}</span>
+                        <div class="hierarchy-tree" 
+                             @dragover="onDragOver" 
+                             @drop="onDrop"
+                             @dragleave="onDragLeave">
+                            <div v-if="!hasRootNode" class="empty-hierarchy">
+                                <i class="el-icon-folder-opened"></i>
+                                <div class="empty-hierarchy-text">暂无层级结构，请添加根节点</div>
+                                <el-button type="primary" @click="addRootNode">
+                                    添加第一个节点
+                                </el-button>
                             </div>
                             
-                                                         <div class="node-actions">
-                                 <el-button 
-                                     type="text" 
-                                     size="mini" 
-                                     icon="el-icon-plus"
-                                     @click.stop="addChildNode(node)">
-                                     添加子节点
-                                 </el-button>
-                                 <el-button 
-                                     type="text" 
-                                     size="mini" 
-                                     icon="el-icon-edit"
-                                     @click.stop="editNode(node)">
-                                     编辑
-                                 </el-button>
-                                 <el-button 
-                                     type="text" 
-                                     size="mini" 
-                                     icon="el-icon-document-copy"
-                                     @click.stop="copyNode(node)"
-                                     style="color: #409eff;">
-                                     复制
-                                 </el-button>
-                                 <el-button 
-                                     type="text" 
-                                     size="mini" 
-                                     icon="el-icon-delete"
-                                     @click.stop="deleteNode(node)"
-                                     style="color: #f56c6c;">
-                                     删除
-                                 </el-button>
-                             </div>
+                            <div v-else>
+                                <div 
+                                    v-for="(node, index) in visibleNodes" 
+                                    :key="node.id"
+                                    class="node-item"
+                                    :class="[
+                                        'node-level-' + node.level, 
+                                        { 
+                                            selected: selectedNode === node,
+                                            dragging: draggingNode === node,
+                                            'drag-over': dragOverNode === node
+                                        }
+                                    ]"
+                                    :data-node-id="node.id"
+                                    :draggable="true"
+                                    @click="selectNode(node)"
+                                    @dragstart="onDragStart($event, node)"
+                                    @dragend="onDragEnd">
+                                    
+                                    <i class="el-icon-rank drag-handle"></i>
+                                    
+                                    <i class="node-expand-icon"
+                                       :class="[
+                                           hasChildren(node) ? (isExpanded(node) ? 'el-icon-arrow-down expanded' : 'el-icon-arrow-right') : 'leaf'
+                                       ]"
+                                       @click.stop="toggleExpand(node)">
+                                    </i>
+                                    
+                                    <i class="node-icon" :class="getNodeIcon(node.type)"></i>
+                                    
+                                    <div class="node-content">
+                                        <span class="node-name">{{ node.name }}</span>
+                                        <span class="node-type">{{ node.type }}</span>
+                                        <span class="node-description">{{ node.description }}</span>
+                                    </div>
+                                    
+                                    <div class="node-actions">
+                                        <el-button 
+                                            type="text" 
+                                            size="mini" 
+                                            icon="el-icon-plus"
+                                            @click.stop="addChildNode(node)">
+                                            添加子节点
+                                        </el-button>
+                                        <el-button 
+                                            type="text" 
+                                            size="mini" 
+                                            icon="el-icon-edit"
+                                            style="display: none;"
+                                            @click.stop="editNode(node)">
+                                            编辑
+                                        </el-button>
+                                        <el-button 
+                                            type="text" 
+                                            size="mini" 
+                                            icon="el-icon-document-copy"
+                                            @click.stop="copyNode(node)"
+                                            style="color: #409eff;">
+                                            复制
+                                        </el-button>
+                                        <el-button 
+                                            type="text" 
+                                            size="mini" 
+                                            icon="el-icon-delete"
+                                            @click.stop="deleteNode(node)"
+                                            style="color: #f56c6c;">
+                                            删除
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hierarchy-right">
+                        <div class="node-detail-card">
+                            <div class="node-detail-header">
+                                <div class="section-title"><i class="el-icon-edit"></i> {{ nodeDetailTitle }}</div>
+                                <el-button type="primary" size="mini" @click="saveNodeDetail" v-if="selectedNode">{{ nodeDetailTitle === '新增子节点' ? '添加子节点' : '保存' }}</el-button>
+                            </div>
+                            <div class="node-detail-body" v-if="selectedNode">
+                                <el-form :model="nodeDetail" label-width="100px">
+                                    <el-form-item label="节点名称" required>
+                                        <el-input v-model="nodeDetail.name" placeholder="请输入节点名称"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="节点编码" required>
+                                        <el-input v-model="nodeDetail.code" placeholder="请输入节点编码"></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="节点类型" required>
+                                        <el-select v-model="nodeDetail.type" placeholder="请选择节点类型" @change="onNodeTypeChange" style="width: 100%;">
+                                            <el-option 
+                                                v-for="type in availableNodeTypes" 
+                                                :key="type.value" 
+                                                :label="type.label" 
+                                                :value="type.value" />
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="资产类型">
+                                        <el-input v-model="nodeDetail.assetTypeDisplay" disabled></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="子节点类型">
+                                        <el-input v-model="nodeDetail.allowedChildrenDisplay" disabled></el-input>
+                                    </el-form-item>
+                                    <el-form-item label="描述">
+                                        <el-input type="textarea" v-model="nodeDetail.description" :rows="3" placeholder="请输入描述"></el-input>
+                                    </el-form-item>
+                                </el-form>
+                                
+                            </div>
+                            <div class="empty-hierarchy" v-else>
+                                <i class="el-icon-document"></i>
+                                <div class="empty-hierarchy-text">请选择左侧节点查看或编辑信息</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -680,6 +757,17 @@
                 type: '',
                 description: ''
             },
+            // 右侧节点详情（与所选节点联动）
+            nodeDetail: {
+                id: '',
+                name: '',
+                code: '',
+                type: '',
+                assetTypeDisplay: '生产车间',
+                allowedChildrenDisplay: '产线、设备',
+                description: ''
+            },
+            nodeDetailTitle: '节点信息',
             
             // 节点表单验证规则
             nodeFormRules: {
@@ -756,6 +844,92 @@
                 // 选择节点
                 selectNode(node) {
                     this.selectedNode = node;
+                    // 将当前节点同步到右侧详情
+                    this.nodeDetail = {
+                        id: node.id,
+                        name: node.name || '',
+                        code: node.code || '',
+                        type: node.type || '',
+                        assetTypeDisplay: this.getAssetTypeByNodeType(node.type),
+                        allowedChildrenDisplay: this.getAllowedChildrenByNodeType(node.type),
+                        description: node.description || ''
+                    };
+                    this.nodeDetailTitle = '节点信息';
+                },
+                // 点击添加子节点时，右侧进入“新增子节点”编辑态（不弹框）
+                addChildNode(parentNode) {
+                    this.editingNode = null;
+                    // 右侧详情复用编辑表单，预置默认值
+                    this.selectedNode = parentNode; // 维持选中态以显示右侧
+                    this.nodeDetail = {
+                        id: '',
+                        name: '',
+                        code: '',
+                        type: '',
+                        assetTypeDisplay: '-',
+                        allowedChildrenDisplay: '-',
+                        description: ''
+                    };
+                    this.nodeDetailTitle = '新增子节点';
+                },
+                // 节点类型变更联动展示字段
+                onNodeTypeChange() {
+                    this.nodeDetail.assetTypeDisplay = this.getAssetTypeByNodeType(this.nodeDetail.type);
+                    this.nodeDetail.allowedChildrenDisplay = this.getAllowedChildrenByNodeType(this.nodeDetail.type);
+                },
+                // 根据节点类型返回资产类型展示
+                getAssetTypeByNodeType(type) {
+                    const map = {
+                        '工厂': '工厂',
+                        '车间': '生产车间',
+                        '工段': '生产工段',
+                        '产线': '产线',
+                        '设备': '设备',
+                        '实验室': '实验室',
+                        '仓库': '仓库'
+                    };
+                    return map[type] || '-';
+                },
+                // 根据节点类型返回允许子节点类型展示
+                getAllowedChildrenByNodeType(type) {
+                    const map = {
+                        '工厂': '车间、产线、设备',
+                        '车间': '工段、设备',
+                        '工段': '设备',
+                        '产线': '工段、设备',
+                        '设备': '-',
+                        '实验室': '设备',
+                        '仓库': '设备'
+                    };
+                    return map[type] || '-';
+                },
+                // 保存右侧节点详情回写到层级数据
+                saveNodeDetail() {
+                    if (this.nodeDetailTitle === '新增子节点') {
+                        if (!this.selectedNode) return;
+                        const newId = 'node_' + Date.now();
+                        const newNode = {
+                            id: newId,
+                            name: this.nodeDetail.name || '未命名节点',
+                            code: this.nodeDetail.code || '',
+                            type: this.nodeDetail.type || '',
+                            description: this.nodeDetail.description || '',
+                            parentId: this.selectedNode.id,
+                            level: (this.selectedNode.level || 1) + 1
+                        };
+                        this.hierarchyNodes.push(newNode);
+                        this.$message.success('子节点已添加');
+                        // 切回“节点信息”标题并指向新节点
+                        this.selectNode(newNode);
+                        return;
+                    }
+                    const target = this.hierarchyNodes.find(n => n.id === this.nodeDetail.id);
+                    if (!target) return;
+                    target.name = this.nodeDetail.name;
+                    target.code = this.nodeDetail.code;
+                    target.type = this.nodeDetail.type;
+                    target.description = this.nodeDetail.description;
+                    this.$message.success('节点信息已更新');
                 },
                 
                 // 检查节点是否有子节点

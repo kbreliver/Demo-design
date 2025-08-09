@@ -3651,7 +3651,7 @@
                                                                          </el-select>
                                                                      </template>
                                                                  </el-table-column>
-                                                                 <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                                 <el-table-column prop="enabled" label="启用" min-width="80" fixed="right">
                                                                      <template slot-scope="scope">
                                                                          <el-switch 
                                                                              v-model="scope.row.enabled"
@@ -3816,7 +3816,7 @@
                                                                          </div>
                                                                      </template>
                                                                  </el-table-column>
-                                                                  <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                                  <el-table-column prop="enabled" label="启用" min-width="80" fixed="right">
                                                                       <template slot-scope="scope">
                                                                           <el-switch 
                                                                               v-model="scope.row.enabled"
@@ -4237,7 +4237,7 @@
                                                                         </el-select>
                                                                     </template>
                                                                 </el-table-column>
-                                                                <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                                <el-table-column prop="enabled" label="启用" min-width="80" fixed="right">
                                                                     <template slot-scope="scope">
                                                                         <el-switch 
                                                                             v-model="scope.row.enabled"
@@ -5768,7 +5768,7 @@
                                                     <el-table-column prop="category" label="分类" min-width="80"></el-table-column>
                                                     <el-table-column prop="unit" label="单位" min-width="60"></el-table-column>
                                                     <el-table-column prop="description" label="描述" min-width="120"></el-table-column>
-                                                    <el-table-column prop="enabled" label="启停" min-width="80" fixed="right">
+                                                    <el-table-column prop="enabled" label="启用" min-width="80" fixed="right">
                                                         <template slot-scope="scope">
                                                             <el-switch 
                                                                 v-model="scope.row.enabled"
@@ -8502,9 +8502,10 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const modelId = urlParams.get('id') || 'model-1';
                     const mode = urlParams.get('mode') || 'view';
+                    const action = urlParams.get('action') || '';
                     
-                    this.isEditMode = mode === 'edit';
-                    this.isReadOnly = mode === 'view';
+                    this.isEditMode = action === 'create' || mode === 'edit';
+                    this.isReadOnly = !(action === 'create' || mode === 'edit');
                     
                     const modelData = this.getModelDataById(modelId);
                     if (modelData) {
@@ -11370,16 +11371,17 @@
 
             },
             mounted() {
-                // 检查URL参数，确定是否进入编辑模式
+                // 检查URL参数，确定是否进入编辑/创建模式
                 const urlParams = new URLSearchParams(window.location.search);
                 const mode = urlParams.get('mode');
+                const action = urlParams.get('action');
                 const modelId = urlParams.get('id');
                 
-                if (mode === 'edit') {
+                if (mode === 'edit' || action === 'create') {
                     this.isEditMode = true;
                     this.isReadOnly = false;
-                    this.pageTitle = '编辑工厂模型';
-                    this.pageDescription = '编辑工厂数字孪生模型信息';
+                    this.pageTitle = action === 'create' ? '创建工厂模型' : '编辑工厂模型';
+                    this.pageDescription = action === 'create' ? '新建工厂数字孪生模型' : '编辑工厂数字孪生模型信息';
                 } else {
                     this.isEditMode = false;
                     this.isReadOnly = true;
@@ -11391,6 +11393,19 @@
                 if (modelId) {
                     console.log('加载模型ID:', modelId);
                     this.loadModelData(modelId);
+                } else if (action === 'create') {
+                    // 创建模式下，按URL参数预填基础信息
+                    const orgName = urlParams.get('orgName');
+                    const template = urlParams.get('template');
+                    if (orgName) {
+                        this.modelInfo.organization = decodeURIComponent(orgName);
+                    }
+                    if (template) {
+                        // 模板ID转展示名：此处先直接展示ID，实际项目可做映射
+                        this.modelInfo.templateName = decodeURIComponent(template);
+                    }
+                    // 草稿初始状态
+                    this.modelInfo.status = 'draft';
                 }
                 
                 this.filterNodes(); // 初始化过滤

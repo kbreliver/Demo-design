@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Design - 设计文件导航中心</title>
+    <title>原型设计 - 设计文件导航中心</title>
     <style>
         * {
             margin: 0;
@@ -12,28 +12,36 @@
         }
 
         body {
-            font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 1000px;
+            width: 90%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 40px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
+            padding: 2rem;
+            text-align: center;
         }
 
         .header h1 {
             font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
 
         .header p {
@@ -41,164 +49,187 @@
             opacity: 0.9;
         }
 
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+        .content {
+            padding: 2rem;
         }
 
-        .nav-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+        .project-section {
+            margin-bottom: 2rem;
         }
 
-        .nav-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .nav-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-        .card-header {
+        .project-title {
+            font-size: 1.5rem;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
         }
 
-        .card-icon {
-            width: 50px;
-            height: 50px;
+        .project-title .icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 0.5rem;
+            fill: currentColor;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .file-item {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
             border-radius: 12px;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 24px;
-            color: white;
+            justify-content: space-between;
         }
 
-        .digital-twin-icon {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: #4f46e5;
         }
 
-        .ai-icon {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
+        .file-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
         }
 
-        .component-icon {
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-        }
-
-        .card-title {
-            font-size: 1.4rem;
+        .file-title {
+            display: flex;
+            align-items: center;
+            color: #1e293b;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: #333;
+            margin-right: 1rem;
         }
 
-        .card-description {
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.6;
+        .file-title .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.5rem;
+            fill: #4f46e5;
         }
 
-        .link-list {
-            list-style: none;
+        .file-path {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin-left: auto;
+            white-space: nowrap;
         }
 
-        .link-item {
-            margin-bottom: 12px;
-        }
-
-        .link-item a {
-            display: block;
-            padding: 12px 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #495057;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .link-item a:hover {
-            background: #e9ecef;
-            color: #667eea;
-            border-left-color: #667eea;
-            transform: translateX(5px);
-        }
-
-        .link-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .link-desc {
+        .file-description {
+            color: #64748b;
             font-size: 0.9rem;
-            color: #6c757d;
+            margin-top: 0.2rem;
         }
 
         .footer {
             text-align: center;
-            color: white;
-            opacity: 0.8;
-            margin-top: 40px;
-        }
-
-        .tech-stack {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .tech-stack h3 {
-            color: white;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .tech-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .tech-tag {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 1.5rem;
+            color: #64748b;
             font-size: 0.9rem;
-            backdrop-filter: blur(5px);
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .usage-tips {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .usage-tips h3 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .usage-tips ul {
+            color: #475569;
+            margin-left: 1.5rem;
+        }
+
+        /* 全局检索区域样式 */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1rem 0 2rem 0;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            /* 提升吸附时的层次感 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .search-input {
+            flex: 1;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        }
+
+        .search-clear {
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #334155;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .search-clear:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .search-stats {
+            color: #64748b;
+            font-size: 14px;
+            white-space: nowrap;
         }
 
         @media (max-width: 768px) {
-            .nav-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .header h1 {
                 font-size: 2rem;
             }
             
-            .container {
-                padding: 15px;
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .file-path {
+                margin-left: 0;
+                margin-top: 0.5rem;
             }
         }
     </style>
@@ -206,186 +237,278 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨 Demo Design</h1>
-            <p>设计文件导航中心 - 综合性设计演示项目</p>
+            <h1>🚀 设计原型导航</h1>
+            <p>设计文件导航中心</p>
         </div>
 
-        <div class="nav-grid">
-            <!-- 数字孪生系统 -->
-            <div class="nav-card">
-                <div class="card-header">
-                    <div class="card-icon digital-twin-icon">🏭</div>
-                    <h2 class="card-title">数字孪生系统</h2>
-                </div>
-                <p class="card-description">
-                    水泥工厂3D可视化数字孪生平台，提供实时数据监控、资产管理和可视化看板功能。
-                </p>
-                <ul class="link-list">
-                    <li class="link-item">
-                        <a href="digitalTwins/cement_factory_digital_twin.html">
-                            <div class="link-title">🏭 水泥工厂数字孪生</div>
-                            <div class="link-desc">3D可视化工厂模型与实时数据监控</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/factory-model-management.html">
-                            <div class="link-title">📋 工厂模型管理</div>
-                            <div class="link-desc">工厂模型创建、编辑和管理功能</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/asset-type-management.html">
-                            <div class="link-title">🏷️ 资产类型管理</div>
-                            <div class="link-desc">资产类型定义和属性配置</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/data-point-management.html">
-                            <div class="link-title">📊 数据点位管理</div>
-                            <div class="link-desc">数据点位配置和实时数据绑定</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/data-source-management.html">
-                            <div class="link-title">🔗 数据源管理</div>
-                            <div class="link-desc">数据源配置和连接管理</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/variable-group-mgt.html">
-                            <div class="link-title">📝 变量组管理</div>
-                            <div class="link-desc">属性变量组定义和管理</div>
-                        </a>
-                    </li>
-                </ul>
+        <div class="content">
+
+
+            <!-- 全局检索 -->
+            <div class="search-bar" role="search" aria-label="页面检索">
+                <input id="globalSearchInput" class="search-input" type="text" placeholder="搜索页面标题或路径，支持空格分词" aria-label="搜索页面标题或路径">
+                <button id="clearSearchBtn" class="search-clear" type="button" title="清空检索">清空</button>
+                <div class="search-stats"><span id="searchStats">共 0 项，匹配 0 项</span></div>
             </div>
 
-            <!-- AI智能运维界面 -->
-            <div class="nav-card">
-                <div class="card-header">
-                    <div class="card-icon ai-icon">🤖</div>
-                    <h2 class="card-title">AI智能运维</h2>
+            <!-- 数字孪生项目 -->
+            <div class="project-section">
+                <div class="project-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/>
+                    </svg>
+                    工厂模型
                 </div>
-                <p class="card-description">
-                    基于人工智能的智能运维界面，提供设备预测、故障诊断和智能决策支持。
-                </p>
-                <ul class="link-list">
-                    <li class="link-item">
-                        <a href="AIUI/aiDemo.html">
-                            <div class="link-title">🤖 AI智能演示</div>
-                            <div class="link-desc">AI智能交互界面演示</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="AIUI/equipmentPrediction.html">
-                            <div class="link-title">🔮 设备预测</div>
-                            <div class="link-desc">设备故障预测和健康状态分析</div>
-                        </a>
-                    </li>
-                </ul>
+                <div class="file-list">
+                    <a href="./digitalTwins/asset-type-list.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                资产类型-列表
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/asset-type-list.html</div>
+                    </a>
+                    
+                    <a href="./digitalTwins/asset-type-mgt.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                资产类型-管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/asset-type-mgt.html</div>
+                    </a>
+                    <a href="./digitalTwins/factory-model-templates.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                </svg>
+                                工厂模板-列表
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/factory-model-templates.html</div>
+                    </a>
+                    <a href="./digitalTwins/factory-model-template-management.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                </svg>
+                                工厂模板-管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/factory-model-template-management.html</div>
+                    </a>
+                    <a href="./digitalTwins/factory-model-list.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                工厂实例-列表
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/factory-model-list.html</div>
+                    </a>
+                    
+                    <a href="./digitalTwins/factory-model-management.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                工厂实例-管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/factory-model-management.html</div>
+                    </a>
+                    
+                    <a href="./digitalTwins/data-source-management.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                </svg>
+                                数据源管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/data-source-management.html</div>
+                    </a>
+                    
+                    <a href="./digitalTwins/data-point-management-vue.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                数据点位管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/data-point-management.html</div>
+                    </a>
+                    
+                    <a href="./digitalTwins/variable-group-mgt.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                变量组管理
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/variable-group-mgt.html</div>
+                    </a>
+
+                    <a href="./digitalTwins/cement_factory_digital_twin.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                水泥工厂数字孪生 （示例）
+                            </div>
+                        </div>
+                        <div class="file-path">./digitalTwins/cement_factory_digital_twin.html</div>
+                    </a>
+                    
+                    
+                </div>
             </div>
 
-            <!-- 前端组件库 -->
-            <div class="nav-card">
-                <div class="card-header">
-                    <div class="card-icon component-icon">🧩</div>
-                    <h2 class="card-title">前端组件库</h2>
+            <!-- AI用户界面项目 -->
+            <div class="project-section">
+                <div class="project-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/>
+                    </svg>
+                    AI用户界面
                 </div>
-                <p class="card-description">
-                    基于Element UI的现代化前端组件库，提供丰富的UI组件和交互功能。
-                </p>
-                <ul class="link-list">
-                    <li class="link-item">
-                        <a href="digitalTwins/test-data-binding.html">
-                            <div class="link-title">🔗 数据绑定测试</div>
-                            <div class="link-desc">实时数据绑定功能测试</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/test-formula-input-modes.html">
-                            <div class="link-title">📝 公式输入模式</div>
-                            <div class="link-desc">多种公式输入模式测试</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="digitalTwins/test-formula-input-modes-v2.html">
-                            <div class="link-title">📝 公式输入模式V2</div>
-                            <div class="link-desc">升级版公式输入模式</div>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- 简化版数字孪生 -->
-            <div class="nav-card">
-                <div class="card-header">
-                    <div class="card-icon digital-twin-icon">⚡</div>
-                    <h2 class="card-title">简化版数字孪生</h2>
+                <div class="file-list">
+                    <a href="./AIUI/aiDemo.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                AI智能运维能力演示
+                            </div>
+                        </div>
+                        <div class="file-path">./AIUI/aiDemo.html</div>
+                    </a>
+                    
+                    <a href="./AIUI/equipmentPrediction.html" target="_blank" class="file-item">
+                        <div class="file-info">
+                            <div class="file-title">
+                                <svg class="icon" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                设备故障概率预测
+                            </div>
+                        </div>
+                        <div class="file-path">./AIUI/equipmentPrediction.html</div>
+                    </a>
                 </div>
-                <p class="card-description">
-                    轻量级数字孪生系统，提供核心功能的快速演示和测试。
-                </p>
-                <ul class="link-list">
-                    <li class="link-item">
-                        <a href="dt/asset-type-management.html">
-                            <div class="link-title">🏷️ 资产类型管理(简化版)</div>
-                            <div class="link-desc">简化版资产类型管理功能</div>
-                        </a>
-                    </li>
-                    <li class="link-item">
-                        <a href="dt/asset-type-list.html">
-                            <div class="link-title">📋 资产类型列表(简化版)</div>
-                            <div class="link-desc">简化版资产类型列表展示</div>
-                        </a>
-                    </li>
-                </ul>
             </div>
-        </div>
-
-        <!-- 技术栈展示 -->
-        <div class="tech-stack">
-            <h3>🛠️ 技术栈</h3>
-            <div class="tech-tags">
-                <span class="tech-tag">HTML5</span>
-                <span class="tech-tag">CSS3</span>
-                <span class="tech-tag">JavaScript ES6+</span>
-                <span class="tech-tag">Three.js 0.128.0</span>
-                <span class="tech-tag">Element UI</span>
-                <span class="tech-tag">ECharts</span>
-                <span class="tech-tag">D3.js</span>
-                <span class="tech-tag">Vue.js</span>
-            </div>
+                        <div class="usage-tips">
+                            <h3>📝 使用说明</h3>
+                            <ul>
+                                <li>每个项目（文件夹）包含多个相关的HTML文件</li>
+                                <li>点击文件项可以导航到对应的HTML页面</li>
+                                <li>添加新项目时，请按照相同的结构添加新的project-section</li>
+                            </ul>
+                        </div>
         </div>
 
         <div class="footer">
-            <p>© 2024 Demo Design - 综合性设计演示项目</p>
-            <p>基于现代前端技术栈构建，支持响应式设计和多设备兼容</p>
+            <p>Demo Design Project © 2024 | 最后更新: <span id="lastUpdate"></span></p>
         </div>
     </div>
 
     <script>
-        // 添加页面加载动画
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.nav-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(30px)';
-                
+        // 显示最后更新时间
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('zh-CN');
+        
+        // 为文件项添加点击效果
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // 添加点击动画
+                this.style.transform = 'scale(0.98)';
                 setTimeout(() => {
-                    card.style.transition = 'all 0.6s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
+                    this.style.transform = '';
+                }, 150);
             });
         });
 
-        // 添加链接点击统计
-        document.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', function() {
-                console.log('导航点击:', this.href);
-                // 这里可以添加统计代码
+        // 全局检索（支持多关键词，按标题与路径匹配；无匹配的分组将被隐藏）
+        (function () {
+            const inputEl = document.getElementById('globalSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const statsEl = document.getElementById('searchStats');
+            const sectionEls = Array.from(document.querySelectorAll('.project-section'));
+            const allItemEls = Array.from(document.querySelectorAll('.file-item'));
+
+            const totalCount = allItemEls.length;
+
+            function updateStats(total, matched) {
+                statsEl.textContent = `共 ${total} 项，匹配 ${matched} 项`;
+            }
+
+            function getText(el, selector) {
+                const node = el.querySelector(selector);
+                return node ? node.textContent : '';
+            }
+
+            function filter() {
+                const q = inputEl.value.trim().toLowerCase();
+                const keys = q.split(/\s+/).filter(Boolean);
+                let matched = 0;
+
+                sectionEls.forEach(section => {
+                    const items = Array.from(section.querySelectorAll('.file-item'));
+                    let sectionMatched = 0;
+
+                    items.forEach(item => {
+                        const titleText = getText(item, '.file-title');
+                        const pathText = getText(item, '.file-path');
+                        const haystack = `${titleText} ${pathText}`.toLowerCase();
+                        const ok = keys.every(k => haystack.includes(k));
+
+                        if (!q || ok) {
+                            item.style.display = '';
+                            sectionMatched += 1;
+                            matched += 1;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    section.style.display = sectionMatched > 0 || !q ? '' : 'none';
+                });
+
+                updateStats(totalCount, q ? matched : totalCount);
+            }
+
+            inputEl.addEventListener('input', filter);
+            clearBtn.addEventListener('click', () => {
+                inputEl.value = '';
+                filter();
+                inputEl.focus();
             });
-        });
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    clearBtn.click();
+                }
+            });
+
+            // 初始化统计
+            updateStats(totalCount, totalCount);
+        })();
     </script>
 </body>
 </html>

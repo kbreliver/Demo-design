@@ -1125,18 +1125,24 @@
                         this.$message.warning('请选择所属组织（工厂）');
                         return;
                     }
+                    const doCreate = () => {
+                        const orgId = encodeURIComponent(this.createForm.orgId);
+                        const orgName = encodeURIComponent(this.createForm.orgName);
+                        const template = encodeURIComponent(this.createForm.template || '');
+                        this.createDialogVisible = false;
+                        window.location.href = `factory-model-management.html?action=create&orgId=${orgId}&orgName=${orgName}&template=${template}`;
+                    };
                     if (!this.createForm.template) {
-                        this.$message.warning('请选择工厂模型模板');
-                        return;
+                        this.$confirm('未选择模板，确定不基于模板直接创建工厂模型吗？', '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }).then(() => {
+                            doCreate();
+                        }).catch(() => {});
+                    } else {
+                        doCreate();
                     }
-                    // 构造跳转URL参数
-                    const orgId = encodeURIComponent(this.createForm.orgId);
-                    const orgName = encodeURIComponent(this.createForm.orgName);
-                    const template = encodeURIComponent(this.createForm.template);
-                    // 关闭弹窗
-                    this.createDialogVisible = false;
-                    // 跳转到模型管理页面（新建模式）
-                    window.location.href = `factory-model-management.html?action=create&orgId=${orgId}&orgName=${orgName}&template=${template}`;
                 },
                 
                 // 显示导入对话框

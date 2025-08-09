@@ -72,9 +72,14 @@
         /* 主要内容区域 */
         .main-content {
             margin: 0 auto;
-            padding: 24px;
+            /* padding: 24px; */
             max-width: none;
             width: 100%;
+        }
+        /* 资产列表容器自适应高度 */
+        .asset-table-container {
+            max-height: calc(100vh - 360px);
+            overflow: auto;
         }
 
         /* 基本信息卡片 */
@@ -83,6 +88,25 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 24px;
+        }
+        /* 基本信息编辑对话框 */
+        .basic-info-dialog .el-form-item__label { width: 110px; }
+        .basic-info-dialog .el-form-item__content { margin-left: 110px; }
+        /* 功能配置对话框布局 */
+        .function-config {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 16px;
+            min-height: 420px;
+        }
+        .function-config .left-panel {
+            border-right: 1px solid #e4e7ed;
+            padding-right: 12px;
+            overflow: auto;
+        }
+        .function-config .right-panel {
+            padding-left: 12px;
+            overflow: auto;
         }
 
         .card-header {
@@ -101,17 +125,11 @@
             align-items: center;
         }
         
-        /* 确保折叠按钮可见 */
+        /* 保证按钮可见但不覆盖主题色 */
         .card-actions .el-button {
-            display: inline-flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            color: #409eff !important;
-            font-size: 14px !important;
-            padding: 8px 12px !important;
-            border: 1px solid #409eff !important;
-            background-color: #fff !important;
-            border-radius: 4px !important;
+            display: inline-flex;
+            visibility: visible;
+            opacity: 1;
         }
         
         /* 确保按钮图标可见 */
@@ -3117,24 +3135,27 @@
                         </span>
                     </h2>
                     <div class="card-actions">
-                        <el-button @click="saveModel" type="primary" icon="el-icon-check" size="small">
-                            保存
+                                                <el-button type="default" size="small" icon="el-icon-edit" @click="openEditBasicInfo">
+                                                    编辑基本信息
+                                                </el-button>
+                        <el-button @click="openFunctionConfig" type="default" icon="el-icon-setting" size="small">
+                            功能配置
                         </el-button>
-                        <el-button @click="toggleModelStatus" :type="modelInfo.status === 'enabled' ? 'warning' : 'success'"
+                        <!-- <el-button @click="saveModel" type="primary" icon="el-icon-check" size="small">
+                            保存
+                        </el-button> -->
+                                                <el-button type="default" size="small" icon="el-icon-download" @click="exportAssets">
+                                                    导出资产
+                                                </el-button>
+                        <el-button @click="toggleModelStatus" :type="modelInfo.status === 'enabled' ? 'danger' : 'success'"
                             :icon="modelInfo.status === 'enabled' ? 'el-icon-close' : 'el-icon-check'" size="small">
                             {{ modelInfo.status === 'enabled' ? '禁用' : '启用' }}
                         </el-button>
-                        <el-button type="default" size="small" icon="el-icon-download" @click="exportAssets">
-                            导出资产
-                        </el-button>
-                        <el-button type="text" @click="toggleBasicInfo"
-                            :icon="basicInfoExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
-                            style="border: 1px solid #ddd; background: #f5f5f5;">
-                            {{ basicInfoExpanded ? '收起' : '展开' }}
-                        </el-button>
+
+
                     </div>
                 </div>
-                <div class="card-content" :class="{ 'collapsed': !basicInfoExpanded }">
+                <div class="card-content" v-if="false">
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">工厂模型名称</div>
@@ -3170,6 +3191,78 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 基本信息编辑弹窗 -->
+            <el-dialog title="编辑基本信息" :visible.sync="editBasicInfoVisible" width="600px" class="basic-info-dialog">
+                <el-form :model="modelInfo" label-width="110px">
+                    <el-form-item label="工厂模型名称">
+                        <el-input v-model="modelInfo.name"></el-input>
+                    </el-form-item>
+                    <el-form-item label="所属组织">
+                        <el-input v-model="modelInfo.organization" disabled></el-input>
+                    </el-form-item>
+                    <el-form-item label="模板">
+                        <el-input v-model="modelInfo.templateName" disabled></el-input>
+                    </el-form-item>
+                    <el-form-item label="状态">
+                        <el-tag :type="modelInfo.status === 'enabled' ? 'success' : (modelInfo.status === 'draft' ? 'info' : 'warning')">
+                            {{ getStatusText(modelInfo.status) }}
+                        </el-tag>
+                    </el-form-item>
+                    <el-form-item label="工厂模型描述">
+                        <el-input type="textarea" :rows="3" v-model="modelInfo.description"></el-input>
+                    </el-form-item>
+                </el-form>
+                <span slot="footer" class="dialog-footer">
+                    <el-button @click="editBasicInfoVisible=false">取消</el-button>
+                    <el-button type="primary" @click="saveModel">保存</el-button>
+                </span>
+            </el-dialog>
+
+            <!-- 功能配置弹窗 -->
+            <el-dialog title="功能配置" :visible.sync="functionConfigVisible" width="800px">
+                <div class="function-config">
+                    <!-- 左侧资产类型列表 -->
+                    <div class="left-panel">
+                        <el-input v-model="functionConfigSearch" placeholder="搜索资产类型" size="small" clearable style="margin-bottom:8px"></el-input>
+                        <el-menu :default-active="selectedFunctionAssetTypeId" class="el-menu-vertical-demo" @select="onSelectFunctionAssetType">
+                            <el-menu-item v-for="t in filteredFunctionAssetTypes" :key="t.id" :index="t.id">
+                                <i class="el-icon-box"></i>
+                                <span slot="title">{{ t.name }}</span>
+                            </el-menu-item>
+                        </el-menu>
+                    </div>
+
+                    <!-- 右侧功能列表 -->
+                    <div class="right-panel">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <div>
+                                <strong>资产类型：</strong>{{ currentFunctionAssetType ? currentFunctionAssetType.name : '-' }}
+                            </div>
+                            <el-button size="mini" type="primary" @click="saveFunctionConfig">保存</el-button>
+                        </div>
+                        <el-table :data="currentFunctionList" size="small" style="width:100%">
+                            <el-table-column prop="name" label="功能名称" min-width="180"></el-table-column>
+                            <el-table-column prop="version" label="版本" width="160">
+                                <template slot-scope="scope">
+                                    <el-select v-model="scope.row.version" size="mini" placeholder="最新版本" clearable style="width: 140px;">
+                                        <el-option v-for="v in getFunctionVersions(scope.row.name)" :key="v" :label="v" :value="v"></el-option>
+                                    </el-select>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="是否启用" width="120">
+                                <template slot-scope="scope">
+                                    <el-switch v-model="scope.row.enabled"></el-switch>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+                <span slot="footer" class="dialog-footer">
+                    <el-button @click="functionConfigVisible=false">取消</el-button>
+                    <el-button type="primary" @click="saveFunctionConfig">保存</el-button>
+                </span>
+            </el-dialog>
 
             <!-- 层级结构管理 -->
             <div class="structure-section">
@@ -4595,7 +4688,7 @@
                                             
                                             <el-tab-pane name="plugins">
                                                 <template slot="label">
-                                                    <span style="font-size: 20px; font-weight: bold;" hint="点击增加选择新页签"> + </span>
+                                                    <span style="font-size: 20px; font-weight: bold;" hint="点击增加选择新页签"> 更多.. </span>
                                                 </template>
                                                 <div class="tab-content">
                                                     <div class="plugin-overview">
@@ -6045,6 +6138,48 @@
                     status: 'enabled',
                     organization: '华东水泥集团'
                 },
+                editBasicInfoVisible: false,
+                
+                // 功能配置
+                functionConfigVisible: false,
+                functionConfigSearch: '',
+                functionAssetTypes: [
+                    { id: 'type-factory', name: '工厂' },
+                    { id: 'type-line', name: '产线' },
+                    { id: 'type-section', name: '工艺段' },
+                    { id: 'type-equipment', name: '设备' },
+                    { id: 'type-rotary-kiln', name: '回转窑' },
+                    { id: 'type-fan', name: '高温风机' }
+                ],
+                selectedFunctionAssetTypeId: 'type-factory',
+                assetTypeToFunctions: {
+                    'type-factory': [
+                        { name: '工厂看板', version: '1.3.0', enabled: true },
+                        { name: '能耗总览', version: '1.1.0', enabled: true },
+                        { name: '环保合规监测', version: '1.0.0', enabled: false }
+                    ],
+                    'type-line': [
+                        { name: '产线排产', version: '2.0.0', enabled: true },
+                        { name: 'OEE分析', version: '1.2.0', enabled: true },
+                        { name: '瓶颈诊断', version: '1.0.0', enabled: false }
+                    ],
+                    'type-equipment': [
+                        { name: '点检管理', version: '1.0.0', enabled: true },
+                        { name: '维保计划', version: '1.2.0', enabled: true },
+                        { name: '能耗监测', version: '1.0.0', enabled: false }
+                    ],
+                    'type-rotary-kiln': [
+                        { name: '煅烧工艺监控', version: '2.1.0', enabled: true },
+                        { name: '热平衡分析', version: '', enabled: false }
+                    ],
+                    'type-fan': [
+                        { name: '振动监测', version: '1.0.0', enabled: true },
+                        { name: '轴承寿命预估', version: '', enabled: false }
+                    ],
+                    'type-section': [
+                        { name: '产线平衡', version: '', enabled: true }
+                    ]
+                },
                 
                 // 层级结构管理相关数据
                 searchKeyword: '',
@@ -6846,6 +6981,18 @@
             },
             
             computed: {
+                // 功能配置计算
+                filteredFunctionAssetTypes() {
+                    const q = (this.functionConfigSearch || '').toLowerCase();
+                    return this.functionAssetTypes ? this.functionAssetTypes.filter(t => !q || t.name.toLowerCase().includes(q)) : [];
+                },
+                currentFunctionAssetType() {
+                    return (this.functionAssetTypes || []).find(t => t.id === this.selectedFunctionAssetTypeId) || null;
+                },
+                currentFunctionList() {
+                    const map = this.assetTypeToFunctions || {};
+                    return map[this.selectedFunctionAssetTypeId] || [];
+                },
                 // 获取选中的资产类型
                 selectedAssetType() {
                     if (!this.assetForm.assetType) {
@@ -7335,6 +7482,40 @@
 
             },
             methods: {
+                openEditBasicInfo() {
+                    this.editBasicInfoVisible = true;
+                },
+                // 功能配置
+                openFunctionConfig() {
+                    this.functionConfigVisible = true;
+                },
+                onSelectFunctionAssetType(id) {
+                    this.selectedFunctionAssetTypeId = id;
+                },
+                getFunctionVersions(functionName) {
+                    // 简单示例：不同功能的可选版本集合
+                    const versionMap = {
+                        '工厂看板': ['1.3.0', '1.2.0', '1.1.0'],
+                        '能耗总览': ['1.1.0', '1.0.0'],
+                        '环保合规监测': ['1.0.0'],
+                        '产线排产': ['2.0.0', '1.5.0'],
+                        'OEE分析': ['1.2.0', '1.1.0', '1.0.0'],
+                        '瓶颈诊断': ['1.0.0'],
+                        '点检管理': ['1.2.0', '1.1.0', '1.0.0'],
+                        '维保计划': ['1.2.0', '1.1.0'],
+                        '能耗监测': ['1.0.0'],
+                        '煅烧工艺监控': ['2.1.0', '2.0.0'],
+                        '热平衡分析': ['1.0.0'],
+                        '振动监测': ['1.0.0'],
+                        '轴承寿命预估': ['0.9.0'],
+                        '产线平衡': ['1.0.0']
+                    };
+                    return versionMap[functionName] || ['1.0.0'];
+                },
+                saveFunctionConfig() {
+                    this.$message.success('功能配置已保存');
+                    this.functionConfigVisible = false;
+                },
                 // 检查设备启用前的配置完整性
                 checkAssetEnableRequirements() {
                     const checkResults = [];
@@ -7636,18 +7817,20 @@
                     this.$message.info('导出功能开发中...');
                 },
                 
-                // 切换模型状态
+                // 切换模型状态（带确认）
                 toggleModelStatus() {
-                    if (this.modelInfo.status === 'enabled') {
-                        this.modelInfo.status = 'disabled';
-                        this.$message.success('模型已禁用');
-                    } else if (this.modelInfo.status === 'disabled') {
-                        this.modelInfo.status = 'enabled';
-                        this.$message.success('模型已启用');
-                    } else if (this.modelInfo.status === 'draft') {
-                        this.modelInfo.status = 'enabled';
-                        this.$message.success('草稿模型已启用');
-                    }
+                    const isEnabled = this.modelInfo.status === 'enabled';
+                    const targetStatus = isEnabled ? 'disabled' : 'enabled';
+                    const actionText = isEnabled ? '禁用' : '启用';
+                    this.$confirm(`确定要${actionText}当前工厂模型吗？`, '确认操作', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: isEnabled ? 'warning' : 'success'
+                    }).then(() => {
+                        this.modelInfo.status = targetStatus;
+                        const msg = targetStatus === 'enabled' ? '模型已启用' : '模型已禁用';
+                        this.$message.success(msg);
+                    }).catch(() => {});
                 },
                 
                 // 返回列表

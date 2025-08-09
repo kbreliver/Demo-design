@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>资产类型列表管理 - 数字孪生平台</title>
+    <link rel="stylesheet" href="assets/element-ui.css">
     <style>
         * {
             margin: 0;
@@ -590,14 +591,12 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="app" class="container">
         <!-- 页面标题和操作按钮 -->
         <div class="page-header">
             <h1 class="page-title">资产类型</h1>
             <div class="header-actions">
-                <button class="btn btn-primary" onclick="showInheritModal()">
-                    <i>+</i> 新建资产类型
-                </button>
+                <el-button type="primary" icon="el-icon-plus" @click="openInheritDialog">新建资产类型</el-button>
             </div>
         </div>
 
@@ -605,35 +604,27 @@
         <div class="filter-section">
             <div class="filter-group">
                 <label class="filter-label">名称:</label>
-                <input type="text" class="form-input" placeholder="请输入资产类型名称">
+                <el-input v-model="filters.name" placeholder="请输入资产类型名称" size="small" style="width: 180px"></el-input>
             </div>
-                <div class="filter-group">
+            <div class="filter-group">
                 <label class="filter-label">编码:</label>
-                <input type="text" class="form-input" placeholder="请输入资产类型编码">
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">分类:</label>
-                    <select class="form-select">
-                        <option value="">全部分类</option>
-                    <option value="equipment">设备</option>
-                        <option value="pipeline">管道</option>
-                        <option value="valve">阀门</option>
-                    <option value="motor">电机</option>
-                    <option value="pump">泵</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">状态:</label>
-                    <select class="form-select">
-                        <option value="">全部状态</option>
-                    <option value="active">已发布</option>
-                        <option value="draft">草稿</option>
-                    <option value="deprecated">已废弃</option>
-                    </select>
-                </div>
+                <el-input v-model="filters.code" placeholder="请输入资产类型编码" size="small" style="width: 180px"></el-input>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">分类:</label>
+                <el-select v-model="filters.category" placeholder="全部分类" clearable size="small" style="width: 180px">
+                    <el-option v-for="opt in categoryOptions" :key="opt.value" :label="opt.label" :value="opt.value"></el-option>
+                </el-select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">状态:</label>
+                <el-select v-model="filters.status" placeholder="全部状态" clearable size="small" style="width: 180px">
+                    <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value"></el-option>
+                </el-select>
+            </div>
             <div class="filter-actions">
-                <button class="btn" onclick="alert('重置筛选条件，清空所有输入框和选择框')">重置</button>
-                <button class="btn btn-primary" onclick="alert('根据筛选条件查询资产类型列表数据')">查询</button>
+                <el-button @click="resetFilters">重置</el-button>
+                <el-button type="primary" @click="applyFilters">查询</el-button>
             </div>
         </div>
 
@@ -649,130 +640,48 @@
 
         <!-- 表格区域 -->
         <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th class="checkbox-cell"><input type="checkbox" id="select-all"></th>
-                        <th>名称</th>
-                        <th>编码</th>
-                        <th>分类</th>
-                        <th>版本</th>
-                        <th>状态</th>
-                        <th>实例化次数</th>
-                        <th>被继承次数</th>
-                        <th>创建时间</th>
-                        <th>最后修改</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr data-id="1">
-                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
-                        <td><a href="asset-type-mgt.html" class="asset-link">水泥磨机</a></td>
-                        <td>cement_mill_001</td>
-                        <td>设备,粉磨</td>
-                        <td>v1.2.0</td>
-                        <td><span class="status-badge status-active">已发布</span></td>
-                        <td>24</td>
-                        <td>8</td>
-                        <td>2024-01-15</td>
-                        <td>2024-01-20</td>
-                        <td class="operation-cell">
-                            <button class="operation-btn" onclick="showVersionHistory('水泥磨机')">版本</button>
-                            <button class="operation-btn publish" onclick="alert('发布当前资产类型，使其状态变为已发布')">发布</button>
-                            <button class="operation-btn" onclick="alert('复制当前资产类型，创建新的资产类型草稿')">复制</button>
-                            <button class="operation-btn delete" onclick="alert('删除当前资产类型，此操作不可撤销')">删除</button>
-                        </td>
-                    </tr>
-                    <tr data-id="2">
-                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
-                        <td><a href="asset-type-list.html" class="asset-link">回转窑</a></td>
-                        <td>rotary_kiln_001</td>
-                        <td>设备,煅烧</td>
-                        <td>v1.0.1</td>
-                        <td><span class="status-badge status-active">已发布</span></td>
-                        <td>18</td>
-                        <td>5</td>
-                        <td>2024-01-10</td>
-                        <td>2024-01-18</td>
-                        <td class="operation-cell">
-                            <button class="operation-btn" onclick="showVersionHistory('回转窑')">版本</button>
-                            <button class="operation-btn publish">发布</button>
-                            <button class="operation-btn">复制</button>
-                            <button class="operation-btn delete">删除</button>
-                        </td>
-                    </tr>
-                    <tr data-id="3">
-                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
-                        <td><a href="asset-type-list.html" class="asset-link">原料仓</a></td>
-                        <td>raw_material_bin_001</td>
-                        <td>设备,仓储</td>
-                        <td>v0.9.2</td>
-                        <td><span class="status-badge status-draft">草稿</span></td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>2024-01-22</td>
-                        <td>2024-01-22</td>
-                        <td class="operation-cell">
-                            <button class="operation-btn" onclick="showVersionHistory('原料仓')">版本</button>
-                            <button class="operation-btn publish">发布</button>
-                            <button class="operation-btn">复制</button>
-                            <button class="operation-btn delete">删除</button>
-                        </td>
-                    </tr>
-                    <tr data-id="4">
-                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
-                        <td><a href="" class="asset-link">篦冷机</a></td>
-                        <td>grate_cooler_001</td>
-                        <td>设备,冷却</td>
-                        <td>v1.1.0</td>
-                        <td><span class="status-badge status-active">已发布</span></td>
-                        <td>15</td>
-                        <td>3</td>
-                        <td>2023-12-05</td>
-                        <td>2024-01-15</td>
-                        <td class="operation-cell">
-                            <button class="operation-btn" onclick="showVersionHistory('篦冷机')">版本</button>
-                            <button class="operation-btn publish">发布</button>
-                            <button class="operation-btn">复制</button>
-                            <button class="operation-btn delete">删除</button>
-                        </td>
-                    </tr>
-                    <tr data-id="5">
-                        <td class="checkbox-cell"><input type="checkbox" class="row-select"></td>
-                        <td><a href="asset-type-list.html" class="asset-link">水泥仓</a></td>
-                        <td>cement_bin_001</td>
-                        <td>设备,仓储</td>
-                        <td>v1.0.0</td>
-                        <td><span class="status-badge status-deprecated">已废弃</span></td>
-                        <td>32</td>
-                        <td>2</td>
-                        <td>2023-11-20</td>
-                        <td>2024-01-05</td>
-                        <td class="operation-cell">
-                            <button class="operation-btn" onclick="showVersionHistory('水泥仓')">版本</button>
-                            <button class="operation-btn publish">发布</button>
-                            <button class="operation-btn">复制</button>
-                            <button class="operation-btn delete">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-                </div>
+            <el-table :data="pagedRows" @selection-change="onSelectionChange" style="width: 100%">
+                <el-table-column type="selection" width="55"></el-table-column>
+                <el-table-column prop="name" label="名称" min-width="160">
+                    <template slot-scope="scope">
+                        <a class="asset-link" :href="'asset-type-mgt.html?id='+scope.row.id">{{ scope.row.name }}</a>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="code" label="编码" min-width="180"></el-table-column>
+                <el-table-column prop="categoryText" label="分类" min-width="120"></el-table-column>
+                <el-table-column prop="parentName" label="继承自" min-width="140"></el-table-column>
+                <el-table-column prop="version" label="版本" width="100"></el-table-column>
+                <el-table-column label="状态" width="100">
+                    <template slot-scope="scope">
+                        <span class="status-badge" :class="statusClass(scope.row.status)">{{ statusText(scope.row.status) }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="instanceCount" label="实例化次数" width="120"></el-table-column>
+                <el-table-column prop="inheritCount" label="被继承次数" width="120"></el-table-column>
+                <el-table-column prop="createTime" label="创建时间" width="120"></el-table-column>
+                <el-table-column prop="updateTime" label="最后修改" width="120"></el-table-column>
+                <el-table-column label="操作" width="200" fixed="right">
+                    <template slot-scope="scope">
+                        <el-button type="text" size="mini" @click="showVersionHistory(scope.row)">版本</el-button>
+                        <el-button type="text" size="mini" @click="publish(scope.row)" style="color:#67c23a">发布</el-button>
+                        <el-button type="text" size="mini" @click="copyRow(scope.row)">复制</el-button>
+                        <el-button type="text" size="mini" @click="deleteRow(scope.row)" style="color:#f56c6c">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
 
         <!-- 分页控件 -->
         <div class="pagination">
-            <div class="pagination-info">显示 1-5 条，共 23 条</div>
-            <div class="pagination-controls">
-                <button class="page-btn disabled" onclick="alert('导航到第一页资产类型列表')"><<</button><button class="page-btn disabled" onclick="alert('导航到上一页资产类型列表')"><</button>
-                <button class="page-btn active" onclick="alert('导航到第1页资产类型列表')">1</button>
-                <button class="page-btn" onclick="alert('导航到第2页资产类型列表')">2</button>
-                <button class="page-btn" onclick="alert('导航到第3页资产类型列表')">3</button>
-                <button class="page-btn" onclick="alert('导航到第4页资产类型列表')">4</button>
-                <button class="page-btn" onclick="alert('导航到第5页资产类型列表')">5</button>
-                <button class="page-btn" onclick="alert('导航到下一页资产类型列表')">></button><button class="page-btn" onclick="alert('导航到最后一页资产类型列表')">>></button>
-            </div>
-                </div>
+            <div class="pagination-info">显示 {{ pageStart }}-{{ pageEnd }} 条，共 {{ filteredRows.length }} 条</div>
+            <el-pagination
+                @current-change="onPageChange"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                layout="prev, pager, next"
+                :total="filteredRows.length">
+            </el-pagination>
+        </div>
             </div>
 
     <!-- 版本历史弹窗 -->
@@ -960,213 +869,84 @@
         </div>
     </div>
 
+    <script src="assets/vue.js"></script>
+    <script src="assets/element-ui.js"></script>
     <script>
-        // 全选功能
-        document.getElementById('select-all').addEventListener('change', function(e) {
-            const checkboxes = document.querySelectorAll('.row-select');
-            const batchOperation = document.getElementById('batch-operation');
-            const selectedCount = document.getElementById('selected-count');
-
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = e.target.checked;
-            });
-
-            // 更新批量操作栏显示
-            if (e.target.checked) {
-                batchOperation.style.display = 'flex';
-                selectedCount.textContent = checkboxes.length;
-            } else {
-                updateBatchOperation();
-            }
-
-            // 更新行选中状态
-            updateSelectedRows();
-        });
-
-        // 行选择功能
-        document.querySelectorAll('.row-select').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateBatchOperation();
-                updateSelectedRows();
-            });
-        });
-
-        // 更新批量操作栏显示
-        function updateBatchOperation() {
-            const checkboxes = document.querySelectorAll('.row-select:checked');
-            const batchOperation = document.getElementById('batch-operation');
-            const selectedCount = document.getElementById('selected-count');
-            const selectAllCheckbox = document.getElementById('select-all');
-
-            if (checkboxes.length > 0) {
-                batchOperation.style.display = 'flex';
-                selectedCount.textContent = checkboxes.length;
-            } else {
-                batchOperation.style.display = 'none';
-            }
-
-            // 更新全选框状态
-            selectAllCheckbox.checked = checkboxes.length === document.querySelectorAll('.row-select').length && checkboxes.length > 0;
-        }
-
-        // 更新行选中状态
-        function updateSelectedRows() {
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const checkbox = row.querySelector('.row-select');
-                if (checkbox.checked) {
-                    row.classList.add('selected');
-                } else {
-                    row.classList.remove('selected');
+        new Vue({
+            el: '#app',
+            data: {
+                filters: { name: '', code: '', category: '', status: '' },
+                categoryOptions: [
+                    {label:'设备', value:'equipment'},
+                    {label:'管道', value:'pipeline'},
+                    {label:'阀门', value:'valve'},
+                    {label:'电机', value:'motor'},
+                    {label:'泵', value:'pump'}
+                ],
+                statusOptions: [
+                    {label:'已发布', value:'active'},
+                    {label:'草稿', value:'draft'},
+                    {label:'已废弃', value:'deprecated'}
+                ],
+                rows: [
+                    {id:'1', name:'工厂', code:'FACTORY', category:['organization'], categoryText:'组织', parentName:'-', version:'v1.0.0', status:'active', instanceCount:5, inheritCount:0, createTime:'2024-01-10', updateTime:'2024-01-15'},
+                    {id:'2', name:'产线', code:'PRODUCTION_LINE', category:['organization'], categoryText:'组织', parentName:'-', version:'v1.0.0', status:'active', instanceCount:12, inheritCount:2, createTime:'2024-01-11', updateTime:'2024-01-16'},
+                    {id:'3', name:'水泥产线', code:'CEMENT_LINE', category:['organization'], categoryText:'组织', parentName:'产线', version:'v1.0.1', status:'active', instanceCount:8, inheritCount:1, createTime:'2024-01-12', updateTime:'2024-01-18'},
+                    {id:'4', name:'石膏板产线', code:'GYPSUM_BOARD_LINE', category:['organization'], categoryText:'组织', parentName:'产线', version:'v1.0.0', status:'draft', instanceCount:0, inheritCount:0, createTime:'2024-01-20', updateTime:'2024-01-20'},
+                    {id:'5', name:'工艺段', code:'PROCESS_SECTION', category:['process'], categoryText:'工艺', parentName:'-', version:'v1.0.0', status:'active', instanceCount:20, inheritCount:3, createTime:'2024-01-13', updateTime:'2024-01-19'},
+                    {id:'6', name:'设备', code:'EQUIPMENT', category:['equipment'], categoryText:'设备', parentName:'-', version:'v1.0.0', status:'active', instanceCount:30, inheritCount:5, createTime:'2024-01-14', updateTime:'2024-01-19'},
+                    {id:'7', name:'高温风机', code:'HIGH_TEMP_FAN', category:['equipment'], categoryText:'设备', parentName:'设备', version:'v0.9.0', status:'draft', instanceCount:2, inheritCount:0, createTime:'2024-01-21', updateTime:'2024-01-21'},
+                    {id:'8', name:'回转窑', code:'ROTARY_KILN', category:['equipment'], categoryText:'设备', parentName:'设备', version:'v1.0.1', status:'active', instanceCount:10, inheritCount:2, createTime:'2024-01-05', updateTime:'2024-01-18'},
+                    {id:'9', name:'窑头', code:'KILN_HEAD', category:['process'], categoryText:'部件', parentName:'-', version:'v1.0.0', status:'active', instanceCount:6, inheritCount:1, createTime:'2024-01-06', updateTime:'2024-01-18'},
+                    {id:'10', name:'窑中', code:'KILN_MIDDLE', category:['process'], categoryText:'部件', parentName:'-', version:'v1.0.0', status:'active', instanceCount:6, inheritCount:1, createTime:'2024-01-06', updateTime:'2024-01-18'},
+                    {id:'11', name:'窑尾', code:'KILN_TAIL', category:['process'], categoryText:'部件', parentName:'-', version:'v1.0.0', status:'active', instanceCount:6, inheritCount:1, createTime:'2024-01-06', updateTime:'2024-01-18'}
+                ],
+                currentPage: 1,
+                pageSize: 10,
+                selectedRows: [],
+                inheritDialogVisible: false
+            },
+            computed: {
+                filteredRows() {
+                    const n = this.filters.name.toLowerCase();
+                    const c = this.filters.code.toLowerCase();
+                    return this.rows.filter(r =>
+                        (!n || r.name.toLowerCase().includes(n)) &&
+                        (!c || r.code.toLowerCase().includes(c)) &&
+                        (!this.filters.category || r.category.includes(this.filters.category)) &&
+                        (!this.filters.status || r.status === this.filters.status)
+                    );
+                },
+                pagedRows() {
+                    const start = (this.currentPage - 1) * this.pageSize;
+                    return this.filteredRows.slice(start, start + this.pageSize);
+                },
+                pageStart() { return this.filteredRows.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1; },
+                pageEnd() { return Math.min(this.currentPage * this.pageSize, this.filteredRows.length); }
+            },
+            methods: {
+                statusText(s) { return s==='active' ? '已发布' : s==='draft' ? '草稿' : '已废弃'; },
+                statusClass(s) { return s==='active' ? 'status-active' : s==='draft' ? 'status-draft' : 'status-deprecated'; },
+                resetFilters() { this.filters = {name:'', code:'', category:'', status:''}; },
+                applyFilters() { this.currentPage = 1; },
+                onSelectionChange(sel) { this.selectedRows = sel; },
+                onPageChange(p) { this.currentPage = p; },
+                showVersionHistory(row) { this.$message.info(`查看 ${row.name} 版本历史`); },
+                publish(row) { this.$message.success(`已发布 ${row.name}`); row.status='active'; },
+                copyRow(row) { this.$message.success(`已复制 ${row.name}`); },
+                deleteRow(row) {
+                    this.$confirm(`确定删除 ${row.name} 吗？`, '警告', {type:'warning'}).then(()=>{
+                        this.rows = this.rows.filter(r => r.id !== row.id);
+                        this.$message.success('删除成功');
+                    }).catch(()=>{});
+                },
+                openInheritDialog() { this.inheritDialogVisible = true; },
+                confirmInherit(value) {
+                    this.inheritDialogVisible = false;
+                    const target = value || 'none';
+                    if (target === 'none') { window.location.href = 'asset-type-mgt.html?inherit=none'; }
+                    else { window.location.href = `asset-type-mgt.html?inherit=${target}`; }
                 }
-            });
-        }
-
-        // 版本历史弹窗控制
-        function showVersionHistory(assetName) {
-            const modal = document.getElementById('version-modal');
-            const modalTitle = document.getElementById('version-modal-title');
-            modalTitle.textContent = `资产类型版本历史 - ${assetName}`;
-            modal.classList.add('active');
-        }
-
-        document.getElementById('version-modal-close').addEventListener('click', function() {
-            document.getElementById('version-modal').classList.remove('active');
-        });
-
-        document.getElementById('version-modal-cancel').addEventListener('click', function() {
-            document.getElementById('version-modal').classList.remove('active');
-        });
-
-        // 点击模态框背景关闭
-        document.getElementById('version-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('active');
-            }
-        });
-
-        // 批量操作按钮事件
-        document.getElementById('batch-copy').addEventListener('click', function() {
-            const selectedCount = document.getElementById('selected-count').textContent;
-            alert(`批量复制 ${selectedCount} 项资产类型`);
-        });
-
-        document.getElementById('batch-delete').addEventListener('click', function() {
-            const selectedCount = document.getElementById('selected-count').textContent;
-            if (confirm(`确定要批量删除 ${selectedCount} 项资产类型吗？此操作不可撤销。`)) {
-                alert(`批量删除 ${selectedCount} 项资产类型`);
-            }
-        });
-
-        document.getElementById('batch-publish').addEventListener('click', function() {
-            const selectedCount = document.getElementById('selected-count').textContent;
-            alert(`批量发布 ${selectedCount} 项资产类型`);
-        });
-
-        // 继承选择弹窗控制
-        function showInheritModal() {
-            const modal = document.getElementById('inherit-modal');
-            modal.classList.add('active');
-            // 默认选择"不继承任何类型"
-            selectInheritOption('none');
-            // 清空搜索框
-            document.getElementById('inherit-search').value = '';
-            // 显示所有选项
-            filterInheritOptions();
-        }
-
-        function selectInheritOption(value) {
-            // 移除所有选中状态
-            document.querySelectorAll('.inherit-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // 设置选中的radio
-            const radio = document.getElementById(`inherit-${value}`);
-            if (radio) {
-                radio.checked = true;
-                radio.closest('.inherit-option').classList.add('selected');
-            }
-        }
-
-        function filterInheritOptions() {
-            const searchTerm = document.getElementById('inherit-search').value.toLowerCase().trim();
-            const options = document.querySelectorAll('.inherit-option');
-            let visibleCount = 0;
-
-            options.forEach(option => {
-                const searchData = option.getAttribute('data-search');
-                const optionName = option.querySelector('.inherit-option-name').textContent.toLowerCase();
-                const optionDesc = option.querySelector('.inherit-option-desc').textContent.toLowerCase();
-                
-                // 如果没有搜索数据属性，说明是"不继承任何类型"选项
-                if (!searchData) {
-                    if (searchTerm === '' || optionName.includes(searchTerm) || optionDesc.includes(searchTerm)) {
-                        option.classList.remove('hidden');
-                        visibleCount++;
-                    } else {
-                        option.classList.add('hidden');
-                    }
-                } else {
-                    // 检查搜索数据、名称和描述
-                    const searchDataLower = searchData.toLowerCase();
-                    if (searchTerm === '' || 
-                        searchDataLower.includes(searchTerm) || 
-                        optionName.includes(searchTerm) || 
-                        optionDesc.includes(searchTerm)) {
-                        option.classList.remove('hidden');
-                        visibleCount++;
-                    } else {
-                        option.classList.add('hidden');
-                    }
-                }
-            });
-
-            // 显示或隐藏"无结果"提示
-            const noResults = document.querySelector('.no-results');
-            if (visibleCount === 0) {
-                if (!noResults) {
-                    const noResultsDiv = document.createElement('div');
-                    noResultsDiv.className = 'no-results';
-                    noResultsDiv.textContent = '没有找到匹配的资产类型';
-                    document.getElementById('inherit-options').appendChild(noResultsDiv);
-                }
-            } else {
-                if (noResults) {
-                    noResults.remove();
-                }
-            }
-        }
-
-        function confirmInherit() {
-            const selectedValue = document.querySelector('input[name="inherit-type"]:checked').value;
-            const modal = document.getElementById('inherit-modal');
-            
-            // 关闭弹窗
-            modal.classList.remove('active');
-            
-            // 根据选择跳转到相应的页面
-            if (selectedValue === 'none') {
-                // 跳转到资产类型管理页面，不继承任何类型
-                window.location.href = 'asset-type-mgt.html?inherit=none';
-            } else {
-                // 跳转到资产类型管理页面，继承选中的类型
-                window.location.href = `asset-type-mgt.html?inherit=${selectedValue}`;
-            }
-        }
-
-        // 继承弹窗关闭事件
-        document.getElementById('inherit-modal-close').addEventListener('click', function() {
-            document.getElementById('inherit-modal').classList.remove('active');
-        });
-
-        document.getElementById('inherit-modal-cancel').addEventListener('click', function() {
-            document.getElementById('inherit-modal').classList.remove('active');
-        });
-
-        // 点击模态框背景关闭
-        document.getElementById('inherit-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('active');
             }
         });
     </script>
